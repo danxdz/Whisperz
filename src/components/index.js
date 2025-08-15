@@ -8,6 +8,7 @@ export { default as DevTools } from './DevTools';
 export { default as DevToolsPanel } from './DevToolsPanel';
 export { default as DevToolsButton } from './DevToolsButton';
 export { default as DevToolsWrapper } from './DevToolsWrapper';
+export { default as MobileDevTools } from './MobileDevTools';
 export { default as ConnectionStatus } from './ConnectionStatus';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as LoadingSpinner } from './LoadingSpinner';

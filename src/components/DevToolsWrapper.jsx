@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DevToolsPanel from './DevToolsPanel';
 import DevToolsButton from './DevToolsButton';
+import MobileDevTools from './MobileDevTools';
 import { APP_CONFIG } from '../config/app.config';
 
 /**
@@ -11,6 +12,7 @@ import { APP_CONFIG } from '../config/app.config';
 function DevToolsWrapper() {
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     // Check if dev tools should be enabled
@@ -21,6 +23,18 @@ function DevToolsWrapper() {
       localStorage.getItem('enableDevTools') === 'true';
     
     setIsEnabled(shouldEnable);
+    
+    // Check if mobile device
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
 
     // Secret key combination to enable dev tools in production
     const secretKeys = [];
@@ -38,7 +52,10 @@ function DevToolsWrapper() {
     };
 
     window.addEventListener('keydown', handleSecretCode);
-    return () => window.removeEventListener('keydown', handleSecretCode);
+    
+    return () => {
+      window.removeEventListener('keydown', handleSecretCode);
+    };
   }, []);
 
   if (!isEnabled) {
@@ -51,10 +68,15 @@ function DevToolsWrapper() {
 
   return (
     <>
-      <DevToolsButton 
-        onClick={toggleDevTools}
-        isDevToolsOpen={isDevToolsOpen}
-      />
+      {/* Show mobile-optimized tools on mobile devices */}
+      {isMobile ? (
+        <MobileDevTools onOpenDevTools={toggleDevTools} />
+      ) : (
+        <DevToolsButton 
+          onClick={toggleDevTools}
+          isDevToolsOpen={isDevToolsOpen}
+        />
+      )}
       
       {isDevToolsOpen && (
         <DevToolsPanel 
