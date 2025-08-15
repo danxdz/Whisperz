@@ -1,0 +1,15 @@
+/**
+ * Barrel export for all components
+ * This makes importing components cleaner in other files
+ */
+
+export { default as LoginView } from './LoginView';
+export { default as DevTools } from './DevTools';
+export { default as ConnectionStatus } from './ConnectionStatus';
+
+// Future components can be added here as they are extracted:
+// export { default as RegisterView } from './RegisterView';
+// export { default as ChatView } from './ChatView';
+// export { default as FriendsList } from './FriendsList';
+// export { default as MessageList } from './MessageList';
+// export { default as MessageInput } from './MessageInput';
