@@ -6,6 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
+import { ThemeToggle } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -1285,6 +1286,7 @@ function App() {
 
   return (
     <div>
+      <ThemeToggle />
       <ConnectionStatus />
       <ChatView user={user} onLogout={handleLogout} onInviteAccepted={handleInviteAccepted} />
     </div>

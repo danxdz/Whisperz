@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import { loginRateLimiter } from '../utils/rateLimiter';
+import ThemeToggle from './ThemeToggle';
 
 /**
  * LoginView Component
@@ -61,6 +62,7 @@ function LoginView({ onLogin, inviteCode }) {
 
   return (
     <div className="auth-container">
+      <ThemeToggle />
       <div className="auth-box">
         <h1>Whisperz Login</h1>
         {inviteCode && (

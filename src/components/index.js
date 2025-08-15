@@ -14,6 +14,7 @@ export { default as ConnectionStatus } from './ConnectionStatus';
 export { default as WebRTCStatus } from './WebRTCStatus';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as LoadingSpinner } from './LoadingSpinner';
+export { default as ThemeToggle } from './ThemeToggle';
 
 // Future components can be added here as they are extracted:
 // export { default as RegisterView } from './RegisterView';
