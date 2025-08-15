@@ -548,23 +548,46 @@ const ConnectionStatus = () => {
   );
 };
 
-// Main Chat Component (unchanged)
+// Main Chat Component with proper nickname display
 function ChatView({ user, onLogout, onInviteAccepted }) {
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [messageInput, setMessageInput] = useState('');
-  const [inviteLink, setInviteLink] = useState('');
-  const [showInvite, setShowInvite] = useState(false);
-  const [showDevTools, setShowDevTools] = useState(false);
-  const [typingUsers, setTypingUsers] = useState(new Set());
+  const [newMessage, setNewMessage] = useState('');
   const [onlineStatus, setOnlineStatus] = useState(new Map());
-  const messagesEndRef = useRef(null);
+  const [typingStatus, setTypingStatus] = useState(new Map());
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
+  const [showDevTools, setShowDevTools] = useState(false);
+  const [userNickname, setUserNickname] = useState('');
+  const [friendsLoading, setFriendsLoading] = useState(true);
   const typingTimeoutRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  // Load user nickname on mount
+  useEffect(() => {
+    const loadUserNickname = async () => {
+      try {
+        const profile = await gunAuthService.getUserProfile();
+        if (profile?.nickname) {
+          setUserNickname(profile.nickname);
+        } else if (user?.alias) {
+          setUserNickname(user.alias);
+        } else {
+          setUserNickname('User');
+        }
+      } catch (error) {
+        console.error('Error loading user nickname:', error);
+        setUserNickname(user?.alias || 'User');
+      }
+    };
+    loadUserNickname();
+  }, [user]);
 
   // Load friends function (moved outside useEffect so it can be called manually)
   const loadFriends = async () => {
     try {
+      setFriendsLoading(true);
       console.log('📋 Loading friends...');
       const currentUser = gunAuthService.getCurrentUser();
       console.log('👤 Current user:', currentUser);
@@ -600,6 +623,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       }
     } catch (error) {
       console.error('❌ Failed to load friends:', error);
+    } finally {
+      setFriendsLoading(false);
     }
   };
 
@@ -672,10 +697,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       selectedFriend.conversationId,
       (userPub, isTyping) => {
         if (userPub !== user.pub) {
-          setTypingUsers(prev => {
-            const updated = new Set(prev);
+          setTypingStatus(prev => {
+            const updated = new Map(prev);
             if (isTyping) {
-              updated.add(userPub);
+              updated.set(userPub, true);
             } else {
               updated.delete(userPub);
             }
@@ -699,14 +724,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Handle message send with sanitization
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!messageInput.trim() || !selectedFriend) return;
+    if (!newMessage.trim() || !selectedFriend) return;
 
     // Sanitize input
-    const sanitizedMessage = messageInput.trim().slice(0, 1000);
+    const sanitizedMessage = newMessage.trim().slice(0, 1000);
 
     try {
       await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
-      setMessageInput('');
+      setNewMessage('');
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message: ' + error.message);
@@ -792,7 +817,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         </div>
         
         <div className="friends-list">
-          {friends.map(friend => (
+          {friendsLoading ? (
+            <div className="no-friends">
+              <p>Loading friends...</p>
+            </div>
+          ) : friends.map(friend => (
             <div
               key={friend.publicKey}
               className={`friend-item ${selectedFriend?.publicKey === friend.publicKey ? 'active' : ''}`}
@@ -804,7 +833,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               </div>
             </div>
           ))}
-          {friends.length === 0 && (
+          {friends.length === 0 && !friendsLoading && (
             <div className="no-friends">
               <p>No contacts yet</p>
               <p className="hint">Click + to invite friends</p>
@@ -814,7 +843,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
         <div className="sidebar-footer">
           <div className="user-info">
-            <span>{user.alias || 'User'}</span>
+            <span>{userNickname}</span>
             <button onClick={onLogout} className="logout-btn">Logout</button>
           </div>
         </div>
@@ -845,7 +874,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   </div>
                 </div>
               ))}
-              {typingUsers.size > 0 && (
+              {typingStatus.size > 0 && (
                 <div className="typing-indicator">
                   <span>{escapeHtml(selectedFriend.nickname)} is typing...</span>
                 </div>
@@ -856,8 +885,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             <form onSubmit={handleSendMessage} className="message-input-form">
               <input
                 type="text"
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
                 onKeyUp={handleTyping}
                 placeholder="Type a message..."
                 className="message-input"

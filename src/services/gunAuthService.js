@@ -76,13 +76,32 @@ class GunAuthService {
 
         // Auto-login after registration
         this.login(username, password)
-          .then(() => {
-            // Set user profile data
-            this.user.get('profile').put({
+          .then(async (loginResult) => {
+            // Set user profile data with proper await
+            const profileData = {
               nickname: nickname || username,
+              username: username,
               createdAt: Date.now(),
               publicKey: this.user.is.pub
+            };
+            
+            console.log('📝 Setting user profile:', profileData);
+            
+            // Store profile with callback to ensure it's saved
+            await new Promise((profileResolve) => {
+              this.user.get('profile').put(profileData, (ack) => {
+                if (ack.err) {
+                  console.error('Error saving profile:', ack.err);
+                } else {
+                  console.log('✅ Profile saved successfully');
+                }
+                profileResolve();
+              });
             });
+            
+            // Also store nickname in a simpler location for quick access
+            this.user.get('nickname').put(nickname || username);
+            
             resolve({ success: true, user: this.user.is });
           })
           .catch(reject);
@@ -129,15 +148,44 @@ class GunAuthService {
     return !!this.getCurrentUser();
   }
 
-  // Get user profile
+  // Get user profile with fallbacks
   async getUserProfile(publicKey = null) {
     const key = publicKey || this.getCurrentUser()?.pub;
     if (!key) return null;
 
     return new Promise((resolve) => {
+      let profileFound = false;
+      
+      // First try to get the full profile
       this.gun.user(key).get('profile').once((data) => {
-        resolve(data);
+        if (data && !profileFound) {
+          profileFound = true;
+          console.log('📋 Profile found:', data);
+          resolve(data);
+        }
       });
+      
+      // Also check for standalone nickname
+      this.gun.user(key).get('nickname').once((nickname) => {
+        if (nickname && !profileFound) {
+          setTimeout(() => {
+            if (!profileFound) {
+              profileFound = true;
+              console.log('📋 Nickname found:', nickname);
+              resolve({ nickname: nickname });
+            }
+          }, 500);
+        }
+      });
+      
+      // Timeout fallback
+      setTimeout(() => {
+        if (!profileFound) {
+          profileFound = true;
+          console.log('📋 No profile found for:', key);
+          resolve(null);
+        }
+      }, 1000);
     });
   }
 

@@ -420,10 +420,33 @@ class FriendsService {
     };
   }
 
-  // Get user nickname
+  // Get user nickname with better error handling and caching
   async getUserNickname() {
-    const profile = await gunAuthService.getUserProfile();
-    return profile?.nickname || 'Anonymous';
+    try {
+      const user = gunAuthService.getCurrentUser();
+      if (!user) return 'Anonymous';
+      
+      // Try to get from profile first
+      const profile = await gunAuthService.getUserProfile();
+      if (profile?.nickname) {
+        console.log('👤 User nickname from profile:', profile.nickname);
+        return profile.nickname;
+      }
+      
+      // Fallback to username from user object
+      if (user.alias) {
+        console.log('👤 User nickname from alias:', user.alias);
+        return user.alias;
+      }
+      
+      // Last resort - use part of public key
+      const shortKey = user.pub ? user.pub.substring(0, 8) : 'Unknown';
+      console.log('👤 User nickname fallback:', shortKey);
+      return `User-${shortKey}`;
+    } catch (error) {
+      console.error('Error getting user nickname:', error);
+      return 'Anonymous';
+    }
   }
 
   // Generate conversation ID
