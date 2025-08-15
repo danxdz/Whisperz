@@ -94,28 +94,31 @@ function LoginView({ onLogin, inviteCode }) {
         )}
         {showFirstUserSetup && (
           <div className="info-message" style={{ marginBottom: '20px', padding: '15px', background: 'rgba(0, 255, 0, 0.1)', border: '1px solid #00ff00', borderRadius: '4px' }}>
-            <p style={{ margin: '0 0 10px 0' }}>👋 <strong>First time setup?</strong></p>
-            <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>To create your first admin account:</p>
-            <ol style={{ margin: '5px 0', paddingLeft: '20px', fontSize: '14px' }}>
-              <li>Open Developer Console (F12)</li>
-              <li>Run: <code style={{ background: '#000', padding: '2px 5px' }}>window.location.hash = '#register'</code></li>
-              <li>Create your admin account</li>
-            </ol>
-            <button 
-              onClick={() => setAuthMode('register')}
-              style={{ 
-                marginTop: '10px', 
-                padding: '8px 15px', 
-                background: '#00ff00', 
-                color: '#000', 
-                border: 'none', 
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              🚀 Setup First Account
-            </button>
+            <p style={{ margin: '0 0 10px 0' }}>👋 <strong>Welcome to Whisperz!</strong></p>
+            <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>First time? Create your admin account:</p>
+            
+            {/* Mobile-friendly setup */}
+            <div style={{ textAlign: 'center', margin: '15px 0' }}>
+              <a 
+                href="?setup=admin"
+                style={{ 
+                  display: 'inline-block',
+                  padding: '12px 24px', 
+                  background: '#00ff00', 
+                  color: '#000', 
+                  textDecoration: 'none',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  fontSize: '16px'
+                }}
+              >
+                📱 Create First Account (Mobile Friendly)
+              </a>
+            </div>
+            
+            <p style={{ margin: '10px 0 0 0', fontSize: '12px', opacity: '0.8', textAlign: 'center' }}>
+              Or manually go to: {window.location.origin}?setup=admin
+            </p>
           </div>
         )}
         <form onSubmit={handleSubmit}>
@@ -719,19 +722,35 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        // Check for invite in URL FIRST
-        const hash = window.location.hash;
-        const path = window.location.pathname;
+        // Check for invite code in URL (both hash and pathname)
+        const hashPath = window.location.hash.slice(1);
+        const pathParts = window.location.pathname.split('/');
         
-        // Check both hash and pathname for invite
         let code = null;
-        if (hash.includes('/invite/')) {
-          code = hash.split('/invite/')[1];
-        } else if (path.includes('/invite/')) {
-          code = path.split('/invite/')[1];
+        
+        // Check for invite in pathname format: /invite/CODE
+        if (pathParts[1] === 'invite' && pathParts[2]) {
+          code = pathParts[2];
+        }
+        // Check for old hash format: #/invite/CODE
+        else if (hashPath.startsWith('/invite/')) {
+          code = hashPath.replace('/invite/', '');
+        }
+        // Check for hash invite format: #invite/CODE
+        else if (hashPath.startsWith('invite/')) {
+          code = hashPath.replace('invite/', '');
         }
         
-        if (code) {
+        // Check for admin setup parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const setupMode = urlParams.get('setup');
+        
+        // Enable registration for first user with ?setup=admin
+        if (setupMode === 'admin' || setupMode === 'first') {
+          setAuthMode('register');
+          // Clear the setup parameter from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (code) {
           setInviteCode(code);
           // If there's an invite, show register page
           setAuthMode('register');
