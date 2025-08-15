@@ -228,7 +228,7 @@ class FriendsService {
     });
   }
   
-  // Add friend
+  // Add friend - Fixed to use public space for friend connections
   async addFriend(publicKey, nickname) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -245,38 +245,47 @@ class FriendsService {
 
     console.log('💾 Storing friend data:', friendData);
 
-    // Store friend relationship for current user
-    gunAuthService.user.get('friends').get(publicKey).put(friendData, (ack) => {
-      console.log('📝 Friend stored for current user:', ack);
+    // Store friend relationship for current user (this works - own space)
+    await new Promise((resolve) => {
+      gunAuthService.user.get('friends').get(publicKey).put(friendData, (ack) => {
+        console.log('📝 Friend stored for current user:', ack);
+        if (ack.err) {
+          console.error('Error storing friend:', ack.err);
+        }
+        resolve();
+      });
     });
 
     // Store in local map
     this.friends.set(publicKey, friendData);
 
-    // Create reverse relationship for the friend
-    // This ensures both users see each other as friends
+    // Create friend request in PUBLIC space (not user's private space)
+    // This is readable by the other user when they check for friend requests
     const myData = {
-      publicKey: user.pub,
-      nickname: await this.getUserNickname(),
+      fromPublicKey: user.pub,
+      toPublicKey: publicKey,
+      fromNickname: await this.getUserNickname(),
+      toNickname: nickname,
       addedAt: Date.now(),
-      conversationId: friendData.conversationId // Same conversation ID
+      conversationId: friendData.conversationId,
+      status: 'connected'
     };
 
-    console.log('💾 Storing reverse friend data:', myData);
+    console.log('💾 Storing friend connection in public space:', myData);
 
-    // Store reverse relationship directly in friend's friends list
-    gunAuthService.gun.user(publicKey)
-      .get('friends')
-      .get(user.pub)
-      .put(myData, (ack) => {
-        console.log('📝 Reverse friend stored:', ack);
+    // Use a public "friendships" space that both users can read
+    // Create a deterministic key for the friendship
+    const friendshipKey = this.generateConversationId(user.pub, publicKey);
+    
+    await new Promise((resolve) => {
+      gunAuthService.gun.get('friendships').get(friendshipKey).put(myData, (ack) => {
+        console.log('📝 Friendship stored in public space:', ack);
+        if (ack.err) {
+          console.error('Error storing friendship:', ack.err);
+        }
+        resolve();
       });
-
-    // Also store in friend_requests for backward compatibility
-    gunAuthService.gun.user(publicKey)
-      .get('friend_requests')
-      .get(user.pub)
-      .put(myData);
+    });
 
     this.notifyFriendListeners('added', friendData);
     return friendData;
@@ -302,7 +311,7 @@ class FriendsService {
     this.notifyFriendListeners('removed', { publicKey });
   }
 
-  // Get all friends
+  // Get all friends - Fixed to check public friendships
   async getFriends() {
     if (!gunAuthService.isAuthenticated()) {
       console.log('❌ Not authenticated, cannot load friends');
@@ -316,8 +325,8 @@ class FriendsService {
       const friends = new Map();
       let loadingComplete = false;
       
-      // Load existing friends
-      console.log('📂 Loading friends from Gun.js...');
+      // Load existing friends from user's own space
+      console.log('📂 Loading friends from user space...');
       gunAuthService.user.get('friends').map().once((data, key) => {
         console.log('📝 Friend data found:', key, data);
         if (data && data.publicKey) {
@@ -327,34 +336,40 @@ class FriendsService {
         }
       });
 
-      // Also check for incoming friend requests and auto-accept them
-      const user = gunAuthService.getCurrentUser();
-      if (user) {
-        console.log('📂 Checking friend requests...');
-        gunAuthService.user.get('friend_requests').map().once((data, key) => {
-          console.log('📨 Friend request found:', key, data);
-          if (data && data.publicKey && !friends.has(data.publicKey)) {
-            // Auto-accept friend requests by adding them as friends
-            const friendData = {
-              publicKey: data.publicKey,
-              nickname: data.nickname,
-              addedAt: data.addedAt || Date.now(),
-              conversationId: data.conversationId || this.generateConversationId(user.pub, data.publicKey)
-            };
+      // Also check public friendships space for connections
+      console.log('📂 Checking public friendships...');
+      gunAuthService.gun.get('friendships').map().once((data, key) => {
+        if (data) {
+          console.log('🔗 Friendship found:', key, data);
+          
+          // Check if this friendship involves the current user
+          if (data.fromPublicKey === currentUser.pub || data.toPublicKey === currentUser.pub) {
+            // Determine which user is the friend
+            const isSender = data.fromPublicKey === currentUser.pub;
+            const friendKey = isSender ? data.toPublicKey : data.fromPublicKey;
+            const friendNickname = isSender ? data.toNickname : data.fromNickname;
             
-            console.log('✅ Auto-accepting friend request:', friendData);
-            
-            // Store as friend
-            gunAuthService.user.get('friends').get(data.publicKey).put(friendData);
-            friends.set(data.publicKey, friendData);
-            this.friends.set(data.publicKey, friendData);
-            this.notifyFriendListeners('added', friendData);
-            
-            // Clear the friend request
-            gunAuthService.user.get('friend_requests').get(data.publicKey).put(null);
+            // Add friend if not already in list
+            if (!friends.has(friendKey)) {
+              const friendData = {
+                publicKey: friendKey,
+                nickname: friendNickname,
+                addedAt: data.addedAt,
+                conversationId: data.conversationId
+              };
+              
+              console.log('➕ Adding friend from public space:', friendData);
+              friends.set(friendKey, friendData);
+              this.friends.set(friendKey, friendData);
+              
+              // Also store in user's local friends list for faster access
+              gunAuthService.user.get('friends').get(friendKey).put(friendData);
+              
+              this.notifyFriendListeners('added', friendData);
+            }
           }
-        });
-      }
+        }
+      });
 
       // Give Gun time to load data
       setTimeout(() => {
@@ -364,7 +379,7 @@ class FriendsService {
           console.log('✅ Friends loaded:', friendArray.length, 'friends');
           resolve(friendArray);
         }
-      }, 1000);
+      }, 2000); // Increased timeout for public space loading
     });
   }
 
