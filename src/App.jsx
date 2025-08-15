@@ -155,23 +155,13 @@ function LoginView({ onLogin, inviteCode }) {
 }
 
 // Register View Component
-const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode }) => {
+const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [inviteData, setInviteData] = useState(null);
-  const [isAdminSetup, setIsAdminSetup] = useState(false);
-
-  // Check if this is admin setup
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const setupMode = urlParams.get('setup');
-    if (setupMode === 'admin' || setupMode === 'first') {
-      setIsAdminSetup(true);
-    }
-  }, []);
 
   // Parse invite data
   useEffect(() => {
@@ -733,6 +723,7 @@ function App() {
   const [authMode, setAuthMode] = useState('login');
   const [inviteCode, setInviteCode] = useState(null);
   const [initError, setInitError] = useState(null);
+  const [isAdminSetup, setIsAdminSetup] = useState(false);
 
   // Initialize services and check for invite
   useEffect(() => {
@@ -764,6 +755,7 @@ function App() {
         // Enable registration for first user with ?setup=admin
         if (setupMode === 'admin' || setupMode === 'first') {
           setAuthMode('register');
+          setIsAdminSetup(true);
           // Clear the setup parameter from URL
           window.history.replaceState({}, document.title, window.location.pathname);
         } else if (code) {
@@ -879,12 +871,17 @@ function App() {
     return authMode === 'register' ? (
       <RegisterView
         onRegister={handleAuth}
-        onSwitchToLogin={() => setAuthMode('login')}
+        onSwitchToLogin={() => {
+          setAuthMode('login');
+          setIsAdminSetup(false);
+        }}
         inviteCode={inviteCode}
+        isAdminSetup={isAdminSetup}
       />
     ) : (
       <LoginView
         onLogin={handleAuth}
+        onSwitchToRegister={() => setAuthMode('register')}
         inviteCode={inviteCode}
       />
     );
