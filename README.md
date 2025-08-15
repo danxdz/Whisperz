@@ -1,12 +1,35 @@
-# 🚀 Decentralized P2P Chat Application
+# 🚀 Whisperz - Decentralized P2P Chat Application
 
-A modern, secure, and fully decentralized peer-to-peer chat application built with React, WebRTC, and Gun.js. Features end-to-end encryption, offline message delivery, and a beautiful Unix-inspired dark theme.
+<div align="center">
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Node Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)](https://nodejs.org)
+  [![React Version](https://img.shields.io/badge/react-18.3.1-61dafb)](https://reactjs.org/)
+  [![Gun.js](https://img.shields.io/badge/gun.js-0.2020.1239-orange)](https://gun.eco/)
+  [![PeerJS](https://img.shields.io/badge/peerjs-1.5.4-red)](https://peerjs.com/)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+  [![Code Style](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+  
+  <h3>A modern, secure, and fully decentralized peer-to-peer chat application</h3>
+  <p>Built with React, WebRTC, and Gun.js | Features end-to-end encryption, offline message delivery, and a beautiful Unix-inspired dark theme</p>
+  
+  [Demo](https://whisperz.vercel.app) • [Documentation](#-documentation) • [Report Bug](https://github.com/danxdz/Whisperz/issues) • [Request Feature](https://github.com/danxdz/Whisperz/issues)
+  
+</div>
 
-![License](https://img.shields.io/badge/license-MIT-green)
-![Node](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)
-![React](https://img.shields.io/badge/react-18.3.1-blue)
-![Gun.js](https://img.shields.io/badge/gun.js-0.2020.1239-orange)
-![PeerJS](https://img.shields.io/badge/peerjs-1.5.4-red)
+---
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Usage Guide](#-usage-guide)
+- [Architecture](#-architecture)
+- [Deployment](#-deployment)
+- [Configuration](#-configuration)
+- [Security](#-security)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## ✨ Features
 
@@ -36,8 +59,8 @@ A modern, secure, and fully decentralized peer-to-peer chat application built wi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/p2p-chat-app.git
-cd p2p-chat-app
+git clone https://github.com/danxdz/Whisperz.git
+cd Whisperz
 ```
 
 2. Install dependencies:
@@ -231,11 +254,15 @@ npm run lint
 
 ## 🤝 Contributing
 
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Commit changes: `git commit -m 'Add amazing feature'`
 4. Push to branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
@@ -251,7 +278,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For issues and questions:
-- Open an issue on GitHub
+- [Open an issue](https://github.com/danxdz/Whisperz/issues/new)
 - Check the built-in developer tools
 - Review the console logs for errors
 
@@ -270,4 +297,8 @@ For issues and questions:
 
 ---
 
-**Built with ❤️ for the decentralized web**
+<div align="center">
+  <strong>Built with ❤️ for the decentralized web</strong>
+  <br>
+  <sub>© 2024 Whisperz Team. All rights reserved.</sub>
+</div>
