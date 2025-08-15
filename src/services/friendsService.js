@@ -22,7 +22,13 @@ class FriendsService {
     };
 
     const inviteString = JSON.stringify(inviteData);
-    const secret = import.meta.env.VITE_INVITE_SECRET || 'default-invite-secret';
+    const secret = import.meta.env.VITE_INVITE_SECRET;
+    
+    // Security check - no default secrets allowed
+    if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
+      throw new Error('Security configuration error: Invalid invite secret');
+    }
+    
     const hmac = encryptionService.generateHMAC(inviteString, secret);
 
     const invitePayload = {
@@ -52,7 +58,13 @@ class FriendsService {
       const inviteData = JSON.parse(encryptionService.base64UrlDecode(invitePayload.data));
       
       // Verify HMAC
-      const secret = import.meta.env.VITE_INVITE_SECRET || 'default-invite-secret';
+      const secret = import.meta.env.VITE_INVITE_SECRET;
+      
+      // Security check - no default secrets allowed
+      if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
+        throw new Error('Security configuration error: Invalid invite secret');
+      }
+      
       if (!encryptionService.verifyHMAC(JSON.stringify(inviteData), invitePayload.hmac, secret)) {
         throw new Error('Invalid invite signature');
       }
