@@ -168,9 +168,21 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
     if (inviteCode) {
       try {
         // Use standard base64 decode with URL-safe replacements
-        const payload = JSON.parse(atob(inviteCode.replace(/-/g, '+').replace(/_/g, '/')));
-        const data = JSON.parse(atob(payload.data.replace(/-/g, '+').replace(/_/g, '/')));
-        setInviteData(data);
+        const invitePayload = JSON.parse(atob(inviteCode.replace(/-/g, '+').replace(/_/g, '/')));
+        
+        // New format just has inviteId and senderKey
+        // We'll show basic info and the actual friend data will be loaded when accepting
+        if (invitePayload.inviteId && invitePayload.senderKey) {
+          setInviteData({
+            inviteId: invitePayload.inviteId,
+            senderKey: invitePayload.senderKey,
+            // We can't show nickname until we fetch from Gun.js
+            nickname: 'Friend' 
+          });
+        } else {
+          // Try old format for backward compatibility
+          setInviteData(invitePayload);
+        }
       } catch (err) {
         console.error('Failed to parse invite:', err);
         setError('Invalid invite link');
@@ -384,11 +396,12 @@ function DevTools({ isVisible, onClose }) {
   );
 }
 
-// Connection Status Component
+// Connection Status Component (improved positioning)
 const ConnectionStatus = () => {
   const [gunStatus, setGunStatus] = useState('connecting');
   const [peerStatus, setPeerStatus] = useState('connecting');
   const [relayStatus, setRelayStatus] = useState('checking...');
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   useEffect(() => {
     // Monitor Gun.js connection
@@ -451,20 +464,58 @@ const ConnectionStatus = () => {
     }
   };
   
+  if (isCollapsed) {
+    return (
+      <div style={{
+        position: 'fixed',
+        bottom: '10px',
+        left: '10px',
+        background: 'rgba(0, 0, 0, 0.9)',
+        border: '1px solid #00ff00',
+        borderRadius: '4px',
+        padding: '5px 10px',
+        fontSize: '12px',
+        zIndex: 999,
+        cursor: 'pointer'
+      }} onClick={() => setIsCollapsed(false)}>
+        <span>📡 Status</span>
+      </div>
+    );
+  }
+  
   return (
     <div style={{
       position: 'fixed',
-      top: '10px',
-      right: '10px',
-      background: 'rgba(0, 0, 0, 0.8)',
+      bottom: '10px',
+      left: '10px',
+      background: 'rgba(0, 0, 0, 0.9)',
       border: '1px solid #00ff00',
       borderRadius: '4px',
       padding: '10px',
       fontSize: '12px',
-      zIndex: 1000,
+      zIndex: 999,
       minWidth: '200px'
     }}>
-      <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Connection Status</div>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '5px'
+      }}>
+        <span style={{ fontWeight: 'bold' }}>Connection Status</span>
+        <button 
+          onClick={() => setIsCollapsed(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#00ff00',
+            cursor: 'pointer',
+            fontSize: '16px',
+            padding: '0',
+            marginLeft: '10px'
+          }}
+        >−</button>
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '3px' }}>
         <span style={{
           width: '8px',
@@ -497,7 +548,7 @@ const ConnectionStatus = () => {
 };
 
 // Main Chat Component (unchanged)
-function ChatView({ user, onLogout }) {
+function ChatView({ user, onLogout, onInviteAccepted }) {
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -509,42 +560,6 @@ function ChatView({ user, onLogout }) {
   const [onlineStatus, setOnlineStatus] = useState(new Map());
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-
-  // Initialize and load friends
-  useEffect(() => {
-    loadFriends();
-
-    // Update own presence
-    const peerId = webrtcService.getPeerId();
-    hybridGunService.updatePresence('online', { peerId });
-
-    // Handle page visibility
-    const handleVisibility = () => {
-      if (document.hidden) {
-        hybridGunService.updatePresence('away');
-      } else {
-        hybridGunService.updatePresence('online', { peerId: webrtcService.getPeerId() });
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    // Handle beforeunload
-    const handleUnload = () => {
-      hybridGunService.updatePresence('offline');
-    };
-    window.addEventListener('beforeunload', handleUnload);
-
-    // Refresh friends list periodically to catch any missed updates
-    const refreshInterval = setInterval(() => {
-      loadFriends();
-    }, 10000); // Refresh every 10 seconds
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('beforeunload', handleUnload);
-      clearInterval(refreshInterval);
-    };
-  }, []);
 
   // Load friends function (moved outside useEffect so it can be called manually)
   const loadFriends = async () => {
@@ -586,6 +601,49 @@ function ChatView({ user, onLogout }) {
       console.error('❌ Failed to load friends:', error);
     }
   };
+
+  // Pass loadFriends to parent through callback
+  useEffect(() => {
+    if (onInviteAccepted) {
+      onInviteAccepted(loadFriends);
+    }
+  }, [onInviteAccepted]);
+
+  // Initialize and load friends
+  useEffect(() => {
+    loadFriends();
+
+    // Update own presence
+    const peerId = webrtcService.getPeerId();
+    hybridGunService.updatePresence('online', { peerId });
+
+    // Handle page visibility
+    const handleVisibility = () => {
+      if (document.hidden) {
+        hybridGunService.updatePresence('away');
+      } else {
+        hybridGunService.updatePresence('online', { peerId: webrtcService.getPeerId() });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Handle beforeunload
+    const handleUnload = () => {
+      hybridGunService.updatePresence('offline');
+    };
+    window.addEventListener('beforeunload', handleUnload);
+
+    // Refresh friends list periodically to catch any missed updates
+    const refreshInterval = setInterval(() => {
+      loadFriends();
+    }, 10000); // Refresh every 10 seconds
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('beforeunload', handleUnload);
+      clearInterval(refreshInterval);
+    };
+  }, []);
 
   // Load messages for selected friend
   useEffect(() => {
@@ -859,6 +917,12 @@ function App() {
   const [inviteCode, setInviteCode] = useState(null);
   const [initError, setInitError] = useState(null);
   const [isAdminSetup, setIsAdminSetup] = useState(false);
+  const loadFriendsRef = useRef(null);
+
+  // Callback to receive loadFriends function from ChatView
+  const handleInviteAccepted = (loadFriendsFunc) => {
+    loadFriendsRef.current = loadFriendsFunc;
+  };
 
   // Initialize services and check for invite
   useEffect(() => {
@@ -943,30 +1007,45 @@ function App() {
 
   // Handle login/register
   const handleAuth = async (authUser) => {
+    console.log('🔐 Authentication successful:', authUser);
     setUser(authUser);
     
     // Initialize WebRTC
     try {
       await webrtcService.initialize(authUser.pub);
+      console.log('✅ WebRTC initialized');
     } catch (error) {
       console.error('Failed to initialize WebRTC:', error);
     }
 
     // Initialize message service
     messageService.initialize();
+    console.log('✅ Message service initialized');
 
     // Handle invite if present
     if (inviteCode) {
-      try {
-        await friendsService.acceptInvite(inviteCode);
-        alert('Friend added successfully!');
-      } catch (error) {
-        console.error('Failed to accept invite:', error);
-        alert('Failed to accept invite: ' + error.message);
-      }
-      setInviteCode(null);
-      // Clear the invite from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+      console.log('🎫 Processing invite after auth...');
+      console.log('📦 Invite code:', inviteCode);
+      
+      // Small delay to ensure services are ready
+      setTimeout(async () => {
+        try {
+          const result = await friendsService.acceptInvite(inviteCode);
+          console.log('✅ Invite acceptance result:', result);
+          alert('Friend added successfully!');
+          
+          // Refresh friends list
+          if (typeof loadFriendsRef.current === 'function') {
+            loadFriendsRef.current();
+          }
+        } catch (error) {
+          console.error('❌ Failed to accept invite:', error);
+          alert('Failed to accept invite: ' + error.message);
+        }
+        setInviteCode(null);
+        // Clear the invite from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 2000); // 2 second delay to ensure Gun.js is ready
     }
   };
 
@@ -1025,7 +1104,7 @@ function App() {
   return (
     <div>
       <ConnectionStatus />
-      <ChatView user={user} onLogout={handleLogout} />
+      <ChatView user={user} onLogout={handleLogout} onInviteAccepted={handleInviteAccepted} />
     </div>
   );
 }
