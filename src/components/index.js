@@ -9,6 +9,7 @@ export { default as DevToolsPanel } from './DevToolsPanel';
 export { default as DevToolsButton } from './DevToolsButton';
 export { default as DevToolsWrapper } from './DevToolsWrapper';
 export { default as MobileDevTools } from './MobileDevTools';
+export { default as MobileDevToolsCompact } from './MobileDevToolsCompact';
 export { default as ConnectionStatus } from './ConnectionStatus';
 export { default as WebRTCStatus } from './WebRTCStatus';
 export { default as ErrorBoundary } from './ErrorBoundary';

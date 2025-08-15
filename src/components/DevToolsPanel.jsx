@@ -724,6 +724,67 @@ function DevToolsPanel({ isVisible, onClose }) {
             padding: 8px 12px;
           }
         }
+
+        /* Ultra-compact for 4-inch screens */
+        @media (max-width: 375px) {
+          .devtools-panel {
+            height: 70vh;
+            font-size: 10px;
+          }
+
+          .devtools-header {
+            padding: 5px;
+          }
+
+          .devtools-header h3 {
+            font-size: 12px;
+          }
+
+          .tab {
+            font-size: 9px;
+            padding: 6px 8px;
+          }
+
+          .devtools-content {
+            padding: 5px;
+          }
+
+          .console-controls button,
+          .console-controls select {
+            padding: 3px 6px;
+            font-size: 9px;
+          }
+
+          .network-status-grid,
+          .perf-grid,
+          .actions-grid {
+            grid-template-columns: 1fr;
+            gap: 5px;
+          }
+
+          .actions-grid button {
+            padding: 10px;
+            font-size: 10px;
+          }
+
+          h4 {
+            font-size: 11px;
+            margin: 5px 0;
+          }
+
+          h5 {
+            font-size: 10px;
+            margin: 5px 0;
+          }
+
+          .storage-item summary {
+            font-size: 9px;
+          }
+
+          .env-item {
+            font-size: 9px;
+          }
+        }
       `}</style>
     </div>
   );

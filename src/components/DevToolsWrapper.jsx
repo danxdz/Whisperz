@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import DevToolsPanel from './DevToolsPanel';
 import DevToolsButton from './DevToolsButton';
 import MobileDevTools from './MobileDevTools';
+import MobileDevToolsCompact from './MobileDevToolsCompact';
 import { APP_CONFIG } from '../config/app.config';
 
 /**
@@ -13,6 +14,7 @@ function DevToolsWrapper() {
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isCompactScreen, setIsCompactScreen] = useState(false);
 
   useEffect(() => {
     // Check if dev tools should be enabled
@@ -24,17 +26,19 @@ function DevToolsWrapper() {
     
     setIsEnabled(shouldEnable);
     
-    // Check if mobile device
-    const checkMobile = () => {
+    // Check if mobile device and screen size
+    const checkDevice = () => {
       const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                      window.innerWidth < 768;
+      const compact = window.innerWidth <= 375; // 4-inch screens and smaller
       setIsMobile(mobile);
+      setIsCompactScreen(compact);
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
     
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkDevice);
 
     // Secret key combination to enable dev tools in production
     const secretKeys = [];
@@ -68,9 +72,13 @@ function DevToolsWrapper() {
 
   return (
     <>
-      {/* Show mobile-optimized tools on mobile devices */}
+      {/* Show appropriate dev tools based on screen size */}
       {isMobile ? (
-        <MobileDevTools onOpenDevTools={toggleDevTools} />
+        isCompactScreen ? (
+          <MobileDevToolsCompact onOpenDevTools={toggleDevTools} />
+        ) : (
+          <MobileDevTools onOpenDevTools={toggleDevTools} />
+        )
       ) : (
         <DevToolsButton 
           onClick={toggleDevTools}
