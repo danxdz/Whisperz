@@ -251,6 +251,63 @@ class MessageService {
   markAsRead(conversationId) {
     localStorage.setItem(`lastRead_${conversationId}`, Date.now());
   }
+
+  // Store offline message with queue limits
+  async storeOfflineMessage(recipientPub, message) {
+    try {
+      const MAX_OFFLINE_MESSAGES = 100; // Limit per recipient
+      const MAX_MESSAGE_SIZE = 10000; // 10KB max per message
+      
+      // Check message size
+      const messageSize = JSON.stringify(message).length;
+      if (messageSize > MAX_MESSAGE_SIZE) {
+        console.warn('Message too large for offline storage:', messageSize);
+        throw new Error('Message exceeds maximum size limit');
+      }
+      
+      // Get existing offline messages for this recipient
+      const offlineRef = hybridGunService.gun
+        .get('offline_messages')
+        .get(recipientPub);
+      
+      // Count existing messages
+      let messageCount = 0;
+      await new Promise((resolve) => {
+        offlineRef.map().once(() => {
+          messageCount++;
+        });
+        setTimeout(resolve, 500);
+      });
+      
+      // Check queue limit
+      if (messageCount >= MAX_OFFLINE_MESSAGES) {
+        console.warn(`Offline message queue full for ${recipientPub} (${messageCount} messages)`);
+        // Remove oldest messages if queue is full
+        const messages = [];
+        offlineRef.map().once((data, key) => {
+          if (data) messages.push({ key, timestamp: data.timestamp });
+        });
+        
+        // Sort by timestamp and remove oldest
+        setTimeout(() => {
+          messages.sort((a, b) => a.timestamp - b.timestamp);
+          const toRemove = messages.slice(0, 10); // Remove 10 oldest
+          toRemove.forEach(msg => {
+            offlineRef.get(msg.key).put(null);
+          });
+        }, 500);
+      }
+      
+      // Store the message
+      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      offlineRef.get(messageId).put(message);
+      
+      console.log(`📥 Stored offline message for ${recipientPub} (queue: ${messageCount + 1}/${MAX_OFFLINE_MESSAGES})`);
+    } catch (error) {
+      console.error('Failed to store offline message:', error);
+      throw error;
+    }
+  }
 }
 
 export default new MessageService();

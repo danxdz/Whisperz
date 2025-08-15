@@ -384,6 +384,101 @@ function DevTools({ isVisible, onClose }) {
   );
 }
 
+// Connection Status Component
+const ConnectionStatus = () => {
+  const [gunStatus, setGunStatus] = useState('connecting');
+  const [peerStatus, setPeerStatus] = useState('connecting');
+  const [relayStatus, setRelayStatus] = useState('unknown');
+  
+  useEffect(() => {
+    // Monitor Gun.js connection
+    const checkGunConnection = () => {
+      const gun = gunAuthService.gun;
+      if (gun && gun._.opt.peers) {
+        const peers = Object.keys(gun._.opt.peers);
+        setGunStatus(peers.length > 0 ? 'connected' : 'disconnected');
+        setRelayStatus(`${peers.length} relay${peers.length !== 1 ? 's' : ''}`);
+      } else {
+        setGunStatus('disconnected');
+      }
+    };
+    
+    // Monitor PeerJS connection
+    const checkPeerConnection = () => {
+      const peer = webrtcService.peer;
+      if (peer) {
+        if (peer.disconnected) {
+          setPeerStatus('disconnected');
+        } else if (peer.destroyed) {
+          setPeerStatus('destroyed');
+        } else {
+          setPeerStatus('connected');
+        }
+      } else {
+        setPeerStatus('initializing');
+      }
+    };
+    
+    // Check connections periodically
+    checkGunConnection();
+    checkPeerConnection();
+    const interval = setInterval(() => {
+      checkGunConnection();
+      checkPeerConnection();
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'connected': return '#00ff00';
+      case 'connecting': case 'initializing': return '#ffff00';
+      case 'disconnected': case 'destroyed': return '#ff0000';
+      default: return '#808080';
+    }
+  };
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '10px',
+      right: '10px',
+      background: 'rgba(0, 0, 0, 0.8)',
+      border: '1px solid #00ff00',
+      borderRadius: '4px',
+      padding: '10px',
+      fontSize: '12px',
+      zIndex: 1000,
+      minWidth: '200px'
+    }}>
+      <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Connection Status</div>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '3px' }}>
+        <span style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: getStatusColor(gunStatus),
+          marginRight: '8px',
+          display: 'inline-block'
+        }}></span>
+        <span>Gun.js: {gunStatus} ({relayStatus})</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <span style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: getStatusColor(peerStatus),
+          marginRight: '8px',
+          display: 'inline-block'
+        }}></span>
+        <span>WebRTC: {peerStatus}</span>
+      </div>
+    </div>
+  );
+};
+
 // Main Chat Component (unchanged)
 function ChatView({ user, onLogout }) {
   const [friends, setFriends] = useState([]);
@@ -910,7 +1005,12 @@ function App() {
     );
   }
 
-  return <ChatView user={user} onLogout={handleLogout} />;
+  return (
+    <div>
+      <ConnectionStatus />
+      <ChatView user={user} onLogout={handleLogout} />
+    </div>
+  );
 }
 
 export default App;

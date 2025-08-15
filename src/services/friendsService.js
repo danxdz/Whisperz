@@ -9,7 +9,7 @@ class FriendsService {
     this.friendListeners = new Set();
   }
 
-  // Generate invite link
+  // Generate invite link using public key cryptography (no shared secrets)
   async generateInviteLink() {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -21,25 +21,13 @@ class FriendsService {
       nonce: encryptionService.generateRandomString(16)
     };
 
-    const inviteString = JSON.stringify(inviteData);
-    let secret = import.meta.env.VITE_INVITE_SECRET;
+    // Sign the invite data with user's private key (Gun.SEA)
+    // This proves the invite came from this user without needing shared secrets
+    const signedInvite = await Gun.SEA.sign(inviteData, user);
     
-    // Use fallback in production if not configured (with warning)
-    if (!secret) {
-      console.error('SECURITY WARNING: Using fallback secret. Configure VITE_INVITE_SECRET in Vercel!');
-      secret = 'TEMPORARY_FALLBACK_SECRET_PLEASE_CONFIGURE_IN_VERCEL_c6626f78f6e53ac812cd8d11';
-    }
-    
-    // Security check - warn about default secrets
-    if (secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
-      console.error('Security warning: Default secret detected');
-    }
-    
-    const hmac = encryptionService.generateHMAC(inviteString, secret);
-
     const invitePayload = {
-      data: encryptionService.base64UrlEncode(inviteString),
-      hmac: hmac
+      data: inviteData,
+      signature: signedInvite
     };
 
     // Store invite for single use
@@ -54,35 +42,25 @@ class FriendsService {
     const inviteCode = encryptionService.base64UrlEncode(JSON.stringify(invitePayload));
     const inviteLink = `${baseUrl}/invite/${inviteCode}`;
 
+    console.log('📨 Invite link generated (using public key crypto)');
     return inviteLink;
   }
 
-  // Accept invite link
+  // Accept invite link using public key verification (no shared secrets)
   async acceptInvite(inviteCode) {
     try {
       console.log('🎫 Accepting invite with code:', inviteCode);
       
       const invitePayload = JSON.parse(encryptionService.base64UrlDecode(inviteCode));
-      const inviteData = JSON.parse(encryptionService.base64UrlDecode(invitePayload.data));
+      const inviteData = invitePayload.data;
       
       console.log('📦 Invite data:', inviteData);
       
-      // Verify HMAC
-      let secret = import.meta.env.VITE_INVITE_SECRET;
+      // Verify signature using sender's public key (no shared secret needed)
+      const isValid = await Gun.SEA.verify(invitePayload.signature, inviteData.publicKey);
       
-      // Use fallback in production if not configured (with warning)
-      if (!secret) {
-        console.error('SECURITY WARNING: Using fallback secret. Configure VITE_INVITE_SECRET in Vercel!');
-        secret = 'TEMPORARY_FALLBACK_SECRET_PLEASE_CONFIGURE_IN_VERCEL_c6626f78f6e53ac812cd8d11';
-      }
-      
-      // Security check - warn about default secrets
-      if (secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
-        console.error('Security warning: Default secret detected');
-      }
-      
-      if (!encryptionService.verifyHMAC(JSON.stringify(inviteData), invitePayload.hmac, secret)) {
-        throw new Error('Invalid invite signature');
+      if (!isValid) {
+        throw new Error('Invalid invite signature - could not verify sender');
       }
 
       // Check if invite is still valid (24 hours)

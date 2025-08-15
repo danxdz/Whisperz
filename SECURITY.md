@@ -1,169 +1,116 @@
-# Security Policy for Whisperz
+# Security Policy
 
 ## 🔒 Security Features
 
 ### Encryption
-- **AES-CBC + HMAC-SHA256** for authenticated encryption
-- **100,000 PBKDF2 iterations** for key derivation
-- **Gun.SEA** for user authentication
-- **End-to-end encryption** for all messages
+- **End-to-End Encryption**: All messages encrypted with AES-256-CBC + HMAC-SHA256
+- **Key Derivation**: PBKDF2 with 100,000 iterations
+- **Public Key Cryptography**: Invite links now use Gun.SEA signatures (no shared secrets in client)
+- **Message Authentication**: HMAC verification for all encrypted messages
 
-### Authentication & Authorization
-- **HMAC-signed invite links** with expiration
-- **Single-use invites** to prevent reuse
-- **Rate limiting** on login attempts (5 per minute)
-- **Session timeout** after 30 minutes of inactivity
+### Authentication
+- **Gun.SEA**: Cryptographic user authentication
+- **Public Key Verification**: Invites verified using sender's public key
+- **Rate Limiting**: Login attempts limited to prevent brute force
+- **Session Management**: Automatic timeout and secure logout
 
-### Input Validation & XSS Protection
-- **HTML escaping** for all user-generated content
-- **Input sanitization** and length limits
-- **Content Security Policy** headers
-- **Secure error handling** without information leakage
+### Data Protection
+- **No Central Server**: Fully decentralized architecture
+- **Offline Message Limits**: Max 100 messages per recipient, 10KB per message
+- **Input Validation**: XSS protection via HTML escaping
+- **Content Security Policy**: Restrictive CSP headers
 
-## 🚨 Security Configuration
+## ⚠️ Known Limitations
 
-### Required Environment Variables
+### WebRTC
+- **IP Address Exposure**: WebRTC may leak real IP addresses
+- **STUN/TURN Dependency**: Relies on third-party signaling servers
+- **Browser Compatibility**: Requires modern browser with WebRTC support
 
-```bash
-# Generate secure secrets (never use defaults!)
-npm run generate-secrets
-```
+### Gun.js
+- **Public Relay Servers**: Default relays are publicly accessible
+- **Data Persistence**: Messages stored on relay servers (encrypted)
+- **No Perfect Forward Secrecy**: Same keys used for all messages in a conversation
 
-### Production Checklist
+## 🛡️ Security Best Practices
 
-- [ ] Generate unique `VITE_INVITE_SECRET` (64+ characters)
-- [ ] Use HTTPS only
-- [ ] Enable CSP headers
-- [ ] Regular security audits with `npm audit`
-- [ ] Keep dependencies updated
-- [ ] Monitor for security alerts
+### For Users
+1. **Strong Passwords**: Use unique, complex passwords
+2. **Verify Invites**: Only accept invites from trusted sources
+3. **Regular Logouts**: Log out when not in use
+4. **Private Networks**: Avoid public WiFi when possible
 
-## 🛡️ Threat Model
-
-### Protected Against
-- ✅ XSS attacks
-- ✅ CSRF attacks
-- ✅ Brute force login attempts
-- ✅ Message tampering
-- ✅ Invite link reuse
-- ✅ Timing attacks
-- ✅ Session hijacking
-
-### Known Limitations
-- ⚠️ Client-side encryption (keys in browser memory)
-- ⚠️ No perfect forward secrecy
-- ⚠️ Relies on Gun.js relay security
-- ⚠️ WebRTC may leak IP addresses
+### For Deployment
+1. **Environment Variables**: Never commit secrets to repository
+2. **HTTPS Only**: Always deploy with SSL/TLS
+3. **Custom Relays**: Consider running your own Gun.js relay servers
+4. **Regular Updates**: Keep dependencies updated (now pinned for stability)
 
 ## 🔍 Security Auditing
 
-### Run Security Checks
-```bash
-# Check for vulnerable dependencies
-npm run security-check
+### Recent Improvements (v2.1.0)
+- ✅ Removed shared secrets from client build
+- ✅ Added connection status indicators
+- ✅ Implemented offline message queue limits
+- ✅ Pinned all dependencies to exact versions
+- ✅ Added comprehensive error handling
 
-# Update dependencies
-npm update
-
-# Audit and fix
-npm audit fix
-```
-
-### Manual Security Review
-1. Check for hardcoded secrets: `grep -r "secret\|password\|key" src/`
-2. Review CSP violations in browser console
-3. Test rate limiting by attempting multiple logins
-4. Verify HTTPS is enforced in production
-
-## 🚫 Security Anti-Patterns to Avoid
-
-### Never Do This
-```javascript
-// ❌ NEVER use default secrets
-const secret = process.env.SECRET || 'default-secret';
-
-// ❌ NEVER store sensitive data in localStorage
-localStorage.setItem('password', userPassword);
-
-// ❌ NEVER use innerHTML with user input
-element.innerHTML = userInput;
-
-// ❌ NEVER log sensitive information
-console.log('User password:', password);
-```
-
-### Always Do This
-```javascript
-// ✅ Require proper secrets
-if (!secret || secret === 'default-secret') {
-  throw new Error('Security configuration required');
-}
-
-// ✅ Use session storage sparingly
-sessionStorage.setItem('tempData', nonSensitiveData);
-
-// ✅ Escape user input
-element.textContent = escapeHtml(userInput);
-
-// ✅ Sanitize logs
-console.log('Login attempt for user:', username);
-```
-
-## 📊 Security Metrics
-
-### Key Security Indicators
-- **PBKDF2 Iterations**: 100,000
-- **Session Timeout**: 30 minutes
-- **Rate Limit**: 5 attempts/minute
-- **Invite Expiry**: 24 hours
-- **Max Message Length**: 1,000 characters
-- **Max Username Length**: 20 characters
+### Pending Improvements
+- [ ] WebRTC/WebCrypto fallback detection
+- [ ] Automated security tests
+- [ ] Light theme for accessibility
+- [ ] Perfect forward secrecy
+- [ ] Custom STUN/TURN servers
 
 ## 🐛 Reporting Security Issues
 
-### Responsible Disclosure
+**DO NOT** create public issues for security vulnerabilities.
 
-If you discover a security vulnerability:
+Instead, please email security concerns to the maintainer with:
+- Description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if any)
 
-1. **DO NOT** create a public issue
-2. **DO NOT** exploit the vulnerability
-3. Email security details to: [security@whisperz.app]
-4. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+## 📊 Security Metrics
 
-### Security Update Process
+- **Encryption Strength**: AES-256 + PBKDF2 (100k iterations)
+- **Max Offline Queue**: 100 messages per recipient
+- **Max Message Size**: 10KB
+- **Session Timeout**: 30 minutes of inactivity
+- **Login Rate Limit**: 5 attempts per 15 minutes
 
-1. Vulnerability reported
-2. Issue confirmed and assessed
-3. Fix developed and tested
-4. Security update released
-5. Users notified to update
+## 🔐 Cryptographic Details
 
-## 📚 Security Resources
+### Message Encryption
+```javascript
+Algorithm: AES-256-CBC
+Key Derivation: PBKDF2-SHA256 (100,000 iterations)
+Authentication: HMAC-SHA256
+IV: Random 16 bytes per message
+```
 
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [Mozilla Web Security](https://infosec.mozilla.org/guidelines/web_security)
-- [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
-- [WebRTC Security](https://webrtc-security.github.io/)
+### Invite System
+```javascript
+Signature: Gun.SEA.sign() with user's private key
+Verification: Gun.SEA.verify() with sender's public key
+Expiration: 24 hours
+Single-use: Enforced via Gun.js storage
+```
 
-## 🔄 Version History
+## 📝 Compliance
 
-| Version | Date | Security Changes |
-|---------|------|-----------------|
-| 2.0.0 | 2024 | Major security overhaul: authenticated encryption, rate limiting, CSP |
-| 1.0.0 | 2024 | Initial release with basic encryption |
+This application is designed for personal use and may not meet regulatory requirements for:
+- HIPAA (healthcare)
+- GDPR (without additional measures)
+- Financial services regulations
 
-## ✅ Compliance
+Users are responsible for ensuring compliance with applicable laws.
 
-This application implements security best practices aligned with:
-- OWASP Application Security Verification Standard (ASVS)
-- Mozilla Web Security Guidelines
-- NIST Cryptographic Standards
+## 🚀 Version History
 
----
+- **v2.1.0** (Current): Major security improvements, removed client secrets
+- **v2.0.0**: Enhanced encryption, invite-only system
+- **v1.0.0**: Initial release with basic encryption
 
-**Last Updated**: 2024
-**Security Contact**: security@whisperz.app
+Last Updated: December 2024
