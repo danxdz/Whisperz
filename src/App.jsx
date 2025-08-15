@@ -6,8 +6,8 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 
-// Login Component
-function LoginView({ onLogin, onSwitchToRegister }) {
+// Login Component - No registration option
+function LoginView({ onLogin, inviteCode }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,12 @@ function LoginView({ onLogin, onSwitchToRegister }) {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>P2P Chat Login</h1>
+        <h1>Whisperz Login</h1>
+        {inviteCode && (
+          <div className="info-message">
+            You have an invite! Login to your account or create a new one to accept it.
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -54,27 +59,47 @@ function LoginView({ onLogin, onSwitchToRegister }) {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <p>
-          Don't have an account?{' '}
-          <a href="#" onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>
-            Register
-          </a>
+        <p className="invite-only-notice">
+          This is an invite-only chat. You need an invite link from an existing member to join.
         </p>
       </div>
     </div>
   );
 }
 
-// Register Component
-function RegisterView({ onRegister, onSwitchToLogin }) {
+// Register Component - Only accessible with invite
+function RegisterView({ onRegister, onSwitchToLogin, inviteCode }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [inviteData, setInviteData] = useState(null);
+
+  useEffect(() => {
+    // Validate invite code
+    if (!inviteCode) {
+      setError('No invite code provided. Registration requires a valid invite.');
+      return;
+    }
+
+    try {
+      // Decode and validate invite
+      const invitePayload = JSON.parse(atob(inviteCode.replace(/-/g, '+').replace(/_/g, '/')));
+      const data = JSON.parse(atob(invitePayload.data.replace(/-/g, '+').replace(/_/g, '/')));
+      setInviteData(data);
+    } catch (err) {
+      setError('Invalid invite link. Please request a new one.');
+    }
+  }, [inviteCode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!inviteCode) {
+      setError('Registration requires a valid invite');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -88,14 +113,31 @@ function RegisterView({ onRegister, onSwitchToLogin }) {
     }
   };
 
+  if (!inviteCode) {
+    return (
+      <div className="auth-container">
+        <div className="auth-box">
+          <h1>Invite Required</h1>
+          <p>Registration requires a valid invite link from an existing member.</p>
+          <button onClick={onSwitchToLogin}>Back to Login</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>Create Account</h1>
+        <h1>Join Whisperz</h1>
+        {inviteData && (
+          <div className="invite-info">
+            <p>You've been invited by <strong>{inviteData.nickname}</strong></p>
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Username"
+            placeholder="Choose a username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -103,7 +145,7 @@ function RegisterView({ onRegister, onSwitchToLogin }) {
           />
           <input
             type="password"
-            placeholder="Password (min 8 chars)"
+            placeholder="Choose a password (min 8 chars)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -112,14 +154,14 @@ function RegisterView({ onRegister, onSwitchToLogin }) {
           />
           <input
             type="text"
-            placeholder="Nickname (optional)"
+            placeholder="Your nickname (optional)"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             disabled={loading}
           />
           {error && <div className="error">{error}</div>}
           <button type="submit" disabled={loading}>
-            {loading ? 'Creating account...' : 'Register'}
+            {loading ? 'Creating account...' : 'Join Whisperz'}
           </button>
         </form>
         <p>
@@ -133,7 +175,7 @@ function RegisterView({ onRegister, onSwitchToLogin }) {
   );
 }
 
-// DevTools Component
+// DevTools Component (unchanged)
 function DevTools({ isVisible, onClose }) {
   const [stats, setStats] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -247,7 +289,7 @@ function DevTools({ isVisible, onClose }) {
   );
 }
 
-// Main Chat Component
+// Main Chat Component (unchanged)
 function ChatView({ user, onLogout }) {
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -562,21 +604,32 @@ function ChatView({ user, onLogout }) {
   );
 }
 
-// Main App Component
+// Main App Component - Fixed invite handling
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState('login');
   const [inviteCode, setInviteCode] = useState(null);
 
-  // Initialize services
+  // Initialize services and check for invite
   useEffect(() => {
     const init = async () => {
-      // Check for invite in URL
+      // Check for invite in URL FIRST
       const hash = window.location.hash;
+      const path = window.location.pathname;
+      
+      // Check both hash and pathname for invite
+      let code = null;
       if (hash.includes('/invite/')) {
-        const code = hash.split('/invite/')[1];
+        code = hash.split('/invite/')[1];
+      } else if (path.includes('/invite/')) {
+        code = path.split('/invite/')[1];
+      }
+      
+      if (code) {
         setInviteCode(code);
+        // If there's an invite, show register page
+        setAuthMode('register');
       }
 
       // Initialize Gun
@@ -597,6 +650,18 @@ function App() {
 
         // Initialize message service
         messageService.initialize();
+
+        // If logged in with invite, process it
+        if (code) {
+          try {
+            await friendsService.acceptInvite(code);
+            alert('Friend added successfully!');
+            // Clear the invite from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (error) {
+            console.error('Failed to accept invite:', error);
+          }
+        }
       }
 
       setLoading(false);
@@ -629,7 +694,8 @@ function App() {
         alert('Failed to accept invite: ' + error.message);
       }
       setInviteCode(null);
-      window.location.hash = '';
+      // Clear the invite from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   };
 
@@ -640,27 +706,30 @@ function App() {
     hybridGunService.cleanup();
     setUser(null);
     setAuthMode('login');
+    setInviteCode(null);
   };
 
   if (loading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Initializing P2P Chat...</p>
+        <p>Initializing Whisperz...</p>
       </div>
     );
   }
 
   if (!user) {
-    return authMode === 'login' ? (
-      <LoginView
-        onLogin={handleAuth}
-        onSwitchToRegister={() => setAuthMode('register')}
-      />
-    ) : (
+    // Show register page if there's an invite code, otherwise show login
+    return authMode === 'register' ? (
       <RegisterView
         onRegister={handleAuth}
         onSwitchToLogin={() => setAuthMode('login')}
+        inviteCode={inviteCode}
+      />
+    ) : (
+      <LoginView
+        onLogin={handleAuth}
+        inviteCode={inviteCode}
       />
     );
   }

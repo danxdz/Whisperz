@@ -37,9 +37,10 @@ class FriendsService {
       used: false
     });
 
-    // Create shareable link
+    // Create shareable link - use pathname instead of hash for better Vercel routing
     const baseUrl = window.location.origin;
-    const inviteLink = `${baseUrl}/#/invite/${encryptionService.base64UrlEncode(JSON.stringify(invitePayload))}`;
+    const inviteCode = encryptionService.base64UrlEncode(JSON.stringify(invitePayload));
+    const inviteLink = `${baseUrl}/invite/${inviteCode}`;
 
     return inviteLink;
   }
