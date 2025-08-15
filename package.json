@@ -6,15 +6,28 @@
   "author": "Whisperz Team",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://github.com/danxdz/Whisperz#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danxdz/Whisperz.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danxdz/Whisperz/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "vercel-build": "vite build",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,json,css,md}\"",
     "preview": "vite preview",
     "test": "echo 'No tests configured yet'",
     "generate-secrets": "node generate-secrets.js",
-    "security-check": "npm audit --audit-level=moderate"
+    "security-check": "npm audit --audit-level=moderate",
+    "clean": "rm -rf dist node_modules package-lock.json",
+    "reinstall": "npm run clean && npm install"
   },
   "dependencies": {
     "crypto-js": "4.2.0",
