@@ -671,23 +671,37 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     };
   }, []);
 
-  // Load messages for selected friend
+  // Load messages when friend is selected
   useEffect(() => {
     if (!selectedFriend) return;
 
     const loadMessages = async () => {
+      console.log('📋 Loading messages for:', selectedFriend.nickname);
       const history = await messageService.getConversationHistory(selectedFriend.conversationId);
+      console.log(`📜 Loaded ${history.length} messages`);
       setMessages(history);
       messageService.markAsRead(selectedFriend.conversationId);
     };
 
     loadMessages();
 
+    // Refresh messages periodically to catch any missed updates
+    const refreshInterval = setInterval(loadMessages, 5000);
+
     // Subscribe to new messages
     const unsubscribe = messageService.subscribeToConversation(
       selectedFriend.conversationId,
       (message) => {
-        setMessages(prev => [...prev, message]);
+        console.log('📨 New message received:', message);
+        setMessages(prev => {
+          // Check if message already exists to avoid duplicates
+          const exists = prev.some(m => m.id === message.id || 
+            (m.timestamp === message.timestamp && m.content === message.content));
+          if (!exists) {
+            return [...prev, message].sort((a, b) => a.timestamp - b.timestamp);
+          }
+          return prev;
+        });
         messageService.markAsRead(selectedFriend.conversationId);
       }
     );
@@ -711,6 +725,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     );
 
     return () => {
+      clearInterval(refreshInterval);
       unsubscribe();
       unsubscribeTyping();
     };
@@ -993,10 +1008,43 @@ function App() {
           }
         };
         
+        window.testWebRTC = async () => {
+          const friends = await friendsService.getFriends();
+          if (friends.length === 0) {
+            console.log('❌ No friends to test with');
+            return;
+          }
+          
+          for (const friend of friends) {
+            const presence = await friendsService.getFriendPresence(friend.publicKey);
+            console.log(`👤 ${friend.nickname} presence:`, presence);
+            
+            if (presence.isOnline && presence.peerId) {
+              console.log(`🔄 Testing WebRTC connection to ${friend.nickname}...`);
+              try {
+                const conn = await webrtcService.connectToPeer(presence.peerId);
+                console.log(`✅ Connected to ${friend.nickname}!`, conn);
+                
+                // Test sending a ping
+                await webrtcService.sendMessage(presence.peerId, {
+                  type: 'ping',
+                  timestamp: Date.now()
+                });
+                console.log(`📡 Ping sent to ${friend.nickname}`);
+              } catch (error) {
+                console.error(`❌ Failed to connect to ${friend.nickname}:`, error);
+              }
+            } else {
+              console.log(`⚫ ${friend.nickname} is offline`);
+            }
+          }
+        };
+        
         console.log('✅ Services initialized');
         console.log('💡 Test helpers available:');
         console.log('   - window.testMessage("Hello!") - Send test message');
         console.log('   - window.getMessageHistory() - View all messages');
+        console.log('   - window.testWebRTC() - Test WebRTC connections');
       } catch (error) {
         console.error('Failed to initialize services:', error);
       }

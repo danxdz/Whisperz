@@ -79,75 +79,126 @@ class HybridGunService {
       .put(null);
   }
 
-  // Store message history
+  // Store message history - store in BOTH users' conversation histories
   async storeMessageHistory(conversationId, message) {
     if (!this.user) throw new Error('Not authenticated');
 
-    const messageId = `msg_${Date.now()}_${Math.random()}`;
+    const messageId = message.id || `msg_${Date.now()}_${Math.random()}`;
     
+    // Store in sender's history
     this.user.get('conversations')
       .get(conversationId)
       .get('messages')
       .get(messageId)
       .put(message);
 
-    // Update last message timestamp
-    this.user.get('conversations')
+    // Also store in a public conversation space that both users can read
+    // This ensures messages are visible to both parties
+    this.gun.get('conversations')
       .get(conversationId)
-      .put({ lastMessageAt: Date.now() });
+      .get('messages')
+      .get(messageId)
+      .put({
+        ...message,
+        storedAt: Date.now()
+      });
+
+    console.log('💾 Message stored in conversation:', conversationId, messageId);
 
     return messageId;
   }
 
-  // Get message history
+  // Get message history - check both private and public spaces
   async getMessageHistory(conversationId, limit = 50) {
     if (!this.user) return [];
 
     return new Promise((resolve) => {
-      const messages = [];
+      const messages = new Map();
+      let privateLoaded = false;
+      let publicLoaded = false;
       
+      const checkResolve = () => {
+        if (privateLoaded && publicLoaded) {
+          const sorted = Array.from(messages.values())
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .slice(-limit);
+          console.log(`📜 Loaded ${sorted.length} messages for conversation:`, conversationId);
+          resolve(sorted);
+        }
+      };
+
+      // Load from user's private space
       this.user.get('conversations')
         .get(conversationId)
         .get('messages')
         .map()
-        .once((data) => {
-          if (data) {
-            messages.push(data);
+        .once((data, key) => {
+          if (data && data.content) {
+            messages.set(key, data);
           }
         });
 
       setTimeout(() => {
-        // Sort by timestamp and limit
-        const sorted = messages
-          .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-          .slice(-limit);
-        resolve(sorted);
-      }, 500);
+        privateLoaded = true;
+        checkResolve();
+      }, 1000);
+
+      // Also load from public conversation space
+      this.gun.get('conversations')
+        .get(conversationId)
+        .get('messages')
+        .map()
+        .once((data, key) => {
+          if (data && data.content) {
+            messages.set(key, data);
+          }
+        });
+
+      setTimeout(() => {
+        publicLoaded = true;
+        checkResolve();
+      }, 1500);
     });
   }
 
-  // Subscribe to conversation updates
+  // Subscribe to conversation updates - subscribe to both private and public
   subscribeToConversation(conversationId, callback) {
     if (!this.user) return () => {};
 
-    const sub = this.user.get('conversations')
+    const handlers = [];
+
+    // Subscribe to private messages
+    const privateSub = this.user.get('conversations')
       .get(conversationId)
       .get('messages')
       .map()
       .on((data, key) => {
-        if (data) {
+        if (data && data.content) {
+          console.log('📨 New private message:', data);
           callback({ ...data, key });
         }
       });
 
-    const unsubscribe = () => {
-      if (sub && sub.off) {
-        sub.off();
-      }
-    };
+    handlers.push(() => privateSub.off());
 
-    this.subscriptions.set(conversationId, unsubscribe);
-    return unsubscribe;
+    // Subscribe to public conversation space
+    const publicSub = this.gun.get('conversations')
+      .get(conversationId)
+      .get('messages')
+      .map()
+      .on((data, key) => {
+        if (data && data.content) {
+          console.log('📨 New public message:', data);
+          callback({ ...data, key });
+        }
+      });
+
+    handlers.push(() => publicSub.off());
+
+    // Return unsubscribe function
+    return () => {
+      handlers.forEach(unsub => unsub());
+    };
   }
 
   // Store user presence

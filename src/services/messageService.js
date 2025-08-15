@@ -41,6 +41,8 @@ class MessageService {
       ...metadata
     };
 
+    console.log('📤 Sending message:', message);
+
     // Try to encrypt message
     let encryptedMessage;
     try {
@@ -51,13 +53,19 @@ class MessageService {
     }
 
     // Try WebRTC first
-    let sent = false;
+    let sentViaWebRTC = false;
     const presence = await friendsService.getFriendPresence(recipientPublicKey);
+    
+    console.log('👤 Friend presence:', presence);
     
     if (presence.isOnline && presence.peerId) {
       try {
         // Try to connect if not already connected
-        if (!webrtcService.getConnectionStatus(presence.peerId).connected) {
+        const connectionStatus = webrtcService.getConnectionStatus(presence.peerId);
+        console.log('🔌 Connection status:', connectionStatus);
+        
+        if (!connectionStatus.connected) {
+          console.log('🔄 Attempting to connect to peer:', presence.peerId);
           await webrtcService.connectToPeer(presence.peerId, {
             publicKey: user.pub,
             nickname: await friendsService.getUserNickname()
@@ -65,28 +73,35 @@ class MessageService {
         }
 
         // Send via WebRTC
+        console.log('📡 Sending via WebRTC to:', presence.peerId);
         await webrtcService.sendMessage(presence.peerId, {
           type: 'message',
           data: encryptedMessage
         });
         
-        sent = true;
+        sentViaWebRTC = true;
         message.deliveryMethod = 'webrtc';
         message.delivered = true;
+        console.log('✅ Message sent via WebRTC');
       } catch (error) {
-        console.warn('WebRTC send failed, falling back to Gun:', error);
+        console.warn('❌ WebRTC send failed, will use Gun:', error);
       }
     }
 
-    // Fallback to Gun for offline delivery
-    if (!sent) {
-      await hybridGunService.storeOfflineMessage(recipientPublicKey, encryptedMessage);
+    // ALWAYS store in Gun for persistence and fallback
+    // This ensures messages are delivered even if WebRTC fails
+    console.log('💾 Storing message in Gun.js');
+    await hybridGunService.storeOfflineMessage(recipientPublicKey, encryptedMessage);
+    
+    if (!sentViaWebRTC) {
       message.deliveryMethod = 'gun';
       message.delivered = false;
+      console.log('📦 Message stored in Gun for offline delivery');
     }
 
     // Store in conversation history
     await hybridGunService.storeMessageHistory(friend.conversationId, message);
+    console.log('📜 Message added to history');
 
     // Notify handlers
     this.notifyHandlers('sent', message);
