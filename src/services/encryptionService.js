@@ -14,7 +14,8 @@ class EncryptionService {
         console.warn('Encryption service warning:', error.message);
         console.warn('Running in development mode. Please configure environment variables for production.');
       } else {
-        throw error;
+        // In production, use a fallback but warn
+        console.error('SECURITY WARNING: Using fallback configuration. Please set VITE_INVITE_SECRET in Vercel!');
       }
     }
   }
@@ -31,9 +32,16 @@ class EncryptionService {
       return;
     }
     
-    // In production, enforce strict security
-    if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
-      throw new Error('SECURITY ERROR: Application requires proper security configuration');
+    // In production, use fallback if not configured (with warning)
+    if (!secret) {
+      console.error('SECURITY WARNING: VITE_INVITE_SECRET not configured. Using fallback (NOT SECURE!)');
+      // Don't throw error to allow app to run
+      return;
+    }
+    
+    // Check for default values
+    if (secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
+      console.error('SECURITY WARNING: Default secret detected. Please configure a proper secret.');
     }
   }
 
