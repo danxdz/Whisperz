@@ -388,34 +388,46 @@ function DevTools({ isVisible, onClose }) {
 const ConnectionStatus = () => {
   const [gunStatus, setGunStatus] = useState('connecting');
   const [peerStatus, setPeerStatus] = useState('connecting');
-  const [relayStatus, setRelayStatus] = useState('unknown');
+  const [relayStatus, setRelayStatus] = useState('checking...');
   
   useEffect(() => {
     // Monitor Gun.js connection
     const checkGunConnection = () => {
-      const gun = gunAuthService.gun;
-      if (gun && gun._.opt.peers) {
-        const peers = Object.keys(gun._.opt.peers);
-        setGunStatus(peers.length > 0 ? 'connected' : 'disconnected');
-        setRelayStatus(`${peers.length} relay${peers.length !== 1 ? 's' : ''}`);
-      } else {
-        setGunStatus('disconnected');
+      try {
+        const gun = gunAuthService.gun;
+        if (gun && gun._ && gun._.opt && gun._.opt.peers) {
+          const peers = Object.keys(gun._.opt.peers);
+          setGunStatus(peers.length > 0 ? 'connected' : 'disconnected');
+          setRelayStatus(`${peers.length} relay${peers.length !== 1 ? 's' : ''}`);
+        } else {
+          setGunStatus('initializing');
+          setRelayStatus('setting up...');
+        }
+      } catch (error) {
+        console.error('Gun status check error:', error);
+        setGunStatus('error');
+        setRelayStatus('error');
       }
     };
     
     // Monitor PeerJS connection
     const checkPeerConnection = () => {
-      const peer = webrtcService.peer;
-      if (peer) {
-        if (peer.disconnected) {
-          setPeerStatus('disconnected');
-        } else if (peer.destroyed) {
-          setPeerStatus('destroyed');
+      try {
+        const peer = webrtcService.peer;
+        if (peer) {
+          if (peer.disconnected) {
+            setPeerStatus('disconnected');
+          } else if (peer.destroyed) {
+            setPeerStatus('destroyed');
+          } else {
+            setPeerStatus('connected');
+          }
         } else {
-          setPeerStatus('connected');
+          setPeerStatus('initializing');
         }
-      } else {
-        setPeerStatus('initializing');
+      } catch (error) {
+        console.error('Peer status check error:', error);
+        setPeerStatus('error');
       }
     };
     
@@ -434,7 +446,7 @@ const ConnectionStatus = () => {
     switch(status) {
       case 'connected': return '#00ff00';
       case 'connecting': case 'initializing': return '#ffff00';
-      case 'disconnected': case 'destroyed': return '#ff0000';
+      case 'disconnected': case 'destroyed': case 'error': return '#ff0000';
       default: return '#808080';
     }
   };
@@ -475,6 +487,11 @@ const ConnectionStatus = () => {
         }}></span>
         <span>WebRTC: {peerStatus}</span>
       </div>
+      {(gunStatus === 'disconnected' || gunStatus === 'error') && (
+        <div style={{ marginTop: '10px', fontSize: '11px', color: '#ff0000' }}>
+          ⚠️ Database connection failed. Check network.
+        </div>
+      )}
     </div>
   );
 };

@@ -13,23 +13,41 @@ class GunAuthService {
 
   // Initialize Gun instance with peers
   initialize(peers = []) {
+    // More reliable Gun.js relay servers
     const defaultPeers = [
+      'https://relay.peer.ooo/gun',
+      'https://gun-relay.herokuapp.com/gun',
+      'https://gunjs.herokuapp.com/gun',
       'https://gun-manhattan.herokuapp.com/gun',
-      'https://gun-matrix.herokuapp.com/gun',
-      'https://gun-euwest.herokuapp.com/gun'
+      'https://e2eec.herokuapp.com/gun'
     ];
 
     const customPeers = import.meta.env.VITE_GUN_PEERS 
       ? import.meta.env.VITE_GUN_PEERS.split(',') 
       : [];
 
+    console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
+
     this.gun = Gun({
       peers: [...customPeers, ...peers, ...defaultPeers],
       localStorage: true,
       radisk: true,
       multicast: false,
-      axe: false
+      axe: false,
+      ws: {
+        reconnect: true,
+        reconnectDelay: 1000
+      }
     });
+
+    // Test connection to peers
+    setTimeout(() => {
+      const connectedPeers = this.gun._.opt.peers;
+      console.log('🔫 Gun.js connected peers:', connectedPeers);
+      if (!connectedPeers || Object.keys(connectedPeers).length === 0) {
+        console.error('❌ Gun.js failed to connect to any peers!');
+      }
+    }, 2000);
 
     this.user = this.gun.user().recall({ sessionStorage: true });
     
