@@ -6,6 +6,33 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 
+// Create rate limiter for login attempts
+const loginRateLimiter = (() => {
+  const attempts = new Map();
+  const MAX_ATTEMPTS = 5;
+  const WINDOW_MS = 60000; // 1 minute
+  
+  return {
+    check: (username) => {
+      const now = Date.now();
+      const userAttempts = attempts.get(username) || [];
+      const recentAttempts = userAttempts.filter(time => now - time < WINDOW_MS);
+      
+      if (recentAttempts.length >= MAX_ATTEMPTS) {
+        const timeLeft = Math.ceil((WINDOW_MS - (now - recentAttempts[0])) / 1000);
+        return { 
+          allowed: false, 
+          error: `Too many login attempts. Please wait ${timeLeft} seconds.`
+        };
+      }
+      
+      recentAttempts.push(now);
+      attempts.set(username, recentAttempts);
+      return { allowed: true };
+    }
+  };
+})();
+
 // Login Component - No registration option
 function LoginView({ onLogin, inviteCode }) {
   const [username, setUsername] = useState('');
@@ -15,14 +42,33 @@ function LoginView({ onLogin, inviteCode }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    // Input validation
+    if (!username || !password) {
+      setError('Please enter username and password');
+      return;
+    }
+
+    // Check rate limiting
+    const rateCheck = loginRateLimiter.check(username);
+    if (!rateCheck.allowed) {
+      setError(rateCheck.error);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const result = await gunAuthService.login(username, password);
-      onLogin(result.user);
+      if (result && result.user) {
+        onLogin(result.user);
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
     } catch (err) {
-      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -45,6 +91,8 @@ function LoginView({ onLogin, inviteCode }) {
             onChange={(e) => setUsername(e.target.value)}
             required
             disabled={loading}
+            autoComplete="username"
+            maxLength={20}
           />
           <input
             type="password"
@@ -53,6 +101,7 @@ function LoginView({ onLogin, inviteCode }) {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading}
+            autoComplete="current-password"
           />
           {error && <div className="error">{error}</div>}
           <button type="submit" disabled={loading}>
@@ -142,6 +191,7 @@ function RegisterView({ onRegister, onSwitchToLogin, inviteCode }) {
             onChange={(e) => setUsername(e.target.value)}
             required
             disabled={loading}
+            maxLength={20}
           />
           <input
             type="password"
@@ -158,6 +208,7 @@ function RegisterView({ onRegister, onSwitchToLogin, inviteCode }) {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             disabled={loading}
+            maxLength={30}
           />
           {error && <div className="error">{error}</div>}
           <button type="submit" disabled={loading}>
@@ -414,13 +465,16 @@ function ChatView({ user, onLogout }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle message send
+  // Handle message send with sanitization
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!messageInput.trim() || !selectedFriend) return;
 
+    // Sanitize input
+    const sanitizedMessage = messageInput.trim().slice(0, 1000);
+
     try {
-      await messageService.sendMessage(selectedFriend.publicKey, messageInput);
+      await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
       setMessageInput('');
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -477,6 +531,19 @@ function ChatView({ user, onLogout }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Escape HTML for safe rendering
+  const escapeHtml = (text) => {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#x27;',
+      '/': '&#x2F;'
+    };
+    return text.replace(/[&<>"'/]/g, char => map[char]);
+  };
+
   return (
     <div className="chat-container">
       {/* Sidebar */}
@@ -494,7 +561,7 @@ function ChatView({ user, onLogout }) {
               onClick={() => setSelectedFriend(friend)}
             >
               <div className="friend-info">
-                <span className="friend-name">{friend.nickname}</span>
+                <span className="friend-name">{escapeHtml(friend.nickname)}</span>
                 <span className={`status-indicator ${onlineStatus.get(friend.publicKey) ? 'online' : 'offline'}`} />
               </div>
             </div>
@@ -520,7 +587,7 @@ function ChatView({ user, onLogout }) {
         {selectedFriend ? (
           <>
             <div className="chat-header">
-              <h3>{selectedFriend.nickname}</h3>
+              <h3>{escapeHtml(selectedFriend.nickname)}</h3>
               <span className={`status ${onlineStatus.get(selectedFriend.publicKey) ? 'online' : 'offline'}`}>
                 {onlineStatus.get(selectedFriend.publicKey) ? 'Online' : 'Offline'}
               </span>
@@ -533,7 +600,7 @@ function ChatView({ user, onLogout }) {
                   className={`message ${msg.from === user.pub ? 'own' : 'other'}`}
                 >
                   <div className="message-bubble">
-                    <p>{msg.content}</p>
+                    <p>{escapeHtml(msg.content)}</p>
                     <span className="message-time">
                       {new Date(msg.timestamp).toLocaleTimeString()}
                     </span>
@@ -542,7 +609,7 @@ function ChatView({ user, onLogout }) {
               ))}
               {typingUsers.size > 0 && (
                 <div className="typing-indicator">
-                  <span>{selectedFriend.nickname} is typing...</span>
+                  <span>{escapeHtml(selectedFriend.nickname)} is typing...</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -556,6 +623,7 @@ function ChatView({ user, onLogout }) {
                 onKeyUp={handleTyping}
                 placeholder="Type a message..."
                 className="message-input"
+                maxLength={1000}
               />
               <button type="submit" className="send-btn">Send</button>
             </form>
@@ -610,61 +678,67 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState('login');
   const [inviteCode, setInviteCode] = useState(null);
+  const [initError, setInitError] = useState(null);
 
   // Initialize services and check for invite
   useEffect(() => {
     const init = async () => {
-      // Check for invite in URL FIRST
-      const hash = window.location.hash;
-      const path = window.location.pathname;
-      
-      // Check both hash and pathname for invite
-      let code = null;
-      if (hash.includes('/invite/')) {
-        code = hash.split('/invite/')[1];
-      } else if (path.includes('/invite/')) {
-        code = path.split('/invite/')[1];
-      }
-      
-      if (code) {
-        setInviteCode(code);
-        // If there's an invite, show register page
-        setAuthMode('register');
-      }
-
-      // Initialize Gun
-      gunAuthService.initialize();
-      hybridGunService.initialize();
-
-      // Check for existing session
-      const currentUser = gunAuthService.getCurrentUser();
-      if (currentUser) {
-        setUser(currentUser);
+      try {
+        // Check for invite in URL FIRST
+        const hash = window.location.hash;
+        const path = window.location.pathname;
         
-        // Initialize WebRTC
-        try {
-          await webrtcService.initialize(currentUser.pub);
-        } catch (error) {
-          console.error('Failed to initialize WebRTC:', error);
+        // Check both hash and pathname for invite
+        let code = null;
+        if (hash.includes('/invite/')) {
+          code = hash.split('/invite/')[1];
+        } else if (path.includes('/invite/')) {
+          code = path.split('/invite/')[1];
+        }
+        
+        if (code) {
+          setInviteCode(code);
+          // If there's an invite, show register page
+          setAuthMode('register');
         }
 
-        // Initialize message service
-        messageService.initialize();
+        // Initialize Gun
+        gunAuthService.initialize();
+        hybridGunService.initialize();
 
-        // If logged in with invite, process it
-        if (code) {
+        // Check for existing session
+        const currentUser = gunAuthService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          
+          // Initialize WebRTC
           try {
-            await friendsService.acceptInvite(code);
-            alert('Friend added successfully!');
-            // Clear the invite from URL
-            window.history.replaceState({}, document.title, window.location.pathname);
+            await webrtcService.initialize(currentUser.pub);
           } catch (error) {
-            console.error('Failed to accept invite:', error);
+            console.error('Failed to initialize WebRTC:', error);
+          }
+
+          // Initialize message service
+          messageService.initialize();
+
+          // If logged in with invite, process it
+          if (code) {
+            try {
+              await friendsService.acceptInvite(code);
+              alert('Friend added successfully!');
+              // Clear the invite from URL
+              window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (error) {
+              console.error('Failed to accept invite:', error);
+            }
           }
         }
+      } catch (error) {
+        console.error('Initialization error:', error);
+        setInitError(error.message);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     init();
@@ -714,6 +788,18 @@ function App() {
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p>Initializing Whisperz...</p>
+      </div>
+    );
+  }
+
+  if (initError) {
+    return (
+      <div className="loading-container">
+        <div className="error">
+          <h2>Initialization Error</h2>
+          <p>{initError}</p>
+          <p>Please check your configuration and refresh the page.</p>
+        </div>
       </div>
     );
   }

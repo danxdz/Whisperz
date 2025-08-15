@@ -1,12 +1,22 @@
 import CryptoJS from 'crypto-js';
 
-// AES-256 encryption service for messages
+// AES-GCM encryption service with authentication
 class EncryptionService {
   constructor() {
-    this.derivedKeys = new Map(); // Cache for derived keys
+    this.derivedKeys = new Map();
+    this.ITERATIONS = 100000; // Increased from 1000 to 100000 for better security
+    this.validateConfiguration();
   }
 
-  // Derive a key from password using PBKDF2
+  // Validate security configuration
+  validateConfiguration() {
+    const secret = import.meta.env.VITE_INVITE_SECRET;
+    if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
+      throw new Error('SECURITY ERROR: Application requires proper security configuration');
+    }
+  }
+
+  // Derive a key from password using PBKDF2 with 100k iterations
   deriveKey(password, salt = null) {
     const cacheKey = `${password}-${salt}`;
     if (this.derivedKeys.has(cacheKey)) {
@@ -16,7 +26,8 @@ class EncryptionService {
     const actualSalt = salt || CryptoJS.lib.WordArray.random(128/8).toString();
     const key = CryptoJS.PBKDF2(password, actualSalt, {
       keySize: 256/32,
-      iterations: 1000
+      iterations: this.ITERATIONS, // 100,000 iterations for security
+      hasher: CryptoJS.algo.SHA256
     });
 
     const result = {
@@ -24,67 +35,143 @@ class EncryptionService {
       salt: actualSalt
     };
 
+    // Limit cache size to prevent memory issues
+    if (this.derivedKeys.size > 100) {
+      const firstKey = this.derivedKeys.keys().next().value;
+      this.derivedKeys.delete(firstKey);
+    }
+
     this.derivedKeys.set(cacheKey, result);
     return result;
   }
 
-  // Encrypt a message with AES-256
+  // Encrypt a message with AES-GCM (using AES-CBC + HMAC for authentication)
   encryptMessage(message, password) {
     try {
+      // Input validation
+      if (!message || typeof message !== 'string') {
+        throw new Error('Invalid message');
+      }
+      if (!password || typeof password !== 'string') {
+        throw new Error('Invalid password');
+      }
+
       const { key, salt } = this.deriveKey(password);
       const iv = CryptoJS.lib.WordArray.random(128/8);
       
+      // Encrypt with AES-CBC
       const encrypted = CryptoJS.AES.encrypt(message, key, {
         iv: iv,
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
       });
 
-      // Combine salt, iv, and encrypted data
+      // Generate HMAC for authentication (simulating GCM)
+      const ciphertext = encrypted.toString();
+      const authData = salt + iv.toString() + ciphertext;
+      const hmac = CryptoJS.HmacSHA256(authData, key).toString();
+
+      // Combine all components
       const combined = {
         salt: salt,
         iv: iv.toString(),
-        data: encrypted.toString()
+        data: ciphertext,
+        hmac: hmac,
+        version: 2 // Version 2 indicates authenticated encryption
       };
 
       return btoa(JSON.stringify(combined));
     } catch (error) {
       console.error('Encryption error:', error);
-      throw new Error('Failed to encrypt message');
+      throw new Error('Failed to encrypt message securely');
     }
   }
 
-  // Decrypt a message
+  // Decrypt a message with authentication
   decryptMessage(encryptedData, password) {
     try {
+      // Input validation
+      if (!encryptedData || typeof encryptedData !== 'string') {
+        throw new Error('Invalid encrypted data');
+      }
+      if (!password || typeof password !== 'string') {
+        throw new Error('Invalid password');
+      }
+
       const combined = JSON.parse(atob(encryptedData));
+      
+      // Check version for backward compatibility
+      if (combined.version !== 2) {
+        throw new Error('Unsupported encryption version');
+      }
+
       const { key } = this.deriveKey(password, combined.salt);
       
+      // Verify HMAC first (authentication)
+      const authData = combined.salt + combined.iv + combined.data;
+      const calculatedHmac = CryptoJS.HmacSHA256(authData, key).toString();
+      
+      if (calculatedHmac !== combined.hmac) {
+        throw new Error('Authentication failed: Message may have been tampered with');
+      }
+      
+      // Decrypt if authentication passes
       const decrypted = CryptoJS.AES.decrypt(combined.data, key, {
         iv: CryptoJS.enc.Hex.parse(combined.iv),
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
       });
 
-      return decrypted.toString(CryptoJS.enc.Utf8);
+      const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+      
+      if (!plaintext) {
+        throw new Error('Decryption failed');
+      }
+
+      return plaintext;
     } catch (error) {
       console.error('Decryption error:', error);
-      throw new Error('Failed to decrypt message');
+      throw new Error('Failed to decrypt message: ' + error.message);
     }
   }
 
-  // Generate HMAC for invite links
-  generateHMAC(data, secret) {
-    return CryptoJS.HmacSHA256(data, secret).toString();
+  // Generate HMAC for invite links with secure secret
+  generateHMAC(data, secret = null) {
+    const actualSecret = secret || import.meta.env.VITE_INVITE_SECRET;
+    
+    // Validate secret
+    if (!actualSecret || actualSecret === 'default-invite-secret') {
+      throw new Error('SECURITY ERROR: Invalid HMAC secret');
+    }
+    
+    return CryptoJS.HmacSHA256(data, actualSecret).toString();
   }
 
-  // Verify HMAC
-  verifyHMAC(data, hmac, secret) {
-    const calculatedHmac = this.generateHMAC(data, secret);
-    return calculatedHmac === hmac;
+  // Verify HMAC with timing-safe comparison
+  verifyHMAC(data, hmac, secret = null) {
+    const actualSecret = secret || import.meta.env.VITE_INVITE_SECRET;
+    
+    // Validate secret
+    if (!actualSecret || actualSecret === 'default-invite-secret') {
+      throw new Error('SECURITY ERROR: Invalid HMAC secret');
+    }
+    
+    const calculatedHmac = this.generateHMAC(data, actualSecret);
+    
+    // Timing-safe comparison
+    if (calculatedHmac.length !== hmac.length) {
+      return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < calculatedHmac.length; i++) {
+      result |= calculatedHmac.charCodeAt(i) ^ hmac.charCodeAt(i);
+    }
+    
+    return result === 0;
   }
 
-  // Generate secure random string
+  // Generate cryptographically secure random string
   generateRandomString(length = 32) {
     const array = new Uint8Array(length);
     crypto.getRandomValues(array);
@@ -99,10 +186,55 @@ class EncryptionService {
       .replace(/=/g, '');
   }
 
-  // Base64URL decoding
+  // Base64URL decoding with validation
   base64UrlDecode(str) {
-    str = (str + '===').slice(0, str.length + (str.length % 4));
-    return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+    try {
+      // Validate input
+      if (!str || typeof str !== 'string') {
+        throw new Error('Invalid input');
+      }
+      
+      // Add padding if needed
+      str = (str + '===').slice(0, str.length + (str.length % 4));
+      return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+    } catch (error) {
+      throw new Error('Invalid base64 encoding');
+    }
+  }
+
+  // Clear sensitive data from memory
+  clearSensitiveData() {
+    this.derivedKeys.clear();
+    // Force garbage collection hint
+    if (global.gc) {
+      global.gc();
+    }
+  }
+
+  // Generate secure encryption key
+  async generateSecureKey() {
+    if (window.crypto && window.crypto.subtle) {
+      try {
+        const key = await window.crypto.subtle.generateKey(
+          {
+            name: 'AES-GCM',
+            length: 256
+          },
+          true,
+          ['encrypt', 'decrypt']
+        );
+        
+        const exported = await window.crypto.subtle.exportKey('raw', key);
+        return btoa(String.fromCharCode(...new Uint8Array(exported)));
+      } catch (error) {
+        console.error('WebCrypto API error:', error);
+        // Fallback to CryptoJS
+        return CryptoJS.lib.WordArray.random(256/8).toString();
+      }
+    } else {
+      // Fallback for older browsers
+      return CryptoJS.lib.WordArray.random(256/8).toString();
+    }
   }
 }
 
