@@ -120,22 +120,32 @@ class FriendsService {
       conversationId: this.generateConversationId(user.pub, publicKey)
     };
 
-    // Store friend relationship
+    // Store friend relationship for current user
     gunAuthService.user.get('friends').get(publicKey).put(friendData);
 
     // Store in local map
     this.friends.set(publicKey, friendData);
 
-    // Notify friend (store reverse relationship)
+    // Create reverse relationship for the friend
+    // This ensures both users see each other as friends
+    const myData = {
+      publicKey: user.pub,
+      nickname: await this.getUserNickname(),
+      addedAt: Date.now(),
+      conversationId: friendData.conversationId // Same conversation ID
+    };
+
+    // Store reverse relationship directly in friend's friends list
+    gunAuthService.gun.user(publicKey)
+      .get('friends')
+      .get(user.pub)
+      .put(myData);
+
+    // Also store in friend_requests for backward compatibility
     gunAuthService.gun.user(publicKey)
       .get('friend_requests')
       .get(user.pub)
-      .put({
-        publicKey: user.pub,
-        nickname: await this.getUserNickname(),
-        addedAt: Date.now(),
-        conversationId: friendData.conversationId
-      });
+      .put(myData);
 
     this.notifyFriendListeners('added', friendData);
     return friendData;
@@ -166,27 +176,50 @@ class FriendsService {
     if (!gunAuthService.isAuthenticated()) return [];
 
     return new Promise((resolve) => {
-      const friends = [];
+      const friends = new Map();
+      let loadingComplete = false;
       
+      // Load existing friends
       gunAuthService.user.get('friends').map().once((data, key) => {
         if (data && data.publicKey) {
-          friends.push(data);
+          friends.set(key, data);
           this.friends.set(key, data);
+          this.notifyFriendListeners('added', data);
         }
       });
 
-      // Check for incoming friend requests
+      // Also check for incoming friend requests and auto-accept them
       const user = gunAuthService.getCurrentUser();
       if (user) {
         gunAuthService.user.get('friend_requests').map().once((data, key) => {
-          if (data && data.publicKey && !this.friends.has(data.publicKey)) {
-            // Auto-accept friend requests
-            this.addFriend(data.publicKey, data.nickname);
+          if (data && data.publicKey && !friends.has(data.publicKey)) {
+            // Auto-accept friend requests by adding them as friends
+            const friendData = {
+              publicKey: data.publicKey,
+              nickname: data.nickname,
+              addedAt: data.addedAt || Date.now(),
+              conversationId: data.conversationId || this.generateConversationId(user.pub, data.publicKey)
+            };
+            
+            // Store as friend
+            gunAuthService.user.get('friends').get(data.publicKey).put(friendData);
+            friends.set(data.publicKey, friendData);
+            this.friends.set(data.publicKey, friendData);
+            this.notifyFriendListeners('added', friendData);
+            
+            // Clear the friend request
+            gunAuthService.user.get('friend_requests').get(data.publicKey).put(null);
           }
         });
       }
 
-      setTimeout(() => resolve(Array.from(this.friends.values())), 500);
+      // Give Gun time to load data
+      setTimeout(() => {
+        if (!loadingComplete) {
+          loadingComplete = true;
+          resolve(Array.from(friends.values()));
+        }
+      }, 1000);
     });
   }
 

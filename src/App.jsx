@@ -400,7 +400,43 @@ function ChatView({ user, onLogout }) {
 
   // Initialize and load friends
   useEffect(() => {
-    const loadFriends = async () => {
+    loadFriends();
+
+    // Update own presence
+    const peerId = webrtcService.getPeerId();
+    hybridGunService.updatePresence('online', { peerId });
+
+    // Handle page visibility
+    const handleVisibility = () => {
+      if (document.hidden) {
+        hybridGunService.updatePresence('away');
+      } else {
+        hybridGunService.updatePresence('online', { peerId: webrtcService.getPeerId() });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Handle beforeunload
+    const handleUnload = () => {
+      hybridGunService.updatePresence('offline');
+    };
+    window.addEventListener('beforeunload', handleUnload);
+
+    // Refresh friends list periodically to catch any missed updates
+    const refreshInterval = setInterval(() => {
+      loadFriends();
+    }, 10000); // Refresh every 10 seconds
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('beforeunload', handleUnload);
+      clearInterval(refreshInterval);
+    };
+  }, []);
+
+  // Load friends function (moved outside useEffect so it can be called manually)
+  const loadFriends = async () => {
+    try {
       const friendList = await friendsService.getFriends();
       setFriends(friendList);
 
@@ -428,36 +464,10 @@ function ChatView({ user, onLogout }) {
           setOnlineStatus(prev => new Map(prev).set(friend.publicKey, isOnline));
         });
       }
-    };
-
-    loadFriends();
-
-    // Update own presence
-    const peerId = webrtcService.getPeerId();
-    hybridGunService.updatePresence('online', { peerId });
-
-    // Handle page visibility
-    const handleVisibility = () => {
-      if (document.hidden) {
-        hybridGunService.updatePresence('away');
-      } else {
-        hybridGunService.updatePresence('online', { peerId: webrtcService.getPeerId() });
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    // Handle beforeunload
-    const handleUnload = () => {
-      hybridGunService.updatePresence('offline');
-    };
-    window.addEventListener('beforeunload', handleUnload);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('beforeunload', handleUnload);
-      hybridGunService.updatePresence('offline');
-    };
-  }, []);
+    } catch (error) {
+      console.error('Failed to load friends:', error);
+    }
+  };
 
   // Load messages for selected friend
   useEffect(() => {
@@ -594,7 +604,14 @@ function ChatView({ user, onLogout }) {
       <div className="sidebar">
         <div className="sidebar-header">
           <h2>Contacts</h2>
-          <button onClick={handleGenerateInvite} className="invite-btn">+</button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={loadFriends} className="add-friend-btn" title="Refresh friends list">
+              🔄
+            </button>
+            <button onClick={handleGenerateInvite} className="add-friend-btn" title="Add friend">
+              +
+            </button>
+          </div>
         </div>
         
         <div className="friends-list">
