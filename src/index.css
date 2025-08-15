@@ -357,6 +357,7 @@ body {
   color: var(--success);
 }
 
+/* Messages */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -368,8 +369,53 @@ body {
 
 .message {
   display: flex;
+  flex-direction: column;
   max-width: 70%;
   animation: slideIn 0.3s ease;
+}
+
+.message.sent {
+  align-self: flex-end;
+}
+
+.message.received {
+  align-self: flex-start;
+}
+
+.message-content {
+  padding: 10px 15px;
+  border-radius: 18px;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.message.sent .message-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message.received .message-content {
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border-bottom-left-radius: 4px;
+}
+
+.message-info {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 0 5px;
+  font-size: 11px;
+  color: #666;
+}
+
+.message.sent .message-info {
+  justify-content: flex-end;
+}
+
+.message-status {
+  color: #667eea;
 }
 
 @keyframes slideIn {
@@ -381,14 +427,6 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.message.own {
-  align-self: flex-end;
-}
-
-.message.other {
-  align-self: flex-start;
 }
 
 .message-bubble {
@@ -420,11 +458,31 @@ body {
   text-align: right;
 }
 
+/* Typing indicator */
 .typing-indicator {
   padding: 10px 20px;
-  color: var(--text-secondary);
+  color: #999;
   font-style: italic;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.typing-indicator::after {
+  content: '...';
+  animation: typingDots 1.5s infinite;
+}
+
+@keyframes typingDots {
+  0%, 20% {
+    content: '.';
+  }
+  40% {
+    content: '..';
+  }
+  60%, 100% {
+    content: '...';
+  }
 }
 
 .message-input-form {

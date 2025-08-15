@@ -861,16 +861,23 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             </div>
 
             <div className="messages-container">
-              {messages.map((msg, idx) => (
+              {messages.map((msg, index) => (
                 <div
-                  key={msg.id || idx}
-                  className={`message ${msg.from === user.pub ? 'own' : 'other'}`}
+                  key={index}
+                  className={`message ${msg.from === user.pub ? 'sent' : 'received'}`}
                 >
-                  <div className="message-bubble">
-                    <p>{escapeHtml(msg.content)}</p>
+                  <div className="message-content">
+                    {escapeHtml(msg.content)}
+                  </div>
+                  <div className="message-info">
                     <span className="message-time">
                       {new Date(msg.timestamp).toLocaleTimeString()}
                     </span>
+                    {msg.from === user.pub && (
+                      <span className="message-status">
+                        {msg.delivered ? '✓✓' : '✓'}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -953,6 +960,50 @@ function App() {
   const handleInviteAccepted = (loadFriendsFunc) => {
     loadFriendsRef.current = loadFriendsFunc;
   };
+
+  // Initialize services
+  useEffect(() => {
+    const initServices = async () => {
+      try {
+        await hybridGunService.initialize();
+        await friendsService.initialize();
+        
+        // Add test helper to window for debugging
+        window.testMessage = async (message = 'Test message from console!') => {
+          const friends = await friendsService.getFriends();
+          if (friends.length === 0) {
+            console.log('❌ No friends to send message to');
+            return;
+          }
+          const friend = friends[0];
+          console.log(`📤 Sending test message to ${friend.nickname}...`);
+          await messageService.sendMessage(friend.publicKey, message);
+          console.log('✅ Message sent!');
+        };
+        
+        window.getMessageHistory = async () => {
+          const friends = await friendsService.getFriends();
+          if (friends.length === 0) {
+            console.log('❌ No friends found');
+            return;
+          }
+          for (const friend of friends) {
+            const messages = await messageService.getMessages(friend.conversationId);
+            console.log(`📜 Messages with ${friend.nickname}:`, messages);
+          }
+        };
+        
+        console.log('✅ Services initialized');
+        console.log('💡 Test helpers available:');
+        console.log('   - window.testMessage("Hello!") - Send test message');
+        console.log('   - window.getMessageHistory() - View all messages');
+      } catch (error) {
+        console.error('Failed to initialize services:', error);
+      }
+    };
+
+    initServices();
+  }, []);
 
   // Initialize services and check for invite
   useEffect(() => {
