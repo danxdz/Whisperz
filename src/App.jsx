@@ -849,38 +849,6 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           </div>
         </div>
         
-        {/* Add a prominent invite section if no friends */}
-        {friends.length === 0 && !friendsLoading && (
-          <div style={{
-            padding: '20px',
-            textAlign: 'center',
-            borderBottom: '1px solid var(--border-color)'
-          }}>
-            <button 
-              onClick={handleGenerateInvite}
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '25px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-            >
-              <span style={{ fontSize: '20px' }}>➕</span>
-              Invite Your First Friend
-            </button>
-          </div>
-        )}
-
         <div className="friends-list">
           {friendsLoading ? (
             <div className="no-friends">
@@ -901,7 +869,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           {friends.length === 0 && !friendsLoading && (
             <div className="no-friends">
               <p>No contacts yet</p>
-              <p className="hint">Click + to invite friends</p>
+              <p className="hint">Click the + button above to invite friends</p>
             </div>
           )}
         </div>
