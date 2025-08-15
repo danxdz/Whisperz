@@ -5,12 +5,33 @@ class EncryptionService {
   constructor() {
     this.derivedKeys = new Map();
     this.ITERATIONS = 100000; // Increased from 1000 to 100000 for better security
-    this.validateConfiguration();
+    
+    // Initialize configuration with better error handling
+    try {
+      this.validateConfiguration();
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.warn('Encryption service warning:', error.message);
+        console.warn('Running in development mode. Please configure environment variables for production.');
+      } else {
+        throw error;
+      }
+    }
   }
 
   // Validate security configuration
   validateConfiguration() {
     const secret = import.meta.env.VITE_INVITE_SECRET;
+    
+    // In development, warn but don't crash
+    if (import.meta.env.DEV) {
+      if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
+        console.warn('SECURITY WARNING: Using development mode. Configure VITE_INVITE_SECRET for production.');
+      }
+      return;
+    }
+    
+    // In production, enforce strict security
     if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
       throw new Error('SECURITY ERROR: Application requires proper security configuration');
     }

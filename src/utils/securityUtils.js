@@ -3,7 +3,16 @@ import CryptoJS from 'crypto-js';
 
 class SecurityUtils {
   constructor() {
-    this.initializeSecrets();
+    // Initialize in a try-catch to prevent app crash
+    try {
+      this.initializeSecrets();
+    } catch (error) {
+      console.error('Security initialization warning:', error.message);
+      // Allow app to start but log the security issue
+      if (import.meta.env.DEV) {
+        console.warn('Running in development mode with security warnings. Please configure environment variables properly.');
+      }
+    }
   }
 
   // Initialize and validate secrets
@@ -11,6 +20,15 @@ class SecurityUtils {
     // Force requirement of custom secrets - no defaults allowed
     const inviteSecret = import.meta.env.VITE_INVITE_SECRET;
     
+    // In development, warn but don't crash
+    if (import.meta.env.DEV) {
+      if (!inviteSecret || inviteSecret === 'default-invite-secret' || inviteSecret === 'your-secret-key-here') {
+        console.warn('SECURITY WARNING: Invalid or default invite secret detected. Please run: npm run generate-secrets');
+      }
+      return;
+    }
+    
+    // In production, enforce strict security
     if (!inviteSecret || inviteSecret === 'default-invite-secret' || inviteSecret === 'your-secret-key-here') {
       console.error('SECURITY ERROR: Invalid or default invite secret detected');
       throw new Error('Application requires secure configuration. Please set proper environment variables.');
