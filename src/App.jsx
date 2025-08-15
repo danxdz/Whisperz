@@ -154,35 +154,45 @@ function LoginView({ onLogin, inviteCode }) {
   );
 }
 
-// Register Component - Only accessible with invite
-function RegisterView({ onRegister, onSwitchToLogin, inviteCode }) {
+// Register View Component
+const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [inviteData, setInviteData] = useState(null);
+  const [isAdminSetup, setIsAdminSetup] = useState(false);
 
+  // Check if this is admin setup
   useEffect(() => {
-    // Validate invite code
-    if (!inviteCode) {
-      setError('No invite code provided. Registration requires a valid invite.');
-      return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const setupMode = urlParams.get('setup');
+    if (setupMode === 'admin' || setupMode === 'first') {
+      setIsAdminSetup(true);
     }
+  }, []);
 
-    try {
-      // Decode and validate invite
-      const invitePayload = JSON.parse(atob(inviteCode.replace(/-/g, '+').replace(/_/g, '/')));
-      const data = JSON.parse(atob(invitePayload.data.replace(/-/g, '+').replace(/_/g, '/')));
-      setInviteData(data);
-    } catch (err) {
-      setError('Invalid invite link. Please request a new one.');
+  // Parse invite data
+  useEffect(() => {
+    if (inviteCode) {
+      try {
+        // Use standard base64 decode with URL-safe replacements
+        const payload = JSON.parse(atob(inviteCode.replace(/-/g, '+').replace(/_/g, '/')));
+        const data = JSON.parse(atob(payload.data.replace(/-/g, '+').replace(/_/g, '/')));
+        setInviteData(data);
+      } catch (err) {
+        console.error('Failed to parse invite:', err);
+        setError('Invalid invite link');
+      }
     }
   }, [inviteCode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!inviteCode) {
+    
+    // Only require invite if not admin setup
+    if (!isAdminSetup && !inviteCode) {
       setError('Registration requires a valid invite');
       return;
     }
@@ -200,7 +210,8 @@ function RegisterView({ onRegister, onSwitchToLogin, inviteCode }) {
     }
   };
 
-  if (!inviteCode) {
+  // Show invite required message only if not admin setup
+  if (!isAdminSetup && !inviteCode) {
     return (
       <div className="auth-container">
         <div className="auth-box">
@@ -215,7 +226,12 @@ function RegisterView({ onRegister, onSwitchToLogin, inviteCode }) {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>Join Whisperz</h1>
+        <h1>{isAdminSetup ? 'Create Admin Account' : 'Join Whisperz'}</h1>
+        {isAdminSetup && (
+          <div className="info-message" style={{ marginBottom: '20px', padding: '10px', background: 'rgba(0, 255, 0, 0.1)', border: '1px solid #00ff00', borderRadius: '4px' }}>
+            <p style={{ margin: 0 }}>🔐 You're creating the first admin account for Whisperz</p>
+          </div>
+        )}
         {inviteData && (
           <div className="invite-info">
             <p>You've been invited by <strong>{inviteData.nickname}</strong></p>
