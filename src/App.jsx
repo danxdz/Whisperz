@@ -821,16 +821,66 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       <div className="sidebar">
         <div className="sidebar-header">
           <h2>Contacts</h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={loadFriends} className="add-friend-btn" title="Refresh friends list">
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button 
+              onClick={loadFriends} 
+              className="add-friend-btn" 
+              title="Refresh friends list"
+              style={{ 
+                background: '#2a2a2a',
+                border: '1px solid #444',
+                fontSize: '18px'
+              }}
+            >
               🔄
             </button>
-            <button onClick={handleGenerateInvite} className="add-friend-btn" title="Add friend">
+            <button 
+              onClick={handleGenerateInvite} 
+              className="add-friend-btn invite-primary" 
+              title="Invite a friend"
+              style={{
+                fontSize: '24px',
+                width: '40px',
+                height: '40px'
+              }}
+            >
               +
             </button>
           </div>
         </div>
         
+        {/* Add a prominent invite section if no friends */}
+        {friends.length === 0 && !friendsLoading && (
+          <div style={{
+            padding: '20px',
+            textAlign: 'center',
+            borderBottom: '1px solid var(--border-color)'
+          }}>
+            <button 
+              onClick={handleGenerateInvite}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '25px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            >
+              <span style={{ fontSize: '20px' }}>➕</span>
+              Invite Your First Friend
+            </button>
+          </div>
+        )}
+
         <div className="friends-list">
           {friendsLoading ? (
             <div className="no-friends">
@@ -948,6 +998,41 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
       {/* DevTools */}
       <DevTools isVisible={showDevTools} onClose={() => setShowDevTools(false)} />
+
+      {/* Floating Invite Button for Mobile */}
+      <button
+        onClick={handleGenerateInvite}
+        className="floating-invite-btn"
+        title="Invite a friend"
+        style={{
+          position: 'fixed',
+          bottom: '80px',
+          right: '20px',
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          border: 'none',
+          fontSize: '30px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.5)',
+          display: 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'scale(1.1) rotate(90deg)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'scale(1) rotate(0deg)';
+        }}
+      >
+        +
+      </button>
 
       {/* Dev Tools Toggle (Mobile) */}
       <button

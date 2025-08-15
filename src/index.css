@@ -220,6 +220,50 @@ body {
   font-size: 20px;
 }
 
+/* Add Friend / Invite Button */
+.add-friend-btn {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+}
+
+.add-friend-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.6);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.add-friend-btn:active {
+  transform: scale(0.95);
+}
+
+.add-friend-btn[title="Add friend"] {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 20px rgba(102, 126, 234, 0.8);
+  }
+  100% {
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+  }
+}
+
 .invite-btn {
   width: 35px;
   height: 35px;
@@ -810,6 +854,38 @@ body {
   transform: scale(1.1);
   background: #6fa86f;
 }
+
+/* Floating Action Button (Mobile) */
+.floating-invite-btn {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .floating-invite-btn {
+    display: flex !important;
+    animation: bounceIn 0.5s ease;
+  }
+  
+  .floating-invite-btn:active {
+    transform: scale(0.9) !important;
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Modal styles */
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
