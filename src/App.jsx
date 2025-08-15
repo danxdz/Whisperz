@@ -437,11 +437,17 @@ function ChatView({ user, onLogout }) {
   // Load friends function (moved outside useEffect so it can be called manually)
   const loadFriends = async () => {
     try {
+      console.log('📋 Loading friends...');
+      const currentUser = gunAuthService.getCurrentUser();
+      console.log('👤 Current user:', currentUser);
+      
       const friendList = await friendsService.getFriends();
+      console.log('👥 Friends loaded:', friendList);
       setFriends(friendList);
 
       // Subscribe to friend updates
       friendsService.subscribeToFriends((event, data) => {
+        console.log('🔔 Friend event:', event, data);
         if (event === 'added' || event === 'updated') {
           setFriends(prev => {
             const updated = prev.filter(f => f.publicKey !== data.publicKey);
@@ -465,7 +471,7 @@ function ChatView({ user, onLogout }) {
         });
       }
     } catch (error) {
-      console.error('Failed to load friends:', error);
+      console.error('❌ Failed to load friends:', error);
     }
   };
 
