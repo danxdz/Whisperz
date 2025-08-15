@@ -39,6 +39,15 @@ function LoginView({ onLogin, inviteCode }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showFirstUserSetup, setShowFirstUserSetup] = useState(false);
+
+  // Check if this might be the first user (no accounts exist)
+  useEffect(() => {
+    // Simple check - if in production and no stored auth, show setup hint
+    if (window.location.hostname !== 'localhost' && !localStorage.getItem('gun/')) {
+      setShowFirstUserSetup(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,6 +90,32 @@ function LoginView({ onLogin, inviteCode }) {
         {inviteCode && (
           <div className="info-message">
             You have an invite! Login to your account or create a new one to accept it.
+          </div>
+        )}
+        {showFirstUserSetup && (
+          <div className="info-message" style={{ marginBottom: '20px', padding: '15px', background: 'rgba(0, 255, 0, 0.1)', border: '1px solid #00ff00', borderRadius: '4px' }}>
+            <p style={{ margin: '0 0 10px 0' }}>👋 <strong>First time setup?</strong></p>
+            <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>To create your first admin account:</p>
+            <ol style={{ margin: '5px 0', paddingLeft: '20px', fontSize: '14px' }}>
+              <li>Open Developer Console (F12)</li>
+              <li>Run: <code style={{ background: '#000', padding: '2px 5px' }}>window.location.hash = '#register'</code></li>
+              <li>Create your admin account</li>
+            </ol>
+            <button 
+              onClick={() => setAuthMode('register')}
+              style={{ 
+                marginTop: '10px', 
+                padding: '8px 15px', 
+                background: '#00ff00', 
+                color: '#000', 
+                border: 'none', 
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              🚀 Setup First Account
+            </button>
           </div>
         )}
         <form onSubmit={handleSubmit}>
