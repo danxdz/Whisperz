@@ -5,6 +5,7 @@ import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
+import encryptionService from './services/encryptionService';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -167,8 +168,8 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
   useEffect(() => {
     if (inviteCode) {
       try {
-        // Use standard base64 decode with URL-safe replacements
-        const invitePayload = JSON.parse(atob(inviteCode.replace(/-/g, '+').replace(/_/g, '/')));
+        // Use encryptionService for proper base64url decoding
+        const invitePayload = JSON.parse(encryptionService.base64UrlDecode(inviteCode));
         
         // New format just has inviteId and senderKey
         // We'll show basic info and the actual friend data will be loaded when accepting
@@ -185,7 +186,7 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
         }
       } catch (err) {
         console.error('Failed to parse invite:', err);
-        setError('Invalid invite link');
+        setError('Invalid invite link format');
       }
     }
   }, [inviteCode]);

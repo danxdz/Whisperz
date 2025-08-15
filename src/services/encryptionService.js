@@ -209,7 +209,10 @@ class EncryptionService {
 
   // Base64URL encoding for invite links
   base64UrlEncode(str) {
-    return btoa(str)
+    // First encode to base64
+    const base64 = btoa(unescape(encodeURIComponent(str)));
+    // Then make it URL-safe
+    return base64
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');
@@ -223,11 +226,23 @@ class EncryptionService {
         throw new Error('Invalid input');
       }
       
-      // Add padding if needed
-      str = (str + '===').slice(0, str.length + (str.length % 4));
-      return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+      // Replace URL-safe characters
+      let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Add proper padding
+      const padding = (4 - (base64.length % 4)) % 4;
+      if (padding) {
+        base64 += '='.repeat(padding);
+      }
+      
+      // Decode from base64
+      const decoded = atob(base64);
+      
+      // Handle UTF-8 decoding
+      return decodeURIComponent(escape(decoded));
     } catch (error) {
-      throw new Error('Invalid base64 encoding');
+      console.error('Base64 decode error:', error);
+      throw new Error('Invalid base64 encoding: ' + error.message);
     }
   }
 

@@ -27,9 +27,17 @@ class FriendsService {
       expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
     };
 
+    console.log('📝 Creating invite:', inviteData);
+
     // Create a signature of the invite ID using the user's private key
     // This proves the invite was created by this specific user
     const signature = await Gun.SEA.sign(inviteId, user);
+    
+    if (!signature) {
+      throw new Error('Failed to sign invite - Gun.SEA error');
+    }
+    
+    console.log('🔏 Invite signed successfully');
     
     // Store the invite in Gun.js with the signature
     // This makes it verifiable and one-time use
@@ -58,7 +66,12 @@ class FriendsService {
     };
 
     // Encode and create link
-    const inviteCode = encryptionService.base64UrlEncode(JSON.stringify(invitePayload));
+    const payloadString = JSON.stringify(invitePayload);
+    console.log('📦 Invite payload:', payloadString);
+    
+    const inviteCode = encryptionService.base64UrlEncode(payloadString);
+    console.log('🔤 Encoded invite code:', inviteCode);
+    
     const inviteLink = `${window.location.origin}/invite/${inviteCode}`;
 
     console.log('🎫 Secure invite created:', inviteId);
