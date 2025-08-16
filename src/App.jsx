@@ -284,270 +284,9 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
   );
 }
 
-// DevTools Component (unchanged)
-function DevTools({ isVisible, onClose }) {
-  const [stats, setStats] = useState(null);
-  const [logs, setLogs] = useState([]);
-  const logEndRef = useRef(null);
+// DevTools component is now handled by DevToolsWrapper imported from components
 
-  useEffect(() => {
-    if (!isVisible) return;
-
-    // Load stats
-    const loadStats = async () => {
-      const dbStats = await hybridGunService.getDatabaseStats();
-      setStats(dbStats);
-    };
-    loadStats();
-    const interval = setInterval(loadStats, 5000);
-
-    // Capture console logs
-    const originalLog = console.log;
-    const originalError = console.error;
-    const originalWarn = console.warn;
-
-    const captureLog = (type, ...args) => {
-      const message = args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-      ).join(' ');
-      
-      setLogs(prev => [...prev.slice(-50), {
-        type,
-        message,
-        timestamp: new Date().toLocaleTimeString()
-      }]);
-    };
-
-    console.log = (...args) => { originalLog(...args); captureLog('log', ...args); };
-    console.error = (...args) => { originalError(...args); captureLog('error', ...args); };
-    console.warn = (...args) => { originalWarn(...args); captureLog('warn', ...args); };
-
-    return () => {
-      clearInterval(interval);
-      console.log = originalLog;
-      console.error = originalError;
-      console.warn = originalWarn;
-    };
-  }, [isVisible]);
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [logs]);
-
-  if (!isVisible) return null;
-
-  const handleClearData = async () => {
-    if (confirm('This will delete all your data. Are you sure?')) {
-      await hybridGunService.clearAllData();
-      await friendsService.clearAllFriends();
-      window.location.reload();
-    }
-  };
-
-  const handleExportLogs = () => {
-    const logText = logs.map(l => `[${l.timestamp}] ${l.type.toUpperCase()}: ${l.message}`).join('\n');
-    const blob = new Blob([logText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chat-logs-${Date.now()}.txt`;
-    a.click();
-  };
-
-  return (
-    <div className="devtools">
-      <div className="devtools-header">
-        <h3>Developer Tools</h3>
-        <button onClick={onClose} className="close-btn">×</button>
-      </div>
-      
-      <div className="devtools-section">
-        <h4>Database Stats</h4>
-        {stats && (
-          <div className="stats-grid">
-            <div>Conversations: {stats.conversations}</div>
-            <div>Messages: {stats.messages}</div>
-            <div>Offline Messages: {stats.offlineMessages}</div>
-            <div>Friends: {stats.friends}</div>
-          </div>
-        )}
-      </div>
-
-      <div className="devtools-section">
-        <h4>Actions</h4>
-        <div className="devtools-actions">
-          <button onClick={handleClearData} className="danger-btn">Clear All Data</button>
-          <button onClick={handleExportLogs}>Export Logs</button>
-          <button onClick={() => setLogs([])}>Clear Console</button>
-        </div>
-      </div>
-
-      <div className="devtools-section">
-        <h4>Console Output</h4>
-        <div className="console-output">
-          {logs.map((log, i) => (
-            <div key={i} className={`log-entry log-${log.type}`}>
-              <span className="log-time">[{log.timestamp}]</span>
-              <span className="log-message">{log.message}</span>
-            </div>
-          ))}
-          <div ref={logEndRef} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Connection Status Component (improved positioning)
-const ConnectionStatus = () => {
-  const [gunStatus, setGunStatus] = useState('connecting');
-  const [peerStatus, setPeerStatus] = useState('connecting');
-  const [relayStatus, setRelayStatus] = useState('checking...');
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  
-  useEffect(() => {
-    // Monitor Gun.js connection
-    const checkGunConnection = () => {
-      try {
-        const gun = gunAuthService.gun;
-        if (gun && gun._ && gun._.opt && gun._.opt.peers) {
-          const peers = Object.keys(gun._.opt.peers);
-          setGunStatus(peers.length > 0 ? 'connected' : 'disconnected');
-          setRelayStatus(`${peers.length} relay${peers.length !== 1 ? 's' : ''}`);
-        } else {
-          setGunStatus('initializing');
-          setRelayStatus('setting up...');
-        }
-      } catch (error) {
-        console.error('Gun status check error:', error);
-        setGunStatus('error');
-        setRelayStatus('error');
-      }
-    };
-    
-    // Monitor PeerJS connection
-    const checkPeerConnection = () => {
-      try {
-        const peer = webrtcService.peer;
-        if (peer) {
-          if (peer.disconnected) {
-            setPeerStatus('disconnected');
-          } else if (peer.destroyed) {
-            setPeerStatus('destroyed');
-          } else {
-            setPeerStatus('connected');
-          }
-        } else {
-          setPeerStatus('initializing');
-        }
-      } catch (error) {
-        console.error('Peer status check error:', error);
-        setPeerStatus('error');
-      }
-    };
-    
-    // Check connections periodically
-    checkGunConnection();
-    checkPeerConnection();
-    const interval = setInterval(() => {
-      checkGunConnection();
-      checkPeerConnection();
-    }, 2000);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'connected': return '#00ff00';
-      case 'connecting': case 'initializing': return '#ffff00';
-      case 'disconnected': case 'destroyed': case 'error': return '#ff0000';
-      default: return '#808080';
-    }
-  };
-  
-  if (isCollapsed) {
-    return (
-      <div style={{
-        position: 'fixed',
-        bottom: '10px',
-        left: '10px',
-        background: 'rgba(0, 0, 0, 0.9)',
-        border: '1px solid #00ff00',
-        borderRadius: '4px',
-        padding: '5px 10px',
-        fontSize: '12px',
-        zIndex: 999,
-        cursor: 'pointer'
-      }} onClick={() => setIsCollapsed(false)}>
-        <span>📡 Status</span>
-      </div>
-    );
-  }
-  
-  return (
-    <div style={{
-      position: 'fixed',
-      bottom: '10px',
-      left: '10px',
-      background: 'rgba(0, 0, 0, 0.9)',
-      border: '1px solid #00ff00',
-      borderRadius: '4px',
-      padding: '10px',
-      fontSize: '12px',
-      zIndex: 999,
-      minWidth: '200px'
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '5px'
-      }}>
-        <span style={{ fontWeight: 'bold' }}>Connection Status</span>
-        <button 
-          onClick={() => setIsCollapsed(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#00ff00',
-            cursor: 'pointer',
-            fontSize: '16px',
-            padding: '0',
-            marginLeft: '10px'
-          }}
-        >−</button>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '3px' }}>
-        <span style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          background: getStatusColor(gunStatus),
-          marginRight: '8px',
-          display: 'inline-block'
-        }}></span>
-        <span>Gun.js: {gunStatus} ({relayStatus})</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <span style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          background: getStatusColor(peerStatus),
-          marginRight: '8px',
-          display: 'inline-block'
-        }}></span>
-        <span>WebRTC: {peerStatus}</span>
-      </div>
-      {(gunStatus === 'disconnected' || gunStatus === 'error') && (
-        <div style={{ marginTop: '10px', fontSize: '11px', color: '#ff0000' }}>
-          ⚠️ Database connection failed. Check network.
-        </div>
-      )}
-    </div>
-  );
-};
+// ConnectionStatus component is now imported from components/ConnectionStatus.jsx
 
 // Main Chat Component with proper nickname display
 function ChatView({ user, onLogout, onInviteAccepted }) {
@@ -559,7 +298,6 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [typingStatus, setTypingStatus] = useState(new Map());
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
-  const [showDevTools, setShowDevTools] = useState(false);
   const [userNickname, setUserNickname] = useState('');
   const [friendsLoading, setFriendsLoading] = useState(true);
   const typingTimeoutRef = useRef(null);
@@ -790,18 +528,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     alert('Invite link copied to clipboard!');
   };
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ctrl/Cmd + D for DevTools
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-        e.preventDefault();
-        setShowDevTools(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  // Keyboard shortcuts are now handled by DevToolsWrapper
 
   // Escape HTML for safe rendering
   const escapeHtml = (text) => {
@@ -1003,14 +730,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         +
       </button>
 
-      {/* Dev Tools Toggle (Mobile) */}
-      <button
-        className="devtools-toggle"
-        onClick={() => setShowDevTools(!showDevTools)}
-        title="Toggle DevTools (Ctrl+D)"
-      >
-        🛠️
-      </button>
+
     </div>
   );
 }
