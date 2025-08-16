@@ -4,11 +4,23 @@ import hybridGunService from '../services/hybridGunService';
 /**
  * OnlineUsers Component
  * Shows only online friends with real-time status updates
+ * Responsive design for small screens (4-inch and up)
  */
 function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
   const [onlineStatus, setOnlineStatus] = useState({});
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCompact, setIsCompact] = useState(window.innerWidth <= 375);
+
+  // Detect screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      setIsCompact(window.innerWidth <= 375);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Monitor friends' online status
   useEffect(() => {
@@ -67,26 +79,28 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-      borderRadius: '12px',
+      maxHeight: '100%',
+      background: 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%)',
+      borderRadius: isCompact ? '8px' : '12px',
       overflow: 'hidden',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
     }}>
       {/* Header */}
       <div style={{
-        padding: '16px',
+        padding: isCompact ? '8px' : '12px',
         background: 'rgba(255, 255, 255, 0.05)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        flexShrink: 0
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '12px'
+          marginBottom: isCompact ? '6px' : '8px'
         }}>
           <h3 style={{
             margin: 0,
-            fontSize: '18px',
+            fontSize: isCompact ? '14px' : '16px',
             fontWeight: '600',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             WebkitBackgroundClip: 'text',
@@ -94,42 +108,36 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
           }}>
             Friends
           </h3>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
+          <span style={{
+            padding: isCompact ? '2px 6px' : '3px 8px',
+            background: 'rgba(67, 233, 123, 0.2)',
+            borderRadius: '10px',
+            fontSize: isCompact ? '10px' : '11px',
+            color: '#43e97b',
+            fontWeight: '500'
           }}>
-            <span style={{
-              padding: '4px 12px',
-              background: 'rgba(67, 233, 123, 0.2)',
-              borderRadius: '12px',
-              fontSize: '12px',
-              color: '#43e97b',
-              fontWeight: '500'
-            }}>
-              {onlineCount} online
-            </span>
-          </div>
+            {onlineCount} online
+          </span>
         </div>
 
         {/* Search Bar */}
         <div style={{
           position: 'relative',
-          marginBottom: '12px'
+          marginBottom: isCompact ? '6px' : '8px'
         }}>
           <input
             type="text"
-            placeholder="Search friends..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
-              padding: '10px 16px 10px 40px',
+              padding: isCompact ? '6px 8px 6px 28px' : '8px 12px 8px 32px',
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
+              borderRadius: '6px',
               color: '#fff',
-              fontSize: '14px',
+              fontSize: isCompact ? '12px' : '13px',
               outline: 'none',
               transition: 'all 0.3s'
             }}
@@ -144,10 +152,11 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
           />
           <span style={{
             position: 'absolute',
-            left: '12px',
+            left: isCompact ? '8px' : '10px',
             top: '50%',
             transform: 'translateY(-50%)',
-            color: 'rgba(255, 255, 255, 0.5)'
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: isCompact ? '12px' : '14px'
           }}>
             🔍
           </span>
@@ -157,9 +166,9 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
         <label style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
           cursor: 'pointer',
-          fontSize: '14px',
+          fontSize: isCompact ? '11px' : '12px',
           color: 'rgba(255, 255, 255, 0.8)'
         }}>
           <input
@@ -167,8 +176,8 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
             checked={showOnlineOnly}
             onChange={(e) => setShowOnlineOnly(e.target.checked)}
             style={{
-              width: '16px',
-              height: '16px',
+              width: isCompact ? '14px' : '16px',
+              height: isCompact ? '14px' : '16px',
               cursor: 'pointer'
             }}
           />
@@ -180,31 +189,33 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '8px'
+        overflowX: 'hidden',
+        padding: isCompact ? '4px' : '6px',
+        minHeight: 0 // Important for flex child scrolling
       }}>
         {sortedFriends.length === 0 ? (
           <div style={{
             textAlign: 'center',
-            padding: '40px 20px',
+            padding: isCompact ? '20px 10px' : '30px 15px',
             color: 'rgba(255, 255, 255, 0.5)'
           }}>
             {showOnlineOnly ? (
               <>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>😴</div>
-                <p>No friends online right now</p>
+                <div style={{ fontSize: isCompact ? '32px' : '40px', marginBottom: '8px' }}>😴</div>
+                <p style={{ fontSize: isCompact ? '12px' : '13px', margin: 0 }}>No friends online</p>
               </>
             ) : friends.length === 0 ? (
               <>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>👋</div>
-                <p>No friends yet</p>
-                <p style={{ fontSize: '12px', marginTop: '8px' }}>
-                  Share your invite link to add friends
+                <div style={{ fontSize: isCompact ? '32px' : '40px', marginBottom: '8px' }}>👋</div>
+                <p style={{ fontSize: isCompact ? '12px' : '13px', margin: '0 0 4px 0' }}>No friends yet</p>
+                <p style={{ fontSize: isCompact ? '10px' : '11px', margin: 0 }}>
+                  Share your invite link
                 </p>
               </>
             ) : (
               <>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
-                <p>No friends match your search</p>
+                <div style={{ fontSize: isCompact ? '32px' : '40px', marginBottom: '8px' }}>🔍</div>
+                <p style={{ fontSize: isCompact ? '12px' : '13px', margin: 0 }}>No matches</p>
               </>
             )}
           </div>
@@ -212,7 +223,8 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
           sortedFriends.map((friend) => {
             const isOnline = onlineStatus[friend.pub || friend.publicKey]?.online;
             const presence = onlineStatus[friend.pub || friend.publicKey];
-            const isSelected = selectedFriend?.pub === (friend.pub || friend.publicKey);
+            const isSelected = selectedFriend?.pub === (friend.pub || friend.publicKey) || 
+                              selectedFriend?.publicKey === (friend.pub || friend.publicKey);
             const lastSeen = presence?.lastActive 
               ? new Date(presence.lastActive).toLocaleTimeString([], { 
                   hour: '2-digit', 
@@ -227,24 +239,24 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '12px',
-                  marginBottom: '8px',
+                  padding: isCompact ? '8px 6px' : '10px 8px',
+                  marginBottom: '4px',
                   background: isSelected 
                     ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%)'
                     : 'rgba(255, 255, 255, 0.05)',
                   border: isSelected 
                     ? '1px solid rgba(102, 126, 234, 0.5)'
                     : '1px solid transparent',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s',
+                  transition: 'all 0.2s',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.transform = 'translateX(4px)';
+                    e.currentTarget.style.transform = 'translateX(2px)';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -257,11 +269,12 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
                 {/* Avatar */}
                 <div style={{
                   position: 'relative',
-                  marginRight: '12px'
+                  marginRight: isCompact ? '8px' : '10px',
+                  flexShrink: 0
                 }}>
                   <div style={{
-                    width: '40px',
-                    height: '40px',
+                    width: isCompact ? '32px' : '36px',
+                    height: isCompact ? '32px' : '36px',
                     borderRadius: '50%',
                     background: isOnline 
                       ? 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
@@ -269,11 +282,11 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '18px',
+                    fontSize: isCompact ? '14px' : '16px',
                     fontWeight: '600',
                     color: '#fff',
                     boxShadow: isOnline 
-                      ? '0 0 0 3px rgba(67, 233, 123, 0.3)'
+                      ? '0 0 0 2px rgba(67, 233, 123, 0.3)'
                       : 'none'
                   }}>
                     {friend.nickname.charAt(0).toUpperCase()}
@@ -284,24 +297,28 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
                     position: 'absolute',
                     bottom: '0',
                     right: '0',
-                    width: '12px',
-                    height: '12px',
+                    width: isCompact ? '8px' : '10px',
+                    height: isCompact ? '8px' : '10px',
                     borderRadius: '50%',
                     background: isOnline ? '#43e97b' : '#666',
                     border: '2px solid #1a1a2e',
                     boxShadow: isOnline 
-                      ? '0 0 8px rgba(67, 233, 123, 0.5)'
+                      ? '0 0 6px rgba(67, 233, 123, 0.5)'
                       : 'none'
                   }} />
                 </div>
 
                 {/* Friend Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ 
+                  flex: 1, 
+                  minWidth: 0,
+                  overflow: 'hidden'
+                }}>
                   <div style={{
-                    fontSize: '16px',
+                    fontSize: isCompact ? '13px' : '14px',
                     fontWeight: '500',
                     color: '#fff',
-                    marginBottom: '4px',
+                    marginBottom: '2px',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
@@ -309,45 +326,37 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
                     {friend.nickname}
                   </div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: isCompact ? '10px' : '11px',
                     color: isOnline 
                       ? '#43e97b'
-                      : 'rgba(255, 255, 255, 0.5)'
+                      : 'rgba(255, 255, 255, 0.5)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}>
-                    {isOnline ? '🟢 Online now' : `Last seen: ${lastSeen}`}
+                    {isOnline ? '🟢 Online' : `Last: ${lastSeen}`}
                   </div>
                 </div>
-
-                {/* Unread indicator (placeholder for future) */}
-                {false && (
-                  <div style={{
-                    padding: '2px 8px',
-                    background: '#fa709a',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    color: '#fff',
-                    fontWeight: '600'
-                  }}>
-                    3
-                  </div>
-                )}
               </div>
             );
           })
         )}
       </div>
 
-      {/* Quick Stats */}
-      <div style={{
-        padding: '12px 16px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        fontSize: '12px',
-        color: 'rgba(255, 255, 255, 0.6)',
-        textAlign: 'center'
-      }}>
-        {friends.length} total friends • {onlineCount} online
-      </div>
+      {/* Quick Stats - Compact for small screens */}
+      {!isCompact && (
+        <div style={{
+          padding: '8px 12px',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          fontSize: '11px',
+          color: 'rgba(255, 255, 255, 0.6)',
+          textAlign: 'center',
+          flexShrink: 0
+        }}>
+          {friends.length} friends • {onlineCount} online
+        </div>
+      )}
     </div>
   );
 }

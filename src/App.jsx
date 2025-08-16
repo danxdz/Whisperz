@@ -546,8 +546,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   return (
     <div className="chat-container">
       {/* Sidebar */}
-      <div className="sidebar">
-        <div className="sidebar-header">
+      <div className="sidebar" style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden'
+      }}>
+        <div className="sidebar-header" style={{ flexShrink: 0 }}>
           <h2>Contacts</h2>
           <div style={{ display: 'flex', gap: '10px' }}>
             <ThemeToggle />
@@ -572,7 +577,12 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         </div>
         
         {/* Replace the existing friends list with OnlineUsers component */}
-        <div style={{ flex: 1, padding: '10px' }}>
+        <div style={{ 
+          flex: 1, 
+          padding: '10px',
+          minHeight: 0, // Important for proper scrolling
+          overflow: 'hidden'
+        }}>
           <OnlineUsers
             friends={friends}
             selectedFriend={selectedFriend}
@@ -581,7 +591,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           />
         </div>
 
-        <div className="sidebar-footer">
+        <div className="sidebar-footer" style={{ flexShrink: 0 }}>
           <div className="user-info">
             <span>{userNickname}</span>
             <button onClick={onLogout} className="logout-btn">Logout</button>
