@@ -908,7 +908,13 @@ function App() {
         try {
           const result = await friendsService.acceptInvite(codeToUse);
           console.log('✅ Invite acceptance result:', result);
-          alert('Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
+          
+          if (result.alreadyFriends) {
+            console.log('Already friends with this user');
+            // Don't show alert if already friends, just continue
+          } else {
+            alert('Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
+          }
           
           // Refresh friends list
           if (typeof loadFriendsRef.current === 'function') {
