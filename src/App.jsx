@@ -7,6 +7,7 @@ import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
 import { ThemeToggle, DevToolsWrapper, SwipeableChat } from './components';
+import { useTheme } from './contexts/ThemeContext';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -273,6 +274,7 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
 
 // Main Chat Component with proper nickname display
 function ChatView({ user, onLogout, onInviteAccepted }) {
+  const { colors } = useTheme();
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -549,25 +551,25 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           <>
             <div style={{ 
               padding: '16px 20px',
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              background: colors.bgCard,
+              borderBottom: `1px solid ${colors.borderColor}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexShrink: 0
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#fff' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: colors.textPrimary }}>
                   {escapeHtml(selectedFriend.nickname)}
                 </h3>
                 <span style={{
                   padding: '2px 8px',
                   background: onlineStatus.get(selectedFriend.publicKey) 
-                    ? 'rgba(67, 233, 123, 0.2)' 
-                    : 'rgba(255, 255, 255, 0.1)',
+                    ? colors.successBg
+                    : colors.bgTertiary,
                   borderRadius: '12px',
                   fontSize: '12px',
-                  color: onlineStatus.get(selectedFriend.publicKey) ? '#43e97b' : 'rgba(255, 255, 255, 0.5)'
+                  color: onlineStatus.get(selectedFriend.publicKey) ? colors.success : colors.textMuted
                 }}>
                   {onlineStatus.get(selectedFriend.publicKey) ? 'Online' : 'Offline'}
                 </span>
@@ -596,15 +598,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                     padding: '10px 14px',
                     borderRadius: '12px',
                     background: msg.from === user.pub 
-                      ? 'linear-gradient(135deg, #667eea, #764ba2)'
-                      : 'rgba(255, 255, 255, 0.1)',
-                    color: '#fff'
+                      ? colors.messageSent
+                      : colors.messageReceived,
+                    color: msg.from === user.pub ? '#fff' : colors.textPrimary
                   }}>
                     <div>{escapeHtml(msg.content)}</div>
                     <div style={{ 
                       fontSize: '11px', 
                       opacity: 0.7,
-                      marginTop: '4px'
+                      marginTop: '4px',
+                      color: msg.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted
                     }}>
                       {new Date(msg.timestamp).toLocaleTimeString()}
                       {msg.from === user.pub && (

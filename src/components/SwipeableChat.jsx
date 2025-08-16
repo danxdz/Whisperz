@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ResizableSidebar from './ResizableSidebar';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * SwipeableChat Component
@@ -16,6 +17,7 @@ function SwipeableChat({
   userNickname,
   onLogout
 }) {
+  const { colors } = useTheme();
   const [showFriends, setShowFriends] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -105,7 +107,7 @@ function SwipeableChat({
         display: 'flex',
         margin: 0,
         padding: 0,
-        background: 'linear-gradient(135deg, #0a0a0f 0%, #16161f 100%)'
+        background: colors.bgPrimary
       }}>
         <ResizableSidebar
           friends={friends}
@@ -133,7 +135,7 @@ function SwipeableChat({
         right: 0,
         bottom: 0,
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #0a0a0f 0%, #16161f 100%)'
+        background: colors.bgPrimary
       }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
