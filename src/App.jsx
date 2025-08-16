@@ -571,6 +571,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             selectedFriend={selectedFriend}
             onSelectFriend={setSelectedFriend}
             currentUser={user}
+            onFriendsUpdate={loadFriends}
           />
         </div>
 

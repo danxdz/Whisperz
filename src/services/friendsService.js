@@ -150,6 +150,27 @@ class FriendsService {
 
         console.log('📋 Invite data found:', inviteData);
 
+        // Check if the inviter is blocked
+        const isBlockedUser = await this.isBlocked(inviteData.from);
+        if (isBlockedUser) {
+          console.error('❌ Cannot accept invite from blocked user');
+          reject(new Error('Cannot accept invite from blocked user'));
+          return;
+        }
+
+        // Check if we are blocked by the inviter
+        const areWeBlocked = await new Promise((resolve) => {
+          this.gun.get('~' + inviteData.from).get('blocked').get(user.pub).once((data) => {
+            resolve(!!data);
+          });
+        });
+
+        if (areWeBlocked) {
+          console.error('❌ You have been blocked by this user');
+          reject(new Error('You cannot connect with this user'));
+          return;
+        }
+
         // Check if invite has already been used
         if (inviteData.used) {
           console.error('❌ Invite already used by:', inviteData.usedBy);
@@ -405,14 +426,106 @@ class FriendsService {
     return friendData;
   }
 
-  // Remove friend - properly removes bidirectional friendship
-  async removeFriend(publicKey) {
+  // Block/Ignore a user - prevents them from adding you again
+  async blockUser(publicKey, removeAsFriend = true) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('🗑️ Removing friend:', publicKey);
+    console.log('🚫 Blocking user:', publicKey);
 
     try {
+      // 1. Add to blocked list
+      await new Promise((resolve) => {
+        gunAuthService.user.get('blocked').get(publicKey).put({
+          blockedAt: Date.now(),
+          publicKey: publicKey
+        }, (ack) => {
+          console.log('✅ Added to blocked list:', ack);
+          resolve();
+        });
+      });
+
+      // 2. Remove as friend if requested
+      if (removeAsFriend) {
+        const existingFriend = await this.getFriend(publicKey);
+        if (existingFriend) {
+          await this.removeFriend(publicKey);
+        }
+      }
+
+      console.log('✅ User blocked successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error blocking user:', error);
+      throw error;
+    }
+  }
+
+  // Unblock a user
+  async unblockUser(publicKey) {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('✅ Unblocking user:', publicKey);
+
+    await new Promise((resolve) => {
+      gunAuthService.user.get('blocked').get(publicKey).put(null, (ack) => {
+        console.log('✅ Removed from blocked list:', ack);
+        resolve();
+      });
+    });
+
+    return { success: true };
+  }
+
+  // Check if a user is blocked
+  async isBlocked(publicKey) {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) return false;
+
+    return new Promise((resolve) => {
+      gunAuthService.user.get('blocked').get(publicKey).once((data) => {
+        resolve(!!data);
+      });
+    });
+  }
+
+  // Get all blocked users
+  async getBlockedUsers() {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) return [];
+
+    return new Promise((resolve) => {
+      const blocked = [];
+      
+      gunAuthService.user.get('blocked').map().once((data, key) => {
+        if (data) {
+          blocked.push({
+            publicKey: key,
+            blockedAt: data.blockedAt
+          });
+        }
+      });
+
+      setTimeout(() => {
+        resolve(blocked);
+      }, 500);
+    });
+  }
+
+  // Remove friend - properly removes bidirectional friendship with optional blocking
+  async removeFriend(publicKey, blockUser = false) {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('🗑️ Removing friend:', publicKey, blockUser ? '(with blocking)' : '');
+
+    try {
+      // If blocking, add to block list first
+      if (blockUser) {
+        await this.blockUser(publicKey, false); // false = don't recursively call removeFriend
+      }
+
       // 1. Remove from current user's friends list
       await new Promise((resolve) => {
         gunAuthService.user.get('friends').get(publicKey).put(null, (ack) => {
@@ -443,8 +556,8 @@ class FriendsService {
       });
 
       // 5. Clear any conversation/messages (optional - you might want to keep history)
-      const clearMessages = window.confirm('Also delete conversation history with this friend?');
-      if (clearMessages) {
+      const clearMessages = !blockUser && window.confirm('Also delete conversation history with this friend?');
+      if (clearMessages || blockUser) {
         // Remove messages from hybrid storage
         const conversationId = this.generateConversationId(user.pub, publicKey);
         gunAuthService.user.get('conversations').get(conversationId).put(null);
@@ -458,7 +571,7 @@ class FriendsService {
       this.notifyFriendListeners('removed', { publicKey });
 
       console.log('✅ Friend removed successfully');
-      return { success: true };
+      return { success: true, blocked: blockUser };
     } catch (error) {
       console.error('❌ Error removing friend:', error);
       throw error;

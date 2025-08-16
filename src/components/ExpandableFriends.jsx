@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import hybridGunService from '../services/hybridGunService';
+import friendsService from '../services/friendsService';
 
 /**
  * ExpandableFriends Component
  * Collapsible friends list that can expand to show all friends or just online ones
+ * With friend management (remove/block)
  */
-function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUser }) {
+function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUser, onFriendsUpdate }) {
   const [onlineStatus, setOnlineStatus] = useState({});
   const [isExpanded, setIsExpanded] = useState(false);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showActions, setShowActions] = useState(null); // Track which friend's actions are shown
 
   // Monitor friends' online status
   useEffect(() => {
@@ -35,6 +38,55 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     return () => clearInterval(interval);
   }, [friends]);
 
+  // Handle remove friend
+  const handleRemoveFriend = async (friend) => {
+    const confirmRemove = window.confirm(`Remove ${friend.nickname} from your friends?`);
+    if (!confirmRemove) return;
+
+    try {
+      await friendsService.removeFriend(friend.pub || friend.publicKey, false);
+      alert(`${friend.nickname} has been removed from your friends.`);
+      
+      // Refresh friends list
+      if (onFriendsUpdate) {
+        onFriendsUpdate();
+      }
+    } catch (error) {
+      console.error('Failed to remove friend:', error);
+      alert('Failed to remove friend: ' + error.message);
+    }
+    
+    setShowActions(null);
+  };
+
+  // Handle block friend
+  const handleBlockFriend = async (friend) => {
+    const confirmBlock = window.confirm(
+      `Block ${friend.nickname}?\n\n` +
+      `This will:\n` +
+      `• Remove them from your friends\n` +
+      `• Delete conversation history\n` +
+      `• Prevent them from sending you invites\n` +
+      `• They won't be notified`
+    );
+    if (!confirmBlock) return;
+
+    try {
+      await friendsService.removeFriend(friend.pub || friend.publicKey, true); // true = also block
+      alert(`${friend.nickname} has been blocked.`);
+      
+      // Refresh friends list
+      if (onFriendsUpdate) {
+        onFriendsUpdate();
+      }
+    } catch (error) {
+      console.error('Failed to block friend:', error);
+      alert('Failed to block friend: ' + error.message);
+    }
+    
+    setShowActions(null);
+  };
+
   // Filter and sort friends
   const onlineFriends = friends.filter(friend => 
     onlineStatus[friend.pub || friend.publicKey]?.online
@@ -53,13 +105,14 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     filteredFriends;
 
   const renderFriend = (friend, isOnline) => {
-    const isSelected = selectedFriend?.pub === (friend.pub || friend.publicKey) || 
-                      selectedFriend?.publicKey === (friend.pub || friend.publicKey);
+    const friendKey = friend.pub || friend.publicKey;
+    const isSelected = selectedFriend?.pub === friendKey || 
+                      selectedFriend?.publicKey === friendKey;
+    const showingActions = showActions === friendKey;
 
     return (
       <div
-        key={friend.pub || friend.publicKey}
-        onClick={() => onSelectFriend(friend)}
+        key={friendKey}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -73,7 +126,8 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
             : '1px solid transparent',
           borderRadius: '6px',
           cursor: 'pointer',
-          transition: 'all 0.2s'
+          transition: 'all 0.2s',
+          position: 'relative'
         }}
         onMouseEnter={(e) => {
           if (!isSelected) {
@@ -86,65 +140,161 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
           }
         }}
       >
-        {/* Compact Avatar */}
-        <div style={{
-          width: '28px',
-          height: '28px',
-          borderRadius: '50%',
-          background: isOnline 
-            ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
-            : 'linear-gradient(135deg, #667eea, #764ba2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '12px',
-          fontWeight: '600',
-          color: '#fff',
-          marginRight: '8px',
-          flexShrink: 0,
-          position: 'relative'
-        }}>
-          {friend.nickname.charAt(0).toUpperCase()}
-          
-          {/* Online dot */}
+        {/* Clickable area for selecting friend */}
+        <div
+          onClick={() => onSelectFriend(friend)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flex: 1,
+            minWidth: 0
+          }}
+        >
+          {/* Compact Avatar */}
+          <div style={{
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            background: isOnline 
+              ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
+              : 'linear-gradient(135deg, #667eea, #764ba2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            fontWeight: '600',
+            color: '#fff',
+            marginRight: '8px',
+            flexShrink: 0,
+            position: 'relative'
+          }}>
+            {friend.nickname.charAt(0).toUpperCase()}
+            
+            {/* Online dot */}
+            <div style={{
+              position: 'absolute',
+              bottom: '-1px',
+              right: '-1px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: isOnline ? '#43e97b' : '#666',
+              border: '2px solid #0a0a0f'
+            }} />
+          </div>
+
+          {/* Name */}
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              fontSize: '13px',
+              fontWeight: '500',
+              color: '#fff',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {friend.nickname}
+            </div>
+          </div>
+
+          {/* Status indicator */}
+          {isOnline && (
+            <span style={{
+              fontSize: '10px',
+              color: '#43e97b',
+              marginRight: '4px'
+            }}>
+              ●
+            </span>
+          )}
+        </div>
+
+        {/* Actions button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowActions(showingActions ? null : friendKey);
+          }}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'rgba(255, 255, 255, 0.5)',
+            cursor: 'pointer',
+            padding: '2px 4px',
+            fontSize: '14px',
+            transition: 'color 0.2s'
+          }}
+          onMouseEnter={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.8)'}
+          onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.5)'}
+        >
+          ⋮
+        </button>
+
+        {/* Actions dropdown */}
+        {showingActions && (
           <div style={{
             position: 'absolute',
-            bottom: '-1px',
-            right: '-1px',
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: isOnline ? '#43e97b' : '#666',
-            border: '2px solid #0a0a0f'
-          }} />
-        </div>
-
-        {/* Name */}
-        <div style={{
-          flex: 1,
-          minWidth: 0,
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            fontSize: '13px',
-            fontWeight: '500',
-            color: '#fff',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
+            right: '30px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(30, 30, 40, 0.98)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '6px',
+            padding: '4px',
+            zIndex: 10,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
           }}>
-            {friend.nickname}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveFriend(friend);
+              }}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '6px 12px',
+                background: 'transparent',
+                border: 'none',
+                color: '#ff9999',
+                fontSize: '12px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                borderRadius: '4px',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.background = 'rgba(255, 100, 100, 0.1)'}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              Remove Friend
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleBlockFriend(friend);
+              }}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '6px 12px',
+                background: 'transparent',
+                border: 'none',
+                color: '#ff6666',
+                fontSize: '12px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                borderRadius: '4px',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.background = 'rgba(255, 50, 50, 0.1)'}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              Block User
+            </button>
           </div>
-        </div>
-
-        {/* Status indicator */}
-        {isOnline && (
-          <span style={{
-            fontSize: '10px',
-            color: '#43e97b'
-          }}>
-            ●
-          </span>
         )}
       </div>
     );
