@@ -692,13 +692,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             alignItems: 'center',
             justifyContent: 'center',
             flexDirection: 'column',
-            color: 'rgba(255, 255, 255, 0.5)'
+            color: colors.textMuted
           }}>
             <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
               <ThemeToggle />
             </div>
+            <div style={{ position: 'absolute', bottom: '20px', left: '20px', fontSize: '10px', color: colors.textMuted, opacity: 0.5 }}>
+              v2.1.0
+            </div>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '24px', fontWeight: '600' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: colors.textPrimary, fontSize: '24px', fontWeight: '600' }}>
               Welcome to Whisperz
             </h3>
             <p style={{ margin: 0, fontSize: '16px' }}>Select a friend to start chatting</p>
@@ -742,6 +745,12 @@ function App() {
   const [initError, setInitError] = useState(null);
   const [isAdminSetup, setIsAdminSetup] = useState(false);
   const loadFriendsRef = useRef(null);
+
+  // Version indicator for deployment verification
+  useEffect(() => {
+    console.log('🚀 Whisperz v2.1.0 - Theme Update');
+    console.log('📅 Deployed:', new Date().toISOString());
+  }, []);
 
   // Callback to receive loadFriends function from ChatView
   const handleInviteAccepted = (loadFriendsFunc) => {

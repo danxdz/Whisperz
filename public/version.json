@@ -1,0 +1,10 @@
+{
+  "version": "2.1.0",
+  "buildDate": "2024-01-15",
+  "features": [
+    "Theme system with light/dark modes",
+    "Swipeable mobile interface",
+    "Improved friend management",
+    "WebRTC peer-to-peer messaging"
+  ]
+}
