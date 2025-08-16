@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import DevToolsButton from './DevToolsButton';
+import SimpleDevToolsButton from './SimpleDevToolsButton';
 import MobileDevTools from './MobileDevTools';
 import MobileDevToolsCompact from './MobileDevToolsCompact';
 import EnhancedDevTools from './EnhancedDevTools';
@@ -83,9 +83,9 @@ function DevToolsWrapper() {
           <MobileDevTools onOpenDevTools={toggleDevTools} />
         )
       ) : (
-        <DevToolsButton 
+        <SimpleDevToolsButton 
           onClick={toggleDevTools}
-          isDevToolsOpen={isDevToolsOpen}
+          isOpen={isDevToolsOpen}
         />
       )}
       
