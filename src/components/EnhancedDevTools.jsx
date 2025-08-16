@@ -14,6 +14,13 @@ function EnhancedDevTools({ isVisible, onClose }) {
   const [users, setUsers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [stats, setStats] = useState({});
+  const [networkStats, setNetworkStats] = useState({
+    gunStatus: 'unknown',
+    webrtcStatus: 'unknown',
+    peerId: '',
+    connectedPeers: 0,
+    gunPeers: 0
+  });
   const [selectedUser, setSelectedUser] = useState(null);
   const [isCompact, setIsCompact] = useState(window.innerWidth <= 375);
   
@@ -69,6 +76,18 @@ function EnhancedDevTools({ isVisible, onClose }) {
       const dbStats = await hybridGunService.getDatabaseStats();
       const gun = gunAuthService.gun;
       const peers = gun?._.opt?.peers ? Object.keys(gun._.opt.peers).length : 0;
+      
+      // Load network stats
+      const peerId = webrtcService.getPeerId();
+      const webrtcPeers = webrtcService.getConnectedPeers ? webrtcService.getConnectedPeers() : [];
+      
+      setNetworkStats({
+        gunStatus: gun ? 'connected' : 'disconnected',
+        webrtcStatus: peerId ? 'connected' : 'disconnected',
+        peerId: peerId || 'Not initialized',
+        connectedPeers: webrtcPeers.length,
+        gunPeers: peers
+      });
       
       setStats({
         ...dbStats,
@@ -438,12 +457,66 @@ function EnhancedDevTools({ isVisible, onClose }) {
         Statistics
       </h4>
       
+      {/* Network Status Section */}
+      <div style={{
+        marginBottom: '16px',
+        padding: '12px',
+        background: 'rgba(255, 255, 255, 0.03)',
+        borderRadius: '8px',
+        border: '1px solid rgba(255, 255, 255, 0.1)'
+      }}>
+        <h5 style={{ 
+          margin: '0 0 8px 0', 
+          fontSize: '14px',
+          color: '#667eea'
+        }}>
+          🌐 Network Status
+        </h5>
+        
+        <div style={{ display: 'grid', gap: '6px', fontSize: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Gun.js:</span>
+            <span style={{ 
+              color: networkStats.gunStatus === 'connected' ? '#43e97b' : '#ff6666'
+            }}>
+              {networkStats.gunStatus} ({networkStats.gunPeers} peers)
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>WebRTC:</span>
+            <span style={{ 
+              color: networkStats.webrtcStatus === 'connected' ? '#43e97b' : '#ff6666'
+            }}>
+              {networkStats.webrtcStatus}
+            </span>
+          </div>
+          {networkStats.peerId && networkStats.peerId !== 'Not initialized' && (
+            <div style={{ 
+              fontSize: '10px', 
+              color: 'rgba(255, 255, 255, 0.5)',
+              wordBreak: 'break-all'
+            }}>
+              Peer ID: {networkStats.peerId}
+            </div>
+          )}
+          {networkStats.connectedPeers > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Connected Peers:</span>
+              <span style={{ color: '#43e97b' }}>{networkStats.connectedPeers}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* General Stats */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: isCompact ? '1fr' : 'repeat(2, 1fr)',
         gap: '8px'
       }}>
-        {Object.entries(stats).map(([key, value]) => (
+        {Object.entries(stats).filter(([key]) => 
+          !['gunPeers', 'webrtcStatus'].includes(key) // Filter out duplicate network stats
+        ).map(([key, value]) => (
           <div key={key} style={{
             padding: isCompact ? '6px' : '8px',
             background: 'rgba(255, 255, 255, 0.05)',

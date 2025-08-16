@@ -707,9 +707,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             flexDirection: 'column',
             color: 'rgba(255, 255, 255, 0.5)'
           }}>
-            <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '12px' }}>
+            <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
               <ThemeToggle />
-              <ConnectionStatus />
             </div>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
             <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '24px', fontWeight: '600' }}>
@@ -743,43 +742,6 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
       {/* DevTools - Using the new enhanced version */}
       <DevToolsWrapper />
-
-      {/* Floating Invite Button for Mobile */}
-      <button
-        onClick={handleGenerateInvite}
-        className="floating-invite-btn"
-        title="Invite a friend"
-        style={{
-          position: 'fixed',
-          bottom: '80px',
-          right: '20px',
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          border: 'none',
-          fontSize: '30px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.5)',
-          display: 'none',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          transition: 'all 0.3s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.1) rotate(90deg)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'scale(1) rotate(0deg)';
-        }}
-      >
-        +
-      </button>
-
-
     </div>
   );
 }
@@ -1063,13 +1025,7 @@ function App() {
     );
   }
 
-  return (
-    <div>
-      <ThemeToggle />
-      <ConnectionStatus />
-      <ChatView user={user} onLogout={handleLogout} onInviteAccepted={handleInviteAccepted} />
-    </div>
-  );
+  return <ChatView user={user} onLogout={handleLogout} onInviteAccepted={handleInviteAccepted} />;
 }
 
 export default App;
