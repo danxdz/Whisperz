@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle } from './components';
+import { ThemeToggle, DevToolsWrapper, ConnectionStatus as ConnectionStatusComponent } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -965,8 +965,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         </div>
       )}
 
-      {/* DevTools */}
-      <DevTools isVisible={showDevTools} onClose={() => setShowDevTools(false)} />
+      {/* DevTools - Using the new enhanced version */}
+      <DevToolsWrapper />
 
       {/* Floating Invite Button for Mobile */}
       <button
