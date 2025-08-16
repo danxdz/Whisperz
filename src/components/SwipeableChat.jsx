@@ -21,13 +21,24 @@ function SwipeableChat({
   const [touchEnd, setTouchEnd] = useState(null);
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const containerRef = useRef(null);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
-  // Check if mobile
-  const isMobile = window.innerWidth <= 768;
+  // Update mobile detection on resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      console.log('Mobile mode:', mobile, 'Width:', window.innerWidth);
+    };
+    
+    handleResize(); // Check on mount
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Reset swipe offset when switching views
@@ -38,6 +49,7 @@ function SwipeableChat({
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
     setIsSwiping(true);
+    console.log('Touch start:', e.targetTouches[0].clientX);
   };
 
   const onTouchMove = (e) => {
@@ -65,11 +77,15 @@ function SwipeableChat({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
+    console.log('Swipe distance:', distance, 'Left:', isLeftSwipe, 'Right:', isRightSwipe);
+
     if (isLeftSwipe && !showFriends) {
       // Swipe left - show friends
+      console.log('Showing friends panel');
       setShowFriends(true);
     } else if (isRightSwipe && showFriends) {
       // Swipe right - show chat
+      console.log('Showing chat');
       setShowFriends(false);
     }
     
@@ -123,28 +139,49 @@ function SwipeableChat({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Swipe Indicator */}
+      {/* Hamburger Menu Button - Always visible on mobile */}
+      {!showFriends && (
+        <button
+          onClick={() => setShowFriends(true)}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            left: '16px',
+            zIndex: 1001,
+            width: '40px',
+            height: '40px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            color: '#fff',
+            fontSize: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          ☰
+        </button>
+      )}
+
+      {/* Swipe Indicator - More subtle */}
       <div style={{
         position: 'absolute',
         top: '50%',
-        left: showFriends ? 'auto' : '10px',
-        right: showFriends ? '10px' : 'auto',
+        left: showFriends ? 'auto' : '4px',
+        right: showFriends ? '4px' : 'auto',
         transform: 'translateY(-50%)',
         zIndex: 1000,
-        padding: '8px',
-        background: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '50%',
-        opacity: 0.7,
+        width: '4px',
+        height: '60px',
+        background: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: '2px',
+        opacity: 0.5,
         pointerEvents: 'none',
         transition: 'opacity 0.3s'
-      }}>
-        <div style={{
-          fontSize: '20px',
-          color: 'rgba(255, 255, 255, 0.5)'
-        }}>
-          {showFriends ? '→' : '←'}
-        </div>
-      </div>
+      }}/>
 
       {/* Navigation Dots */}
       <div style={{
