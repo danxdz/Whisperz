@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, ConnectionStatus, ExpandableFriends } from './components';
+import { ThemeToggle, DevToolsWrapper, ConnectionStatus, CollapsibleSidebar } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -527,71 +527,34 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   };
 
   return (
-    <div className="chat-container">
-      {/* Sidebar */}
-      <div className="sidebar" style={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden'
-      }}>
-        <div className="sidebar-header" style={{ flexShrink: 0 }}>
-          <h2>Contacts</h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <ThemeToggle />
-            <button
-              onClick={handleGenerateInvite}
-              className="generate-invite-btn"
-              style={{
-                background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                padding: '8px 16px',
-                cursor: 'pointer',
-                fontSize: '24px',
-                width: '40px',
-                height: '40px'
-              }}
-            >
-              +
-            </button>
-          </div>
-        </div>
-        
-        {/* Replace the existing friends list with ExpandableFriends component */}
-        <div style={{ 
-          flex: 1, 
-          padding: '10px',
-          minHeight: 0, // Important for proper scrolling
-          overflow: 'auto'
-        }}>
-          <ExpandableFriends
-            friends={friends}
-            selectedFriend={selectedFriend}
-            onSelectFriend={setSelectedFriend}
-            currentUser={user}
-            onFriendsUpdate={loadFriends}
-          />
-        </div>
-
-        <div className="sidebar-footer" style={{ flexShrink: 0 }}>
-          <div className="user-info">
-            <span>{userNickname}</span>
-            <button onClick={onLogout} className="logout-btn">Logout</button>
-          </div>
-        </div>
-      </div>
+    <div className="chat-container" style={{ display: 'flex', height: '100vh' }}>
+      {/* Collapsible Sidebar */}
+      <CollapsibleSidebar
+        friends={friends}
+        selectedFriend={selectedFriend}
+        onSelectFriend={setSelectedFriend}
+        currentUser={user}
+        onFriendsUpdate={loadFriends}
+        onGenerateInvite={handleGenerateInvite}
+        userNickname={userNickname}
+        onLogout={onLogout}
+      />
 
       {/* Chat Area */}
       <div className="chat-area">
         {selectedFriend ? (
           <>
-            <div className="chat-header">
-              <h3>{escapeHtml(selectedFriend.nickname)}</h3>
-              <span className={`status ${onlineStatus.get(selectedFriend.publicKey) ? 'online' : 'offline'}`}>
-                {onlineStatus.get(selectedFriend.publicKey) ? 'Online' : 'Offline'}
-              </span>
+            <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h3>{escapeHtml(selectedFriend.nickname)}</h3>
+                <span className={`status ${onlineStatus.get(selectedFriend.publicKey) ? 'online' : 'offline'}`}>
+                  {onlineStatus.get(selectedFriend.publicKey) ? 'Online' : 'Offline'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <ThemeToggle />
+                <ConnectionStatus />
+              </div>
             </div>
 
             <div className="messages-container">
@@ -636,12 +599,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               <button type="submit" className="send-btn">Send</button>
             </form>
           </>
-        ) : (
-          <div className="no-chat">
-            <h3>Select a contact to start chatting</h3>
-            <p>Your messages are encrypted and sent peer-to-peer</p>
-          </div>
-        )}
+                  ) : (
+            <div className="no-chat">
+              <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '12px' }}>
+                <ThemeToggle />
+                <ConnectionStatus />
+              </div>
+              <h3>Select a contact to start chatting</h3>
+              <p>Your messages are encrypted and sent peer-to-peer</p>
+            </div>
+          )}
       </div>
 
       {/* Invite Modal */}

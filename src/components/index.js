@@ -16,6 +16,7 @@ export { default as ThemeToggle } from './ThemeToggle';
 export { default as EnhancedDevTools } from './EnhancedDevTools';
 export { default as OnlineUsers } from './OnlineUsers';
 export { default as ExpandableFriends } from './ExpandableFriends';
+export { default as CollapsibleSidebar } from './CollapsibleSidebar';
 
 // Future components can be added here as they are extracted:
 // export { default as RegisterView } from './RegisterView';
