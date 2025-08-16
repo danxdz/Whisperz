@@ -370,13 +370,12 @@ function ResizableSidebar({
     <>
       <div 
         ref={sidebarRef}
-        className="sidebar"
         style={{
           width: `${currentWidth}px`,
           transition: isResizing ? 'none' : 'width 0.3s ease',
           display: 'flex',
           flexDirection: 'column',
-          height: '100vh',
+          height: '100%',
           background: 'rgba(20, 20, 30, 0.95)',
           borderRight: '1px solid rgba(255, 255, 255, 0.1)',
           position: 'relative',
@@ -623,7 +622,7 @@ function ResizableSidebar({
             left: `${currentWidth - 2}px`,
             top: 0,
             width: '4px',
-            height: '100vh',
+            height: '100%',
             cursor: 'col-resize',
             background: 'transparent',
             zIndex: 10,

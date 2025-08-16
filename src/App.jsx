@@ -527,7 +527,17 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   };
 
   return (
-    <div className="chat-container" style={{ display: 'flex', height: '100vh', overflow: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ 
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: 'flex',
+      margin: 0,
+      padding: 0,
+      background: 'linear-gradient(135deg, #0a0a0f 0%, #16161f 100%)'
+    }}>
       {/* Resizable Sidebar */}
       <ResizableSidebar
         friends={friends}
@@ -541,13 +551,37 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       />
 
       {/* Chat Area */}
-      <div className="chat-area" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        minWidth: 0,
+        position: 'relative'
+      }}>
         {selectedFriend ? (
           <>
-            <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ 
+              padding: '16px 20px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0
+            }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h3>{escapeHtml(selectedFriend.nickname)}</h3>
-                <span className={`status ${onlineStatus.get(selectedFriend.publicKey) ? 'online' : 'offline'}`}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#fff' }}>
+                  {escapeHtml(selectedFriend.nickname)}
+                </h3>
+                <span style={{
+                  padding: '2px 8px',
+                  background: onlineStatus.get(selectedFriend.publicKey) 
+                    ? 'rgba(67, 233, 123, 0.2)' 
+                    : 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  color: onlineStatus.get(selectedFriend.publicKey) ? '#43e97b' : 'rgba(255, 255, 255, 0.5)'
+                }}>
                   {onlineStatus.get(selectedFriend.publicKey) ? 'Online' : 'Offline'}
                 </span>
               </div>
@@ -557,58 +591,133 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               </div>
             </div>
 
-            <div className="messages-container" style={{ flex: 1, overflowY: 'auto' }}>
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
               {messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`message ${msg.from === user.pub ? 'sent' : 'received'}`}
+                  style={{
+                    display: 'flex',
+                    justifyContent: msg.from === user.pub ? 'flex-end' : 'flex-start',
+                    marginBottom: '12px'
+                  }}
                 >
-                  <div className="message-content">
-                    {escapeHtml(msg.content)}
-                  </div>
-                  <div className="message-info">
-                    <span className="message-time">
+                  <div style={{
+                    maxWidth: '70%',
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    background: msg.from === user.pub 
+                      ? 'linear-gradient(135deg, #667eea, #764ba2)'
+                      : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff'
+                  }}>
+                    <div>{escapeHtml(msg.content)}</div>
+                    <div style={{ 
+                      fontSize: '11px', 
+                      opacity: 0.7,
+                      marginTop: '4px'
+                    }}>
                       {new Date(msg.timestamp).toLocaleTimeString()}
-                    </span>
-                    {msg.from === user.pub && (
-                      <span className="message-status">
-                        {msg.delivered ? '✓✓' : '✓'}
-                      </span>
-                    )}
+                      {msg.from === user.pub && (
+                        <span style={{ marginLeft: '6px' }}>
+                          {msg.delivered ? '✓✓' : '✓'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
               {typingStatus.size > 0 && (
-                <div className="typing-indicator">
-                  <span>{escapeHtml(selectedFriend.nickname)} is typing...</span>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontSize: '14px',
+                    fontStyle: 'italic'
+                  }}>
+                    {escapeHtml(selectedFriend.nickname)} is typing...
+                  </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            <form onSubmit={handleSendMessage} className="message-input-form">
+            <form onSubmit={handleSendMessage} style={{
+              padding: '16px 20px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              gap: '12px'
+            }}>
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyUp={handleTyping}
                 placeholder="Type a message..."
-                className="message-input"
                 maxLength={1000}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
               />
-              <button type="submit" className="send-btn">Send</button>
+              <button 
+                type="submit"
+                style={{
+                  padding: '12px 24px',
+                  background: newMessage.trim() 
+                    ? 'linear-gradient(135deg, #667eea, #764ba2)'
+                    : 'rgba(255, 255, 255, 0.1)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '14px',
+                  cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
+                  opacity: newMessage.trim() ? 1 : 0.5
+                }}
+                disabled={!newMessage.trim()}
+              >
+                Send
+              </button>
             </form>
           </>
-                  ) : (
-            <div className="no-chat">
-              <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '12px' }}>
-                <ThemeToggle />
-                <ConnectionStatus />
-              </div>
-              <h3>Select a contact to start chatting</h3>
-              <p>Your messages are encrypted and sent peer-to-peer</p>
+        ) : (
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            color: 'rgba(255, 255, 255, 0.5)'
+          }}>
+            <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '12px' }}>
+              <ThemeToggle />
+              <ConnectionStatus />
             </div>
-          )}
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '24px', fontWeight: '600' }}>
+              Welcome to Whisperz
+            </h3>
+            <p style={{ margin: 0, fontSize: '16px' }}>Select a friend to start chatting</p>
+          </div>
+        )}
       </div>
 
       {/* Invite Modal */}
