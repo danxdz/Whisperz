@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, ConnectionStatus as ConnectionStatusComponent } from './components';
+import { ThemeToggle, DevToolsWrapper, ConnectionStatus } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -775,12 +775,12 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Generate invite link
   const handleGenerateInvite = async () => {
     try {
-      const link = await friendsService.generateInviteLink();
-      setInviteLink(link);
+      const result = await friendsService.generateInvite();
+      setInviteLink(result.inviteLink);
       setShowInvite(true);
     } catch (error) {
       console.error('Failed to generate invite:', error);
-      alert('Failed to generate invite link');
+      alert('Failed to generate invite link: ' + error.message);
     }
   };
 
