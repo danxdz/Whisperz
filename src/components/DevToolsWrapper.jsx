@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import DevToolsPanel from './DevToolsPanel';
 import DevToolsButton from './DevToolsButton';
 import MobileDevTools from './MobileDevTools';
 import MobileDevToolsCompact from './MobileDevToolsCompact';

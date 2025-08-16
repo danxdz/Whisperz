@@ -4,8 +4,6 @@
  */
 
 export { default as LoginView } from './LoginView';
-export { default as DevTools } from './DevTools';
-export { default as DevToolsPanel } from './DevToolsPanel';
 export { default as DevToolsButton } from './DevToolsButton';
 export { default as DevToolsWrapper } from './DevToolsWrapper';
 export { default as MobileDevTools } from './MobileDevTools';
