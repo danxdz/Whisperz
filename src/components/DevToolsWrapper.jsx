@@ -3,6 +3,7 @@ import DevToolsPanel from './DevToolsPanel';
 import DevToolsButton from './DevToolsButton';
 import MobileDevTools from './MobileDevTools';
 import MobileDevToolsCompact from './MobileDevToolsCompact';
+import EnhancedDevTools from './EnhancedDevTools';
 import { APP_CONFIG } from '../config/app.config';
 
 /**
@@ -87,7 +88,7 @@ function DevToolsWrapper() {
       )}
       
       {isDevToolsOpen && (
-        <DevToolsPanel 
+        <EnhancedDevTools 
           isVisible={isDevToolsOpen}
           onClose={() => setIsDevToolsOpen(false)}
         />

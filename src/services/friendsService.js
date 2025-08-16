@@ -9,223 +9,257 @@ class FriendsService {
     this.friends = new Map();
     this.invites = new Map();
     this.friendListeners = new Set();
+    this.gun = null;
+    this.user = null;
   }
 
-  // Generate secure, one-time use invite link
-  async generateInviteLink() {
+  // Initialize service
+  initialize() {
+    this.gun = gunAuthService.gun;
+    this.user = gunAuthService.user;
+  }
+
+  // Generate a secure invite code
+  generateInviteCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    for (let i = 0; i < 32; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  // Sign invite data
+  async signInvite(inviteData) {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+    
+    const dataToSign = JSON.stringify({
+      from: inviteData.from,
+      nickname: inviteData.nickname,
+      createdAt: inviteData.createdAt,
+      expiresAt: inviteData.expiresAt
+    });
+    
+    return await Gun.SEA.sign(dataToSign, user);
+  }
+
+  // Verify invite signature
+  async verifyInvite(inviteData, signature) {
+    const dataToVerify = JSON.stringify({
+      from: inviteData.from,
+      nickname: inviteData.nickname,
+      createdAt: inviteData.createdAt,
+      expiresAt: inviteData.expiresAt
+    });
+    
+    const verified = await Gun.SEA.verify(signature, inviteData.from);
+    return verified === dataToVerify;
+  }
+
+  // Generate invite link with one-time use
+  async generateInvite() {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Generate unique invite ID
-    const inviteId = `${user.pub}_${Date.now()}_${encryptionService.generateRandomString(16)}`;
+    const inviteCode = this.generateInviteCode();
+    const nickname = await this.getUserNickname();
     
     const inviteData = {
-      inviteId: inviteId,
-      fromPublicKey: user.pub,
-      fromNickname: await this.getUserNickname(),
+      from: user.pub,
+      nickname: nickname || 'Anonymous',
       createdAt: Date.now(),
       expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+      used: false,  // Track if invite has been used
+      usedBy: null, // Track who used it
+      usedAt: null  // Track when it was used
     };
 
-    console.log('📝 Creating invite:', inviteData);
+    // Sign the invite
+    const signature = await this.signInvite(inviteData);
+    inviteData.signature = signature;
 
-    // Create a signature of the invite ID using the user's private key
-    // This proves the invite was created by this specific user
-    const signature = await Gun.SEA.sign(inviteId, user);
-    
-    if (!signature) {
-      throw new Error('Failed to sign invite - Gun.SEA error');
-    }
-    
-    console.log('🔏 Invite signed successfully');
-    
-    // Store the invite in Gun.js with the signature
-    // This makes it verifiable and one-time use
+    // Store invite in Gun
     await new Promise((resolve, reject) => {
-      gunAuthService.user.get('invites_sent').get(inviteId).put({
-        ...inviteData,
-        signature: signature,
-        used: false,
-        createdBy: user.pub
-      }, (ack) => {
-        if (ack.err) {
-          console.error('Failed to store invite:', ack.err);
-          reject(new Error('Failed to create invite'));
-        } else {
-          console.log('✅ Invite stored in Gun.js:', inviteId);
-          resolve();
-        }
+      this.user.get('invites').get(inviteCode).put(inviteData, (ack) => {
+        if (ack.err) reject(new Error(ack.err));
+        else resolve();
       });
     });
 
-    // Create the invite payload (only contains invite ID and sender's public key)
-    // The actual data will be fetched from Gun.js to ensure it's authentic
-    const invitePayload = {
-      inviteId: inviteId,
-      senderKey: user.pub
-    };
+    // Also store in a global invites registry for lookup
+    this.gun.get('invites').get(inviteCode).put({
+      ...inviteData,
+      inviteCode // Include the code for reference
+    });
 
-    // Encode and create link
-    const payloadString = JSON.stringify(invitePayload);
-    console.log('📦 Invite payload:', payloadString);
+    const inviteLink = `${window.location.origin}/?invite=${inviteCode}`;
     
-    const inviteCode = encryptionService.base64UrlEncode(payloadString);
-    console.log('🔤 Encoded invite code:', inviteCode);
-    
-    const inviteLink = `${window.location.origin}/invite/${inviteCode}`;
+    console.log('🎫 Invite generated:', {
+      code: inviteCode,
+      link: inviteLink,
+      expiresAt: new Date(inviteData.expiresAt).toLocaleString()
+    });
 
-    console.log('🎫 Secure invite created:', inviteId);
-    console.log('📨 Invite link:', inviteLink);
-    
-    return inviteLink;
+    return { inviteCode, inviteLink, inviteData };
   }
 
-  // Accept invite with proper verification
+  // Accept invite with one-time use validation
   async acceptInvite(inviteCode) {
-    try {
-      console.log('🎫 Accepting invite...');
-      
-      // Decode the invite payload
-      const invitePayload = JSON.parse(encryptionService.base64UrlDecode(inviteCode));
-      
-      if (!invitePayload.inviteId || !invitePayload.senderKey) {
-        throw new Error('Invalid invite format');
-      }
-      
-      console.log('📦 Invite payload:', invitePayload);
-      
-      // Fetch the actual invite data from Gun.js
-      // This ensures the invite exists and was created through the app
-      const inviteData = await new Promise((resolve, reject) => {
-        gunAuthService.gun
-          .user(invitePayload.senderKey)
-          .get('invites_sent')
-          .get(invitePayload.inviteId)
-          .once((data) => {
-            if (!data) {
-              reject(new Error('Invite not found - may be invalid or already used'));
-            } else {
-              resolve(data);
-            }
-          });
+    const user = gunAuthService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('🎫 Attempting to accept invite:', inviteCode);
+
+    // Get invite data from global registry
+    return new Promise((resolve, reject) => {
+      this.gun.get('invites').get(inviteCode).once(async (inviteData) => {
+        if (!inviteData) {
+          console.error('❌ Invite not found:', inviteCode);
+          reject(new Error('Invalid invite code'));
+          return;
+        }
+
+        console.log('📋 Invite data found:', inviteData);
+
+        // Check if invite has already been used
+        if (inviteData.used) {
+          console.error('❌ Invite already used by:', inviteData.usedBy);
+          reject(new Error('This invite has already been used'));
+          return;
+        }
+
+        // Check expiration
+        if (Date.now() > inviteData.expiresAt) {
+          console.error('❌ Invite expired');
+          reject(new Error('Invite has expired'));
+          return;
+        }
+
+        // Verify signature
+        const isValid = await this.verifyInvite({
+          from: inviteData.from,
+          nickname: inviteData.nickname,
+          createdAt: inviteData.createdAt,
+          expiresAt: inviteData.expiresAt
+        }, inviteData.signature);
+
+        if (!isValid) {
+          console.error('❌ Invalid invite signature');
+          reject(new Error('Invalid invite signature'));
+          return;
+        }
+
+        // Check if already friends
+        const existingFriend = await this.getFriend(inviteData.from);
+        if (existingFriend) {
+          console.log('⚠️ Already friends with this user');
+          reject(new Error('Already friends with this user'));
+          return;
+        }
+
+        // Mark invite as used
+        this.gun.get('invites').get(inviteCode).put({
+          ...inviteData,
+          used: true,
+          usedBy: user.pub,
+          usedAt: Date.now()
+        });
+
+        // Also update in the inviter's space
+        this.gun.get('~' + inviteData.from).get('invites').get(inviteCode).put({
+          used: true,
+          usedBy: user.pub,
+          usedAt: Date.now()
+        });
+
+        // Create bidirectional friendship
+        const conversationId = `conv_${Date.now()}_${Math.random()}`;
         
-        // Timeout after 5 seconds
-        setTimeout(() => reject(new Error('Timeout fetching invite data')), 5000);
-      });
-      
-      console.log('📄 Fetched invite data from Gun.js:', inviteData);
-      
-      // Verify the invite hasn't been used
-      if (inviteData.used === true) {
-        throw new Error('This invite has already been used');
-      }
-      
-      // Verify the invite hasn't expired
-      if (Date.now() > inviteData.expiresAt) {
-        throw new Error('This invite has expired');
-      }
-      
-      // Verify the signature to ensure the invite was created by the claimed sender
-      const verifiedId = await Gun.SEA.verify(inviteData.signature, invitePayload.senderKey);
-      if (verifiedId !== invitePayload.inviteId) {
-        console.error('Signature verification failed:', verifiedId, '!==', invitePayload.inviteId);
-        throw new Error('Invalid invite signature - could not verify authenticity');
-      }
-      
-      console.log('✅ Invite verified successfully');
-      
-      // Check if already friends
-      const existingFriend = await this.getFriend(inviteData.fromPublicKey);
-      if (existingFriend) {
-        console.log('✅ Already friends with:', inviteData.fromNickname);
-        return { success: true, message: 'Already friends', friend: existingFriend };
-      }
-      
-      // Mark the invite as used BEFORE adding friend (atomic operation)
-      await new Promise((resolve, reject) => {
-        gunAuthService.gun
-          .user(invitePayload.senderKey)
-          .get('invites_sent')
-          .get(invitePayload.inviteId)
-          .put({ used: true }, (ack) => {
-            if (ack.err) {
-              console.error('Failed to mark invite as used:', ack.err);
-              // Don't reject, just log - we'll still add the friend
-            }
-            resolve();
-          });
+        // Add friend for current user
+        await this.addFriend(inviteData.from, inviteData.nickname, conversationId);
         
-        setTimeout(resolve, 1000); // Continue after 1 second regardless
+        // Add current user as friend for inviter
+        const myNickname = await this.getUserNickname();
+        this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put({
+          publicKey: user.pub,
+          nickname: myNickname || 'Friend',
+          addedAt: Date.now(),
+          conversationId: conversationId,
+          addedViaInvite: inviteCode // Track how they became friends
+        });
+
+        console.log('✅ Invite accepted successfully');
+        resolve({
+          success: true,
+          friend: {
+            publicKey: inviteData.from,
+            nickname: inviteData.nickname,
+            conversationId
+          }
+        });
       });
-      
-      // Add as friend
-      console.log('➕ Adding friend:', inviteData.fromNickname, inviteData.fromPublicKey);
-      await this.addFriend(inviteData.fromPublicKey, inviteData.fromNickname);
-      
-      console.log('✅ Friend added successfully');
-      return { success: true, friend: inviteData };
-      
-    } catch (error) {
-      console.error('❌ Failed to accept invite:', error);
-      throw error;
-    }
+    });
   }
 
-  // Get list of active invites sent by current user
-  async getActiveInvites() {
+  // Get all invites (for tracking)
+  async getMyInvites() {
     const user = gunAuthService.getCurrentUser();
     if (!user) return [];
-    
+
     return new Promise((resolve) => {
       const invites = [];
       
-      gunAuthService.user.get('invites_sent').map().once((data, key) => {
-        if (data && !data.used && data.expiresAt > Date.now()) {
+      this.user.get('invites').map().once((data, key) => {
+        if (data) {
           invites.push({
-            inviteId: key,
-            ...data
+            ...data,
+            code: key,
+            link: `${window.location.origin}/?invite=${key}`
           });
         }
       });
-      
-      setTimeout(() => resolve(invites), 1000);
+
+      setTimeout(() => {
+        // Sort by creation date, newest first
+        invites.sort((a, b) => b.createdAt - a.createdAt);
+        resolve(invites);
+      }, 500);
     });
   }
-  
-  // Revoke an invite
-  async revokeInvite(inviteId) {
+
+  // Revoke an unused invite
+  async revokeInvite(inviteCode) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
-    
-    return new Promise((resolve, reject) => {
-      gunAuthService.user.get('invites_sent').get(inviteId).put({ 
-        used: true, 
-        revokedAt: Date.now() 
-      }, (ack) => {
-        if (ack.err) {
-          reject(new Error('Failed to revoke invite'));
-        } else {
-          console.log('🚫 Invite revoked:', inviteId);
-          resolve();
-        }
-      });
+
+    // Mark as revoked in both places
+    this.user.get('invites').get(inviteCode).put({
+      revoked: true,
+      revokedAt: Date.now()
     });
+
+    this.gun.get('invites').get(inviteCode).put({
+      revoked: true,
+      revokedAt: Date.now()
+    });
+
+    console.log('🚫 Invite revoked:', inviteCode);
+    return true;
   }
 
   // Clean up expired invites
   async cleanupExpiredInvites() {
-    const user = gunAuthService.getCurrentUser();
-    if (!user) return;
+    const invites = await this.getMyInvites();
+    const now = Date.now();
     
-    gunAuthService.user.get('invites_sent').map().once((data, key) => {
-      if (data && !data.used && data.expiresAt < Date.now()) {
-        gunAuthService.user.get('invites_sent').get(key).put({
-          ...data,
-          used: true,
-          expiredAt: Date.now()
-        });
+    for (const invite of invites) {
+      if (!invite.used && !invite.revoked && invite.expiresAt < now) {
+        await this.revokeInvite(invite.code);
       }
-    });
+    }
+    
+    console.log('🧹 Cleaned up expired invites');
   }
   
   // Add friend - Fixed to use public space for friend connections

@@ -15,6 +15,7 @@ export { default as WebRTCStatus } from './WebRTCStatus';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as ThemeToggle } from './ThemeToggle';
+export { default as EnhancedDevTools } from './EnhancedDevTools';
 
 // Future components can be added here as they are extracted:
 // export { default as RegisterView } from './RegisterView';
