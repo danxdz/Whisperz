@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Whisperz Mobile Access Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .step {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .button:active {
+            transform: scale(0.98);
+        }
+        
+        .highlight {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .emoji {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+        
+        .qr-section {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .qr-section img {
+            max-width: 200px;
+            height: auto;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Whisperz Mobile Access</h1>
+        
+        <div class="card">
+            <h2><span class="emoji">🛠️</span>DevTools Access on Mobile</h2>
+            
+            <div class="success">
+                <strong>✅ DevTools are now automatically enabled on mobile devices!</strong>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Look for the floating button:</strong><br>
+                A purple <span class="highlight">🛠️</span> button appears in the bottom-right corner
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Tap to expand menu:</strong><br>
+                - Open DevTools panel<br>
+                - Enable permanently<br>
+                - View quick tips
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Alternative methods:</strong><br>
+                - Triple-tap the bottom-right corner<br>
+                - Triple-tap anywhere (some devices)<br>
+                - Swipe from corner (4-inch screens)
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="emoji">🚀</span>Quick Start Guide</h2>
+            
+            <a href="/" class="button">Open Whisperz App</a>
+            
+            <div class="feature-list" style="margin-top: 20px;">
+                <ul class="feature-list">
+                    <li>✨ <strong>Modern UI:</strong> Dark/Light theme toggle</li>
+                    <li>👥 <strong>User Management:</strong> Add/remove friends</li>
+                    <li>🎫 <strong>Invite System:</strong> One-time use invite links</li>
+                    <li>💬 <strong>WebRTC Chat:</strong> Real-time P2P messaging</li>
+                    <li>🔒 <strong>Security:</strong> End-to-end encryption</li>
+                    <li>📊 <strong>Statistics:</strong> View app metrics</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="emoji">📲</span>Mobile-Specific Features</h2>
+            
+            <div class="step">
+                <strong>4-inch Screen Support:</strong><br>
+                Optimized layout for iPhone SE, older iPhones
+            </div>
+            
+            <div class="step">
+                <strong>Touch Gestures:</strong><br>
+                - Swipe to navigate<br>
+                - Long-press for options<br>
+                - Pinch to zoom (where applicable)
+            </div>
+            
+            <div class="step">
+                <strong>Responsive Design:</strong><br>
+                Auto-adjusts to screen size and orientation
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="emoji">🔧</span>DevTools Features</h2>
+            
+            <ul class="feature-list">
+                <li><strong>Users Tab:</strong> Manage friends and connections</li>
+                <li><strong>Invites Tab:</strong> View and manage invite links</li>
+                <li><strong>Stats Tab:</strong> Monitor app performance</li>
+                <li><strong>Actions Tab:</strong> Quick actions and data management</li>
+            </ul>
+            
+            <div class="warning">
+                <strong>⚠️ Note:</strong> Some features require authentication. Create an account or login first.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="emoji">🎮</span>Secret Features</h2>
+            
+            <div class="step">
+                <strong>Konami Code:</strong><br>
+                <span class="highlight">↑ ↑ ↓ ↓ ← → ← → B A</span><br>
+                Enables DevTools in production (desktop)
+            </div>
+            
+            <div class="step">
+                <strong>Debug Mode:</strong><br>
+                Add <span class="highlight">?debug=true</span> to URL
+            </div>
+        </div>
+        
+        <div class="card" style="text-align: center;">
+            <h2><span class="emoji">📱</span>Test Now</h2>
+            
+            <button class="button" onclick="window.location.href='/'">
+                Launch Whisperz App
+            </button>
+            
+            <p style="margin-top: 15px; opacity: 0.8;">
+                The app will automatically detect your mobile device and show the DevTools button
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Detect if on mobile and show appropriate message
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log('✅ Mobile device detected - DevTools will be available');
+        } else {
+            console.log('💻 Desktop detected - Use Ctrl+D or Konami code for DevTools');
+        }
+    </script>
+</body>
+</html>

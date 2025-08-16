@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import DevToolsButton from './DevToolsButton';
 import MobileDevTools from './MobileDevTools';
 import MobileDevToolsCompact from './MobileDevToolsCompact';
+import MobileDevToolsButton from './MobileDevToolsButton';
 import EnhancedDevTools from './EnhancedDevTools';
 import { APP_CONFIG } from '../config/app.config';
 
@@ -18,11 +19,14 @@ function DevToolsWrapper() {
 
   useEffect(() => {
     // Check if dev tools should be enabled
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
     const shouldEnable = 
       APP_CONFIG.dev.enableDevTools || 
       import.meta.env.DEV || 
       window.location.hostname === 'localhost' ||
-      localStorage.getItem('enableDevTools') === 'true';
+      localStorage.getItem('enableDevTools') === 'true' ||
+      isMobileDevice; // Always enable on mobile for easier access
     
     setIsEnabled(shouldEnable);
     
@@ -73,11 +77,17 @@ function DevToolsWrapper() {
     <>
       {/* Show appropriate dev tools based on screen size */}
       {isMobile ? (
-        isCompactScreen ? (
-          <MobileDevToolsCompact onOpenDevTools={toggleDevTools} />
-        ) : (
-          <MobileDevTools onOpenDevTools={toggleDevTools} />
-        )
+        <>
+          {/* Always show the floating button on mobile for easy access */}
+          <MobileDevToolsButton onClick={toggleDevTools} />
+          
+          {/* Also keep the gesture-based tools */}
+          {isCompactScreen ? (
+            <MobileDevToolsCompact onOpenDevTools={toggleDevTools} />
+          ) : (
+            <MobileDevTools onOpenDevTools={toggleDevTools} />
+          )}
+        </>
       ) : (
         <DevToolsButton 
           onClick={toggleDevTools}
