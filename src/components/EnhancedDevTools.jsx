@@ -3,10 +3,11 @@ import gunAuthService from '../services/gunAuthService';
 import friendsService from '../services/friendsService';
 import hybridGunService from '../services/hybridGunService';
 import webrtcService from '../services/webrtcService';
+import backupService from '../services/backupService';
 
 /**
  * EnhancedDevTools Component
- * Advanced developer tools with user management and mobile optimization
+ * Advanced developer tools with user management, backup system, and mobile optimization
  */
 function EnhancedDevTools({ isVisible, onClose }) {
   const [activeTab, setActiveTab] = useState('users');
@@ -15,6 +16,11 @@ function EnhancedDevTools({ isVisible, onClose }) {
   const [stats, setStats] = useState({});
   const [selectedUser, setSelectedUser] = useState(null);
   const [isCompact, setIsCompact] = useState(window.innerWidth <= 375);
+  
+  // Backup state
+  const [backupPassword, setBackupPassword] = useState('');
+  const [storageStats, setStorageStats] = useState(null);
+  const [backupStatus, setBackupStatus] = useState('');
 
   // Detect screen size
   useEffect(() => {
@@ -77,6 +83,70 @@ function EnhancedDevTools({ isVisible, onClose }) {
     }
   };
 
+  // Load storage stats for backup tab
+  const loadStorageStats = () => {
+    try {
+      const stats = backupService.getStorageStats();
+      setStorageStats(stats);
+    } catch (error) {
+      console.error('Failed to load storage stats:', error);
+    }
+  };
+
+  // Handle backup export
+  const handleBackupExport = async () => {
+    try {
+      setBackupStatus('Creating backup...');
+      const result = backupService.exportToFile(backupPassword || null);
+      setBackupStatus(`✅ Backup exported: ${result.filename} (${result.encrypted ? 'Encrypted' : 'Not encrypted'})`);
+      setTimeout(() => setBackupStatus(''), 5000);
+    } catch (error) {
+      setBackupStatus(`❌ Export failed: ${error.message}`);
+    }
+  };
+
+  // Handle backup import
+  const handleBackupImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      setBackupStatus('Importing backup...');
+      const password = backupPassword || prompt('Enter backup password (leave empty if not encrypted):');
+      const result = await backupService.importFromFile(file, password);
+      
+      if (result.success) {
+        setBackupStatus(`✅ Restored ${result.restoredCount} items from backup`);
+        loadStorageStats();
+      } else if (result.cancelled) {
+        setBackupStatus('Import cancelled');
+      }
+    } catch (error) {
+      setBackupStatus(`❌ Import failed: ${error.message}`);
+    }
+    
+    // Clear file input
+    event.target.value = '';
+  };
+
+  // Handle clear data
+  const handleClearData = (category) => {
+    const confirmMsg = category === 'all' 
+      ? '⚠️ This will delete ALL data! Are you sure?' 
+      : `Clear ${category} data?`;
+    
+    if (window.confirm(confirmMsg)) {
+      if (category === 'all' && !window.confirm('This action cannot be undone. Are you REALLY sure?')) {
+        return;
+      }
+      
+      const result = backupService.clearData([category]);
+      setBackupStatus(`Cleared ${result.count} items`);
+      loadStorageStats();
+      setTimeout(() => setBackupStatus(''), 3000);
+    }
+  };
+
   const handleRemoveUser = async (userId) => {
     if (!confirm('Are you sure you want to remove this friend?')) return;
     
@@ -126,370 +196,532 @@ function EnhancedDevTools({ isVisible, onClose }) {
     }
   };
 
-  const renderCompactTabs = () => {
-    const tabs = [
-      { id: 'users', icon: '👥', label: 'Users' },
-      { id: 'invites', icon: '🎫', label: 'Invites' },
-      { id: 'stats', icon: '📊', label: 'Stats' },
-      { id: 'actions', icon: '⚡', label: 'Actions' }
-    ];
+  const renderCompactTabs = () => (
+    <div style={{
+      display: 'flex',
+      gap: '4px',
+      padding: '8px',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch'
+    }}>
+      {['users', 'invites', 'stats', 'backup', 'logs'].map(tab => (
+        <button
+          key={tab}
+          onClick={() => {
+            setActiveTab(tab);
+            if (tab === 'backup') loadStorageStats();
+          }}
+          style={{
+            padding: '6px 12px',
+            background: activeTab === tab 
+              ? 'linear-gradient(135deg, #667eea, #764ba2)'
+              : 'rgba(255, 255, 255, 0.05)',
+            border: 'none',
+            borderRadius: '6px',
+            color: '#fff',
+            fontSize: '12px',
+            fontWeight: activeTab === tab ? '600' : '400',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            transition: 'all 0.2s'
+          }}
+        >
+          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+        </button>
+      ))}
+    </div>
+  );
 
-    return (
-      <div style={{
-        display: 'flex',
-        overflowX: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        borderBottom: '1px solid rgba(102, 126, 234, 0.3)',
-        background: 'rgba(0, 0, 0, 0.5)'
+  const renderUsersTab = () => (
+    <div style={{ padding: isCompact ? '8px' : '12px' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '12px'
       }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              flex: '0 0 auto',
-              padding: isCompact ? '8px 12px' : '10px 16px',
-              background: activeTab === tab.id 
-                ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3))'
-                : 'transparent',
-              border: 'none',
-              color: activeTab === tab.id ? '#fff' : 'rgba(255, 255, 255, 0.7)',
-              fontSize: isCompact ? '11px' : '12px',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.3s',
-              borderBottom: activeTab === tab.id ? '2px solid #667eea' : '2px solid transparent'
-            }}
-          >
-            <div>{tab.icon}</div>
-            <div style={{ fontSize: isCompact ? '9px' : '10px' }}>{tab.label}</div>
-          </button>
-        ))}
+        <h4 style={{ margin: 0, fontSize: isCompact ? '14px' : '16px' }}>
+          Friends ({users.length})
+        </h4>
+        <button
+          onClick={handleGenerateInvite}
+          style={{
+            padding: isCompact ? '4px 8px' : '6px 12px',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            border: 'none',
+            borderRadius: '4px',
+            color: 'white',
+            fontSize: isCompact ? '10px' : '12px',
+            cursor: 'pointer'
+          }}
+        >
+          + Invite
+        </button>
       </div>
-    );
-  };
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'users':
-        return (
-          <div style={{ padding: isCompact ? '8px' : '12px' }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
+      
+      <div style={{ 
+        maxHeight: isCompact ? '200px' : '300px', 
+        overflowY: 'auto',
+        background: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: '8px',
+        padding: '8px'
+      }}>
+        {users.length === 0 ? (
+          <p style={{ 
+            textAlign: 'center', 
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: isCompact ? '11px' : '12px'
+          }}>
+            No friends yet. Generate an invite to add friends.
+          </p>
+        ) : (
+          users.map(user => (
+            <div key={user.id} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '12px'
+              padding: isCompact ? '6px' : '8px',
+              marginBottom: '4px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '4px',
+              fontSize: isCompact ? '11px' : '12px'
             }}>
-              <h4 style={{ margin: 0, fontSize: isCompact ? '14px' : '16px' }}>
-                Friends ({users.length})
-              </h4>
-              <button
-                onClick={handleGenerateInvite}
-                style={{
-                  padding: isCompact ? '4px 8px' : '6px 12px',
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: 'white',
-                  fontSize: isCompact ? '10px' : '12px',
-                  cursor: 'pointer'
-                }}
-              >
-                + Invite
-              </button>
-            </div>
-            
-            <div style={{ 
-              maxHeight: isCompact ? '200px' : '300px', 
-              overflowY: 'auto',
-              background: 'rgba(0, 0, 0, 0.3)',
-              borderRadius: '8px',
-              padding: '8px'
-            }}>
-              {users.length === 0 ? (
-                <p style={{ 
-                  textAlign: 'center', 
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontSize: isCompact ? '11px' : '12px'
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ 
+                  fontWeight: 'bold',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
                 }}>
-                  No friends yet. Generate an invite to add friends.
-                </p>
-              ) : (
-                users.map(user => (
-                  <div key={user.id} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: isCompact ? '6px' : '8px',
-                    marginBottom: '4px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '4px',
-                    fontSize: isCompact ? '11px' : '12px'
-                  }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ 
-                        fontWeight: 'bold',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {user.name}
-                      </div>
-                      <div style={{ 
-                        fontSize: isCompact ? '9px' : '10px', 
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {user.id.substring(0, 20)}...
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveUser(user.id)}
-                      style={{
-                        padding: isCompact ? '2px 6px' : '4px 8px',
-                        background: 'rgba(255, 0, 0, 0.2)',
-                        border: '1px solid rgba(255, 0, 0, 0.5)',
-                        borderRadius: '4px',
-                        color: '#ff6666',
-                        fontSize: isCompact ? '9px' : '10px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        );
-
-      case 'invites':
-        return (
-          <div style={{ padding: isCompact ? '8px' : '12px' }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: isCompact ? '14px' : '16px' 
-            }}>
-              Invites ({invites.length})
-            </h4>
-            
-            <div style={{ 
-              maxHeight: isCompact ? '200px' : '300px', 
-              overflowY: 'auto',
-              background: 'rgba(0, 0, 0, 0.3)',
-              borderRadius: '8px',
-              padding: '8px'
-            }}>
-              {invites.length === 0 ? (
-                <p style={{ 
-                  textAlign: 'center', 
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontSize: isCompact ? '11px' : '12px'
-                }}>
-                  No invites generated yet.
-                </p>
-              ) : (
-                invites.map(invite => (
-                  <div key={invite.code} style={{
-                    padding: isCompact ? '6px' : '8px',
-                    marginBottom: '4px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '4px',
-                    fontSize: isCompact ? '11px' : '12px'
-                  }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '4px'
-                    }}>
-                      <span style={{ 
-                        fontWeight: 'bold',
-                        color: invite.used ? '#66ff66' : invite.revoked ? '#ff6666' : '#ffff66'
-                      }}>
-                        {invite.used ? '✅ Used' : invite.revoked ? '❌ Revoked' : '⏳ Pending'}
-                      </span>
-                      <span style={{ fontSize: isCompact ? '9px' : '10px' }}>
-                        {new Date(invite.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    
-                    {invite.used && invite.usedBy && (
-                      <div style={{ 
-                        fontSize: isCompact ? '9px' : '10px',
-                        color: 'rgba(255, 255, 255, 0.5)'
-                      }}>
-                        Used by: {invite.usedBy.substring(0, 20)}...
-                      </div>
-                    )}
-                    
-                    {!invite.used && !invite.revoked && (
-                      <div style={{ marginTop: '4px' }}>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(invite.link);
-                            alert('Invite link copied!');
-                          }}
-                          style={{
-                            padding: isCompact ? '2px 6px' : '4px 8px',
-                            background: 'rgba(102, 126, 234, 0.2)',
-                            border: '1px solid rgba(102, 126, 234, 0.5)',
-                            borderRadius: '4px',
-                            color: '#667eea',
-                            fontSize: isCompact ? '9px' : '10px',
-                            cursor: 'pointer',
-                            marginRight: '4px'
-                          }}
-                        >
-                          Copy
-                        </button>
-                        <button
-                          onClick={() => handleRevokeInvite(invite.code)}
-                          style={{
-                            padding: isCompact ? '2px 6px' : '4px 8px',
-                            background: 'rgba(255, 0, 0, 0.2)',
-                            border: '1px solid rgba(255, 0, 0, 0.5)',
-                            borderRadius: '4px',
-                            color: '#ff6666',
-                            fontSize: isCompact ? '9px' : '10px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Revoke
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        );
-
-      case 'stats':
-        return (
-          <div style={{ padding: isCompact ? '8px' : '12px' }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: isCompact ? '14px' : '16px' 
-            }}>
-              Statistics
-            </h4>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isCompact ? '1fr' : 'repeat(2, 1fr)',
-              gap: '8px'
-            }}>
-              {Object.entries(stats).map(([key, value]) => (
-                <div key={key} style={{
-                  padding: isCompact ? '6px' : '8px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '4px',
-                  fontSize: isCompact ? '11px' : '12px'
-                }}>
-                  <div style={{ 
-                    fontSize: isCompact ? '9px' : '10px',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    marginBottom: '2px'
-                  }}>
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </div>
-                  <div style={{ 
-                    fontWeight: 'bold',
-                    color: '#667eea'
-                  }}>
-                    {value}
-                  </div>
+                  {user.name}
                 </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'actions':
-        return (
-          <div style={{ padding: isCompact ? '8px' : '12px' }}>
-            <h4 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: isCompact ? '14px' : '16px' 
-            }}>
-              Actions
-            </h4>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isCompact ? '1fr' : 'repeat(2, 1fr)',
-              gap: '8px'
-            }}>
+                <div style={{ 
+                  fontSize: isCompact ? '9px' : '10px', 
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {user.id.substring(0, 20)}...
+                </div>
+              </div>
               <button
-                onClick={handleGenerateInvite}
+                onClick={() => handleRemoveUser(user.id)}
                 style={{
-                  padding: isCompact ? '8px' : '12px',
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: 'white',
-                  fontSize: isCompact ? '11px' : '12px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                🎫 Generate Invite
-              </button>
-              
-              <button
-                onClick={() => friendsService.cleanupExpiredInvites()}
-                style={{
-                  padding: isCompact ? '8px' : '12px',
-                  background: 'rgba(102, 126, 234, 0.2)',
-                  border: '1px solid rgba(102, 126, 234, 0.5)',
-                  borderRadius: '4px',
-                  color: '#667eea',
-                  fontSize: isCompact ? '11px' : '12px',
-                  cursor: 'pointer'
-                }}
-              >
-                🧹 Cleanup Invites
-              </button>
-              
-              <button
-                onClick={() => window.location.reload()}
-                style={{
-                  padding: isCompact ? '8px' : '12px',
-                  background: 'rgba(67, 233, 123, 0.2)',
-                  border: '1px solid rgba(67, 233, 123, 0.5)',
-                  borderRadius: '4px',
-                  color: '#43e97b',
-                  fontSize: isCompact ? '11px' : '12px',
-                  cursor: 'pointer'
-                }}
-              >
-                🔄 Reload App
-              </button>
-              
-              <button
-                onClick={handleClearAllData}
-                style={{
-                  padding: isCompact ? '8px' : '12px',
+                  padding: isCompact ? '2px 6px' : '4px 8px',
                   background: 'rgba(255, 0, 0, 0.2)',
                   border: '1px solid rgba(255, 0, 0, 0.5)',
                   borderRadius: '4px',
                   color: '#ff6666',
-                  fontSize: isCompact ? '11px' : '12px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
+                  fontSize: isCompact ? '9px' : '10px',
+                  cursor: 'pointer'
                 }}
               >
-                💣 Clear All Data
+                Remove
               </button>
             </div>
-          </div>
-        );
+          ))
+        )}
+      </div>
+    </div>
+  );
 
+  const renderInvitesTab = () => (
+    <div style={{ padding: isCompact ? '8px' : '12px' }}>
+      <h4 style={{ 
+        margin: '0 0 12px 0', 
+        fontSize: isCompact ? '14px' : '16px' 
+      }}>
+        Invites ({invites.length})
+      </h4>
+      
+      <div style={{ 
+        maxHeight: isCompact ? '200px' : '300px', 
+        overflowY: 'auto',
+        background: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: '8px',
+        padding: '8px'
+      }}>
+        {invites.length === 0 ? (
+          <p style={{ 
+            textAlign: 'center', 
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: isCompact ? '11px' : '12px'
+          }}>
+            No invites generated yet.
+          </p>
+        ) : (
+          invites.map(invite => (
+            <div key={invite.code} style={{
+              padding: isCompact ? '6px' : '8px',
+              marginBottom: '4px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '4px',
+              fontSize: isCompact ? '11px' : '12px'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '4px'
+              }}>
+                <span style={{ 
+                  fontWeight: 'bold',
+                  color: invite.used ? '#66ff66' : invite.revoked ? '#ff6666' : '#ffff66'
+                }}>
+                  {invite.used ? '✅ Used' : invite.revoked ? '❌ Revoked' : '⏳ Pending'}
+                </span>
+                <span style={{ fontSize: isCompact ? '9px' : '10px' }}>
+                  {new Date(invite.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {invite.used && invite.usedBy && (
+                <div style={{ 
+                  fontSize: isCompact ? '9px' : '10px',
+                  color: 'rgba(255, 255, 255, 0.5)'
+                }}>
+                  Used by: {invite.usedBy.substring(0, 20)}...
+                </div>
+              )}
+              
+              {!invite.used && !invite.revoked && (
+                <div style={{ marginTop: '4px' }}>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(invite.link);
+                      alert('Invite link copied!');
+                    }}
+                    style={{
+                      padding: isCompact ? '2px 6px' : '4px 8px',
+                      background: 'rgba(102, 126, 234, 0.2)',
+                      border: '1px solid rgba(102, 126, 234, 0.5)',
+                      borderRadius: '4px',
+                      color: '#667eea',
+                      fontSize: isCompact ? '9px' : '10px',
+                      cursor: 'pointer',
+                      marginRight: '4px'
+                    }}
+                  >
+                    Copy
+                  </button>
+                  <button
+                    onClick={() => handleRevokeInvite(invite.code)}
+                    style={{
+                      padding: isCompact ? '2px 6px' : '4px 8px',
+                      background: 'rgba(255, 0, 0, 0.2)',
+                      border: '1px solid rgba(255, 0, 0, 0.5)',
+                      borderRadius: '4px',
+                      color: '#ff6666',
+                      fontSize: isCompact ? '9px' : '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Revoke
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  const renderStatsTab = () => (
+    <div style={{ padding: isCompact ? '8px' : '12px' }}>
+      <h4 style={{ 
+        margin: '0 0 12px 0', 
+        fontSize: isCompact ? '14px' : '16px' 
+      }}>
+        Statistics
+      </h4>
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isCompact ? '1fr' : 'repeat(2, 1fr)',
+        gap: '8px'
+      }}>
+        {Object.entries(stats).map(([key, value]) => (
+          <div key={key} style={{
+            padding: isCompact ? '6px' : '8px',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '4px',
+            fontSize: isCompact ? '11px' : '12px'
+          }}>
+            <div style={{ 
+              fontSize: isCompact ? '9px' : '10px',
+              color: 'rgba(255, 255, 255, 0.5)',
+              marginBottom: '2px'
+            }}>
+              {key.replace(/([A-Z])/g, ' $1').trim()}
+            </div>
+            <div style={{ 
+              fontWeight: 'bold',
+              color: '#667eea'
+            }}>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderBackupTab = () => (
+    <div style={{ padding: '12px' }}>
+      <h3 style={{ 
+        fontSize: '16px', 
+        marginBottom: '12px',
+        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent'
+      }}>
+        🔐 Secure Backup System
+      </h3>
+
+      {/* Storage Stats */}
+      {storageStats && (
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px'
+        }}>
+          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+            📊 Storage Usage: {storageStats.totalSizeFormatted}
+          </div>
+          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>
+            Total items: {storageStats.totalKeys}
+          </div>
+          
+          {/* Category breakdown */}
+          <div style={{ marginTop: '8px', fontSize: '11px' }}>
+            {Object.entries(storageStats.categories).map(([cat, data]) => (
+              <div key={cat} style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                padding: '2px 0'
+              }}>
+                <span>{cat}:</span>
+                <span>{data.count} items ({data.sizeFormatted})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Backup Password */}
+      <div style={{ marginBottom: '12px' }}>
+        <label style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+          Encryption Password (optional):
+        </label>
+        <input
+          type="password"
+          value={backupPassword}
+          onChange={(e) => setBackupPassword(e.target.value)}
+          placeholder="Enter password for encryption"
+          style={{
+            width: '100%',
+            padding: '8px',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '6px',
+            color: '#fff',
+            fontSize: '12px'
+          }}
+        />
+      </div>
+
+      {/* Export/Import Buttons */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1fr 1fr',
+        gap: '8px',
+        marginBottom: '12px'
+      }}>
+        <button
+          onClick={handleBackupExport}
+          style={{
+            padding: '10px',
+            background: 'linear-gradient(135deg, #43e97b, #38f9d7)',
+            border: 'none',
+            borderRadius: '6px',
+            color: '#000',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
+          📥 Export Backup
+        </button>
+        
+        <label style={{
+          padding: '10px',
+          background: 'linear-gradient(135deg, #4facfe, #00f2fe)',
+          border: 'none',
+          borderRadius: '6px',
+          color: '#000',
+          fontSize: '12px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          textAlign: 'center'
+        }}>
+          📤 Import Backup
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleBackupImport}
+            style={{ display: 'none' }}
+          />
+        </label>
+      </div>
+
+      {/* Clear Data Options */}
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ fontSize: '12px', marginBottom: '8px', color: '#fa709a' }}>
+          ⚠️ Danger Zone
+        </div>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '6px'
+        }}>
+          <button
+            onClick={() => handleClearData('messages')}
+            style={{
+              padding: '8px',
+              background: 'rgba(250, 112, 154, 0.1)',
+              border: '1px solid rgba(250, 112, 154, 0.3)',
+              borderRadius: '4px',
+              color: '#fa709a',
+              fontSize: '11px',
+              cursor: 'pointer'
+            }}
+          >
+            Clear Messages
+          </button>
+          <button
+            onClick={() => handleClearData('cache')}
+            style={{
+              padding: '8px',
+              background: 'rgba(250, 112, 154, 0.1)',
+              border: '1px solid rgba(250, 112, 154, 0.3)',
+              borderRadius: '4px',
+              color: '#fa709a',
+              fontSize: '11px',
+              cursor: 'pointer'
+            }}
+          >
+            Clear Cache
+          </button>
+          <button
+            onClick={() => handleClearData('friends')}
+            style={{
+              padding: '8px',
+              background: 'rgba(250, 112, 154, 0.1)',
+              border: '1px solid rgba(250, 112, 154, 0.3)',
+              borderRadius: '4px',
+              color: '#fa709a',
+              fontSize: '11px',
+              cursor: 'pointer'
+            }}
+          >
+            Clear Friends
+          </button>
+          <button
+            onClick={() => handleClearData('all')}
+            style={{
+              padding: '8px',
+              background: 'rgba(255, 0, 0, 0.2)',
+              border: '1px solid rgba(255, 0, 0, 0.5)',
+              borderRadius: '4px',
+              color: '#ff4444',
+              fontSize: '11px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            🗑️ Clear ALL
+          </button>
+        </div>
+      </div>
+
+      {/* Status Message */}
+      {backupStatus && (
+        <div style={{
+          padding: '8px',
+          background: backupStatus.includes('✅') 
+            ? 'rgba(67, 233, 123, 0.1)'
+            : backupStatus.includes('❌')
+            ? 'rgba(250, 112, 154, 0.1)'
+            : 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '6px',
+          fontSize: '12px',
+          textAlign: 'center'
+        }}>
+          {backupStatus}
+        </div>
+      )}
+
+      {/* Info */}
+      <div style={{
+        marginTop: '12px',
+        padding: '8px',
+        background: 'rgba(102, 126, 234, 0.1)',
+        borderRadius: '6px',
+        fontSize: '11px',
+        color: 'rgba(255, 255, 255, 0.7)'
+      }}>
+        💡 Tips:
+        <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+          <li>Always use a password for sensitive data</li>
+          <li>Export backups regularly</li>
+          <li>Test restore on a different device</li>
+        </ul>
+      </div>
+    </div>
+  );
+
+  const renderLogsTab = () => (
+    <div style={{ padding: '12px' }}>
+      <h3 style={{ 
+        fontSize: '16px', 
+        marginBottom: '12px',
+        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent'
+      }}>
+        📝 Logs
+      </h3>
+      <div style={{
+        background: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: '8px',
+        padding: '12px',
+        height: 'calc(100% - 100px)', // Adjust height to leave space for other tabs
+        overflowY: 'auto',
+        fontSize: '12px',
+        color: 'rgba(255, 255, 255, 0.7)'
+      }}>
+        {/* Placeholder for logs */}
+        <p>No logs available yet.</p>
+      </div>
+    </div>
+  );
+
+  const renderContent = () => {
+    switch(activeTab) {
+      case 'users':
+        return renderUsersTab();
+      case 'invites':
+        return renderInvitesTab();
+      case 'stats':
+        return renderStatsTab();
+      case 'backup':
+        return renderBackupTab();
+      case 'logs':
+        return renderLogsTab();
       default:
         return null;
     }
