@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import DevToolsButton from './DevToolsButton';
 import MobileDevTools from './MobileDevTools';
 import MobileDevToolsCompact from './MobileDevToolsCompact';
-import MobileDevToolsButton from './MobileDevToolsButton';
 import EnhancedDevTools from './EnhancedDevTools';
 import { APP_CONFIG } from '../config/app.config';
 
@@ -77,17 +76,12 @@ function DevToolsWrapper() {
     <>
       {/* Show appropriate dev tools based on screen size */}
       {isMobile ? (
-        <>
-          {/* Always show the floating button on mobile for easy access */}
-          <MobileDevToolsButton onClick={toggleDevTools} />
-          
-          {/* Also keep the gesture-based tools */}
-          {isCompactScreen ? (
-            <MobileDevToolsCompact onOpenDevTools={toggleDevTools} />
-          ) : (
-            <MobileDevTools onOpenDevTools={toggleDevTools} />
-          )}
-        </>
+        // Only use gesture-based tools for mobile (no floating button)
+        isCompactScreen ? (
+          <MobileDevToolsCompact onOpenDevTools={toggleDevTools} />
+        ) : (
+          <MobileDevTools onOpenDevTools={toggleDevTools} />
+        )
       ) : (
         <DevToolsButton 
           onClick={toggleDevTools}

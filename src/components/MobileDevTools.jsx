@@ -5,24 +5,22 @@ import { useState, useEffect, useRef } from 'react';
  * Mobile-optimized dev tools access with touch gestures
  */
 function MobileDevTools({ onOpenDevTools }) {
-  const [showTrigger, setShowTrigger] = useState(false);
   const [touchCount, setTouchCount] = useState(0);
   const touchTimeoutRef = useRef(null);
   const lastTapRef = useRef(0);
 
-  // Triple-tap detection for mobile
+  // Double-tap detection for mobile (simplified from triple-tap)
   useEffect(() => {
-    const handleTripleTap = (e) => {
+    const handleDoubleTap = (e) => {
       const currentTime = Date.now();
       const tapLength = currentTime - lastTapRef.current;
       
       if (tapLength < 500 && tapLength > 0) {
         setTouchCount(prev => {
           const newCount = prev + 1;
-          if (newCount === 3) {
-            // Triple tap detected
-            setShowTrigger(true);
-            setTimeout(() => setShowTrigger(false), 5000);
+          if (newCount === 2) {
+            // Double tap detected - directly open DevTools
+            onOpenDevTools();
             return 0;
           }
           return newCount;
@@ -51,7 +49,7 @@ function MobileDevTools({ onOpenDevTools }) {
         x > window.innerWidth - cornerSize &&
         y > window.innerHeight - cornerSize
       ) {
-        handleTripleTap(e);
+        handleDoubleTap(e);
       }
     };
 
@@ -65,181 +63,31 @@ function MobileDevTools({ onOpenDevTools }) {
     };
   }, []);
 
-  // Long press detection
-  useEffect(() => {
-    let longPressTimer;
-    let touchStartX, touchStartY;
-    const longPressDuration = 2000; // 2 seconds
+  // Removed long press detection - only using corner double-tap
 
-    const handleTouchStart = (e) => {
-      // Check if touching with 3 fingers
-      if (e.touches.length === 3) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        
-        longPressTimer = setTimeout(() => {
-          setShowTrigger(true);
-          setTimeout(() => setShowTrigger(false), 5000);
-        }, longPressDuration);
-      }
-    };
+  // Removed swipe gesture - only using corner double-tap
 
-    const handleTouchMove = (e) => {
-      if (longPressTimer && e.touches.length === 3) {
-        const moveThreshold = 10;
-        const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-        const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-        
-        if (deltaX > moveThreshold || deltaY > moveThreshold) {
-          clearTimeout(longPressTimer);
-        }
-      }
-    };
-
-    const handleTouchEnd = () => {
-      clearTimeout(longPressTimer);
-    };
-
-    window.addEventListener('touchstart', handleTouchStart);
-    window.addEventListener('touchmove', handleTouchMove);
-    window.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-      clearTimeout(longPressTimer);
-    };
-  }, []);
-
-  // Swipe gesture detection
-  useEffect(() => {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-
-    const handleTouchStart = (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e) => {
-      touchEndX = e.changedTouches[0].clientX;
-      touchEndY = e.changedTouches[0].clientY;
-      handleSwipe();
-    };
-
-    const handleSwipe = () => {
-      const swipeThreshold = 100;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      
-      // Swipe up from bottom
-      if (
-        Math.abs(deltaY) > swipeThreshold &&
-        Math.abs(deltaX) < swipeThreshold &&
-        deltaY < 0 &&
-        touchStartY > window.innerHeight - 100
-      ) {
-        setShowTrigger(true);
-        setTimeout(() => setShowTrigger(false), 5000);
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart);
-    window.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
-
-  if (!showTrigger) {
-    return (
-      <>
-        {/* Corner indicator */}
-        <div 
-          className="mobile-devtools-corner"
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            right: 0,
-            width: '50px',
-            height: '50px',
-            background: 'linear-gradient(135deg, transparent 50%, rgba(0, 255, 0, 0.1) 50%)',
-            pointerEvents: 'none',
-            zIndex: 9998,
-          }}
-        />
-        
-        {/* Instructions hint (shows briefly on first load) */}
-        <MobileDevToolsHint />
-      </>
-    );
-  }
-
+  // Only show subtle corner indicator
   return (
-    <div className="mobile-devtools-trigger" style={{
-      position: 'fixed',
-      bottom: '20px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      background: 'rgba(0, 0, 0, 0.95)',
-      border: '2px solid #00ff00',
-      borderRadius: '10px',
-      padding: '15px',
-      zIndex: 10000,
-      animation: 'slideUp 0.3s ease-out',
-      minWidth: '250px',
-      textAlign: 'center',
-    }}>
-      <h4 style={{ color: '#00ff00', margin: '0 0 10px 0' }}>🛠️ Developer Tools</h4>
-      
-      <button
-        onClick={() => {
-          onOpenDevTools();
-          setShowTrigger(false);
-        }}
+    <>
+      {/* Corner indicator - subtle visual hint */}
+      <div 
+        className="mobile-devtools-corner"
         style={{
-          width: '100%',
-          padding: '12px',
-          background: 'rgba(0, 255, 0, 0.2)',
-          border: '1px solid #00ff00',
-          color: '#00ff00',
-          borderRadius: '5px',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
+          position: 'fixed',
+          bottom: 0,
+          right: 0,
+          width: '50px',
+          height: '50px',
+          background: 'linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.05) 50%)',
+          pointerEvents: 'none',
+          zIndex: 9998,
         }}
-      >
-        Open Dev Tools
-      </button>
+      />
       
-      <div style={{
-        marginTop: '10px',
-        fontSize: '11px',
-        color: 'rgba(0, 255, 0, 0.6)',
-      }}>
-        <div>• Triple-tap corner to show again</div>
-        <div>• 3-finger long press</div>
-        <div>• Swipe up from bottom</div>
-      </div>
-
-      <style jsx>{`
-        @keyframes slideUp {
-          from {
-            transform: translate(-50%, 100%);
-            opacity: 0;
-          }
-          to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-    </div>
+      {/* Show hint only on first visit */}
+      <MobileDevToolsHint />
+    </>
   );
 }
 
@@ -287,9 +135,7 @@ function MobileDevToolsHint() {
         <p style={{ margin: '0 0 10px 0' }}>Access dev tools with:</p>
         
         <div style={{ textAlign: 'left', paddingLeft: '20px' }}>
-          <div>• <strong>Triple-tap</strong> bottom-right corner</div>
-          <div>• <strong>3-finger long press</strong> (2 sec)</div>
-          <div>• <strong>Swipe up</strong> from bottom edge</div>
+          <div>• <strong>Double-tap</strong> bottom-right corner</div>
         </div>
         
         <p style={{ margin: '15px 0 0 0', fontSize: '12px', opacity: 0.7 }}>
