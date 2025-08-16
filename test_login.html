@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+</head>
+<body>
+    <h1>Testing Whisperz Login</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="checkUser()">Check Current User</button>
+    <button onclick="clearStorage()">Clear Storage</button>
+    <div id="result"></div>
+    
+    <script>
+        function testLogin() {
+            // Try to login with test credentials
+            localStorage.setItem('enableDevTools', 'true');
+            document.getElementById('result').innerHTML = 'DevTools enabled in localStorage';
+        }
+        
+        function checkUser() {
+            const gunData = localStorage.getItem('gun/');
+            const devTools = localStorage.getItem('enableDevTools');
+            document.getElementById('result').innerHTML = 
+                'Gun data: ' + (gunData ? 'Present' : 'Not found') + '<br>' +
+                'DevTools: ' + (devTools || 'Not set');
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.getElementById('result').innerHTML = 'Storage cleared';
+        }
+    </script>
+</body>
+</html>
