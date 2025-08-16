@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, ConnectionStatus, CollapsibleSidebar } from './components';
+import { ThemeToggle, DevToolsWrapper, ConnectionStatus, ResizableSidebar } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -527,9 +527,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   };
 
   return (
-    <div className="chat-container" style={{ display: 'flex', height: '100vh' }}>
-      {/* Collapsible Sidebar */}
-      <CollapsibleSidebar
+    <div className="chat-container" style={{ display: 'flex', height: '100vh', overflow: 'hidden', margin: 0, padding: 0 }}>
+      {/* Resizable Sidebar */}
+      <ResizableSidebar
         friends={friends}
         selectedFriend={selectedFriend}
         onSelectFriend={setSelectedFriend}
@@ -541,10 +541,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       />
 
       {/* Chat Area */}
-      <div className="chat-area">
+      <div className="chat-area" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
         {selectedFriend ? (
           <>
-            <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <h3>{escapeHtml(selectedFriend.nickname)}</h3>
                 <span className={`status ${onlineStatus.get(selectedFriend.publicKey) ? 'online' : 'offline'}`}>
@@ -557,7 +557,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               </div>
             </div>
 
-            <div className="messages-container">
+            <div className="messages-container" style={{ flex: 1, overflowY: 'auto' }}>
               {messages.map((msg, index) => (
                 <div
                   key={index}
