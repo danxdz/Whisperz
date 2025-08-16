@@ -38,8 +38,6 @@ function DevToolsWrapper() {
     checkDevice();
     window.addEventListener('resize', checkDevice);
     
-    return () => window.removeEventListener('resize', checkDevice);
-
     // Secret key combination to enable dev tools in production
     const secretKeys = [];
     const secretCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
@@ -58,6 +56,7 @@ function DevToolsWrapper() {
     window.addEventListener('keydown', handleSecretCode);
     
     return () => {
+      window.removeEventListener('resize', checkDevice);
       window.removeEventListener('keydown', handleSecretCode);
     };
   }, []);
