@@ -405,24 +405,64 @@ class FriendsService {
     return friendData;
   }
 
-  // Remove friend
+  // Remove friend - properly removes bidirectional friendship
   async removeFriend(publicKey) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Remove from Gun
-    gunAuthService.user.get('friends').get(publicKey).put(null);
+    console.log('🗑️ Removing friend:', publicKey);
 
-    // Remove from local map
-    this.friends.delete(publicKey);
+    try {
+      // 1. Remove from current user's friends list
+      await new Promise((resolve) => {
+        gunAuthService.user.get('friends').get(publicKey).put(null, (ack) => {
+          console.log('✅ Removed from current user friends:', ack);
+          resolve();
+        });
+      });
 
-    // Remove reverse relationship
-    gunAuthService.gun.user(publicKey)
-      .get('friend_requests')
-      .get(user.pub)
-      .put(null);
+      // 2. Remove from friend's friends list (bidirectional removal)
+      await new Promise((resolve) => {
+        this.gun.get('~' + publicKey).get('friends').get(user.pub).put(null, (ack) => {
+          console.log('✅ Removed from friend\'s friends list:', ack);
+          resolve();
+        });
+      });
 
-    this.notifyFriendListeners('removed', { publicKey });
+      // 3. Remove from friendsIndex for both users
+      gunAuthService.user.get('friendsIndex').get(publicKey).put(null);
+      this.gun.get('~' + publicKey).get('friendsIndex').get(user.pub).put(null);
+
+      // 4. Remove from public friendships space
+      const friendshipKey = this.generateConversationId(user.pub, publicKey);
+      await new Promise((resolve) => {
+        gunAuthService.gun.get('friendships').get(friendshipKey).put(null, (ack) => {
+          console.log('✅ Removed from public friendships:', ack);
+          resolve();
+        });
+      });
+
+      // 5. Clear any conversation/messages (optional - you might want to keep history)
+      const clearMessages = window.confirm('Also delete conversation history with this friend?');
+      if (clearMessages) {
+        // Remove messages from hybrid storage
+        const conversationId = this.generateConversationId(user.pub, publicKey);
+        gunAuthService.user.get('conversations').get(conversationId).put(null);
+        gunAuthService.gun.get('conversations').get(conversationId).put(null);
+      }
+
+      // 6. Remove from local map
+      this.friends.delete(publicKey);
+
+      // 7. Notify listeners
+      this.notifyFriendListeners('removed', { publicKey });
+
+      console.log('✅ Friend removed successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error removing friend:', error);
+      throw error;
+    }
   }
 
   // Get all friends - Fixed to check public friendships
