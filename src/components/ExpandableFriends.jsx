@@ -1,0 +1,355 @@
+import React, { useState, useEffect } from 'react';
+import hybridGunService from '../services/hybridGunService';
+
+/**
+ * ExpandableFriends Component
+ * Collapsible friends list that can expand to show all friends or just online ones
+ */
+function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUser }) {
+  const [onlineStatus, setOnlineStatus] = useState({});
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showOnlineOnly, setShowOnlineOnly] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Monitor friends' online status
+  useEffect(() => {
+    if (!friends || friends.length === 0) return;
+
+    const checkPresence = async () => {
+      const status = {};
+      
+      for (const friend of friends) {
+        try {
+          const presence = await hybridGunService.getPresence(friend.pub || friend.publicKey);
+          status[friend.pub || friend.publicKey] = presence;
+        } catch (error) {
+          status[friend.pub || friend.publicKey] = { online: false };
+        }
+      }
+      
+      setOnlineStatus(status);
+    };
+
+    checkPresence();
+    const interval = setInterval(checkPresence, 5000);
+    return () => clearInterval(interval);
+  }, [friends]);
+
+  // Filter and sort friends
+  const onlineFriends = friends.filter(friend => 
+    onlineStatus[friend.pub || friend.publicKey]?.online
+  );
+  
+  const offlineFriends = friends.filter(friend => 
+    !onlineStatus[friend.pub || friend.publicKey]?.online
+  );
+
+  const filteredFriends = friends.filter(friend =>
+    friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const displayedFriends = showOnlineOnly ? 
+    onlineFriends.filter(f => f.nickname.toLowerCase().includes(searchTerm.toLowerCase())) :
+    filteredFriends;
+
+  const renderFriend = (friend, isOnline) => {
+    const isSelected = selectedFriend?.pub === (friend.pub || friend.publicKey) || 
+                      selectedFriend?.publicKey === (friend.pub || friend.publicKey);
+
+    return (
+      <div
+        key={friend.pub || friend.publicKey}
+        onClick={() => onSelectFriend(friend)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '6px 8px',
+          marginBottom: '4px',
+          background: isSelected 
+            ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3))'
+            : 'rgba(255, 255, 255, 0.03)',
+          border: isSelected 
+            ? '1px solid rgba(102, 126, 234, 0.5)'
+            : '1px solid transparent',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          transition: 'all 0.2s'
+        }}
+        onMouseEnter={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+          }
+        }}
+      >
+        {/* Compact Avatar */}
+        <div style={{
+          width: '28px',
+          height: '28px',
+          borderRadius: '50%',
+          background: isOnline 
+            ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
+            : 'linear-gradient(135deg, #667eea, #764ba2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '12px',
+          fontWeight: '600',
+          color: '#fff',
+          marginRight: '8px',
+          flexShrink: 0,
+          position: 'relative'
+        }}>
+          {friend.nickname.charAt(0).toUpperCase()}
+          
+          {/* Online dot */}
+          <div style={{
+            position: 'absolute',
+            bottom: '-1px',
+            right: '-1px',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: isOnline ? '#43e97b' : '#666',
+            border: '2px solid #0a0a0f'
+          }} />
+        </div>
+
+        {/* Name */}
+        <div style={{
+          flex: 1,
+          minWidth: 0,
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            fontSize: '13px',
+            fontWeight: '500',
+            color: '#fff',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {friend.nickname}
+          </div>
+        </div>
+
+        {/* Status indicator */}
+        {isOnline && (
+          <span style={{
+            fontSize: '10px',
+            color: '#43e97b'
+          }}>
+            ●
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: isExpanded ? 'auto' : 'auto',
+      maxHeight: isExpanded ? '70vh' : 'auto',
+      background: 'rgba(15, 15, 25, 0.95)',
+      borderRadius: '8px',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      overflow: 'hidden',
+      transition: 'all 0.3s ease'
+    }}>
+      {/* Collapsible Header */}
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{
+          padding: '10px 12px',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderBottom: isExpanded ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          userSelect: 'none'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>
+            Friends
+          </span>
+          <span style={{
+            padding: '2px 6px',
+            background: 'rgba(67, 233, 123, 0.2)',
+            borderRadius: '10px',
+            fontSize: '10px',
+            color: '#43e97b',
+            fontWeight: '500'
+          }}>
+            {onlineFriends.length} online
+          </span>
+          <span style={{
+            padding: '2px 6px',
+            background: 'rgba(102, 126, 234, 0.2)',
+            borderRadius: '10px',
+            fontSize: '10px',
+            color: '#667eea',
+            fontWeight: '500'
+          }}>
+            {friends.length} total
+          </span>
+        </div>
+        
+        <span style={{
+          fontSize: '12px',
+          color: 'rgba(255, 255, 255, 0.5)',
+          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.3s'
+        }}>
+          ▼
+        </span>
+      </div>
+
+      {/* Quick Online Users (Always Visible) */}
+      {!isExpanded && onlineFriends.length > 0 && (
+        <div style={{
+          padding: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        }}>
+          <div style={{
+            fontSize: '11px',
+            color: 'rgba(255, 255, 255, 0.5)',
+            marginBottom: '4px'
+          }}>
+            Online Now:
+          </div>
+          {onlineFriends.slice(0, 3).map(friend => renderFriend(friend, true))}
+          {onlineFriends.length > 3 && (
+            <div style={{
+              fontSize: '11px',
+              color: 'rgba(255, 255, 255, 0.5)',
+              textAlign: 'center',
+              padding: '4px'
+            }}>
+              +{onlineFriends.length - 3} more online
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <>
+          {/* Search and Filter */}
+          <div style={{
+            padding: '8px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <input
+              type="text"
+              placeholder="Search friends..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '12px',
+                outline: 'none'
+              }}
+            />
+            
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginTop: '8px',
+              fontSize: '11px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              cursor: 'pointer'
+            }}
+            onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="checkbox"
+                checked={showOnlineOnly}
+                onChange={(e) => setShowOnlineOnly(e.target.checked)}
+                style={{ width: '12px', height: '12px' }}
+              />
+              Show online only
+            </label>
+          </div>
+
+          {/* Friends List */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '8px',
+            maxHeight: '400px'
+          }}>
+            {displayedFriends.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '12px'
+              }}>
+                {searchTerm ? 'No friends match your search' : 
+                 showOnlineOnly ? 'No friends online' : 'No friends yet'}
+              </div>
+            ) : (
+              <>
+                {/* Online Friends */}
+                {displayedFriends.filter(f => onlineStatus[f.pub || f.publicKey]?.online).length > 0 && (
+                  <>
+                    <div style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      marginBottom: '6px',
+                      fontWeight: '600'
+                    }}>
+                      ONLINE ({displayedFriends.filter(f => onlineStatus[f.pub || f.publicKey]?.online).length})
+                    </div>
+                    {displayedFriends
+                      .filter(f => onlineStatus[f.pub || f.publicKey]?.online)
+                      .map(friend => renderFriend(friend, true))
+                    }
+                  </>
+                )}
+                
+                {/* Offline Friends */}
+                {!showOnlineOnly && displayedFriends.filter(f => !onlineStatus[f.pub || f.publicKey]?.online).length > 0 && (
+                  <>
+                    <div style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      marginTop: '12px',
+                      marginBottom: '6px',
+                      fontWeight: '600'
+                    }}>
+                      OFFLINE ({displayedFriends.filter(f => !onlineStatus[f.pub || f.publicKey]?.online).length})
+                    </div>
+                    {displayedFriends
+                      .filter(f => !onlineStatus[f.pub || f.publicKey]?.online)
+                      .map(friend => renderFriend(friend, false))
+                    }
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default ExpandableFriends;

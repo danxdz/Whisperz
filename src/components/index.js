@@ -15,6 +15,7 @@ export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as ThemeToggle } from './ThemeToggle';
 export { default as EnhancedDevTools } from './EnhancedDevTools';
 export { default as OnlineUsers } from './OnlineUsers';
+export { default as ExpandableFriends } from './ExpandableFriends';
 
 // Future components can be added here as they are extracted:
 // export { default as RegisterView } from './RegisterView';

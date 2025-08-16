@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, ConnectionStatus, OnlineUsers } from './components';
+import { ThemeToggle, DevToolsWrapper, ConnectionStatus, ExpandableFriends } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -165,30 +165,15 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
   const [error, setError] = useState('');
   const [inviteData, setInviteData] = useState(null);
 
-  // Parse invite data
+  // Parse invite data - simplified to just use the code directly
   useEffect(() => {
     if (inviteCode) {
-      try {
-        // Use encryptionService for proper base64url decoding
-        const invitePayload = JSON.parse(encryptionService.base64UrlDecode(inviteCode));
-        
-        // New format just has inviteId and senderKey
-        // We'll show basic info and the actual friend data will be loaded when accepting
-        if (invitePayload.inviteId && invitePayload.senderKey) {
-          setInviteData({
-            inviteId: invitePayload.inviteId,
-            senderKey: invitePayload.senderKey,
-            // We can't show nickname until we fetch from Gun.js
-            nickname: 'Friend' 
-          });
-        } else {
-          // Try old format for backward compatibility
-          setInviteData(invitePayload);
-        }
-      } catch (err) {
-        console.error('Failed to parse invite:', err);
-        setError('Invalid invite link format');
-      }
+      // The invite code is now just a simple string, not base64 encoded
+      // We'll fetch the actual invite data from Gun when accepting
+      setInviteData({
+        code: inviteCode,
+        message: 'You have a valid invite code'
+      });
     }
   }, [inviteCode]);
 
@@ -238,7 +223,10 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
         )}
         {inviteData && (
           <div className="invite-info">
-            <p>You've been invited by <strong>{inviteData.nickname}</strong></p>
+            <p>✅ {inviteData.message}</p>
+            <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
+              Code: {inviteData.code}
+            </p>
           </div>
         )}
         <form onSubmit={handleSubmit}>
@@ -576,14 +564,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           </div>
         </div>
         
-        {/* Replace the existing friends list with OnlineUsers component */}
+        {/* Replace the existing friends list with ExpandableFriends component */}
         <div style={{ 
           flex: 1, 
           padding: '10px',
           minHeight: 0, // Important for proper scrolling
-          overflow: 'hidden'
+          overflow: 'auto'
         }}>
-          <OnlineUsers
+          <ExpandableFriends
             friends={friends}
             selectedFriend={selectedFriend}
             onSelectFriend={setSelectedFriend}
