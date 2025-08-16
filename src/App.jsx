@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, SwipeableChat } from './components';
+import { ThemeToggle, DevToolsWrapper, SwipeableChat, InviteModal } from './components';
 import { useTheme } from './contexts/ThemeContext';
 
 // Create rate limiter for login attempts
@@ -550,7 +550,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         {selectedFriend ? (
           <>
             <div style={{ 
-              padding: '16px 20px',
+              padding: window.innerWidth <= 320 ? '8px 12px' : '16px 20px',
               background: colors.bgCard,
               borderBottom: `1px solid ${colors.borderColor}`,
               display: 'flex',
@@ -558,20 +558,29 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               justifyContent: 'space-between',
               flexShrink: 0
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: colors.textPrimary }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: window.innerWidth <= 320 ? '6px' : '12px' }}>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: window.innerWidth <= 320 ? '14px' : '18px', 
+                  fontWeight: '600', 
+                  color: colors.textPrimary,
+                  maxWidth: window.innerWidth <= 320 ? '120px' : 'none',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
                   {escapeHtml(selectedFriend.nickname)}
                 </h3>
                 <span style={{
-                  padding: '2px 8px',
+                  padding: window.innerWidth <= 320 ? '1px 4px' : '2px 8px',
                   background: onlineStatus.get(selectedFriend.publicKey) 
                     ? colors.successBg
                     : colors.bgTertiary,
                   borderRadius: '12px',
-                  fontSize: '12px',
+                  fontSize: window.innerWidth <= 320 ? '10px' : '12px',
                   color: onlineStatus.get(selectedFriend.publicKey) ? colors.success : colors.textMuted
                 }}>
-                  {onlineStatus.get(selectedFriend.publicKey) ? 'Online' : 'Offline'}
+                  {onlineStatus.get(selectedFriend.publicKey) ? '●' : '○'}
                 </span>
               </div>
               <ThemeToggle />
@@ -580,7 +589,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             <div style={{ 
               flex: 1, 
               overflowY: 'auto',
-              padding: '20px',
+              padding: window.innerWidth <= 320 ? '8px' : '20px',
               display: 'flex',
               flexDirection: 'column'
             }}>
@@ -590,23 +599,25 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   style={{
                     display: 'flex',
                     justifyContent: msg.from === user.pub ? 'flex-end' : 'flex-start',
-                    marginBottom: '12px'
+                    marginBottom: window.innerWidth <= 320 ? '6px' : '12px'
                   }}
                 >
                   <div style={{
-                    maxWidth: '70%',
-                    padding: '10px 14px',
+                    maxWidth: window.innerWidth <= 320 ? '85%' : '70%',
+                    padding: window.innerWidth <= 320 ? '6px 10px' : '10px 14px',
                     borderRadius: '12px',
                     background: msg.from === user.pub 
                       ? colors.messageSent
                       : colors.messageReceived,
                     color: msg.from === user.pub ? '#fff' : colors.textPrimary
                   }}>
-                    <div>{escapeHtml(msg.content)}</div>
+                    <div style={{ fontSize: window.innerWidth <= 320 ? '13px' : '14px' }}>
+                      {escapeHtml(msg.content)}
+                    </div>
                     <div style={{ 
-                      fontSize: '11px', 
+                      fontSize: window.innerWidth <= 320 ? '9px' : '11px', 
                       opacity: 0.7,
-                      marginTop: '4px',
+                      marginTop: '2px',
                       color: msg.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted
                     }}>
                       {new Date(msg.timestamp).toLocaleTimeString()}
@@ -641,47 +652,47 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             </div>
 
             <form onSubmit={handleSendMessage} style={{
-              padding: '16px 20px',
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: window.innerWidth <= 320 ? '8px' : '16px 20px',
+              background: colors.bgCard,
+              borderTop: `1px solid ${colors.borderColor}`,
               display: 'flex',
-              gap: '12px'
+              gap: window.innerWidth <= 320 ? '6px' : '12px'
             }}>
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyUp={handleTyping}
-                placeholder="Type a message..."
+                placeholder="Message..."
                 maxLength={1000}
                 style={{
                   flex: 1,
-                  padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: '#fff',
-                  fontSize: '14px',
+                  padding: window.innerWidth <= 320 ? '8px 10px' : '12px 16px',
+                  background: colors.bgTertiary,
+                  border: `1px solid ${colors.borderColor}`,
+                  borderRadius: window.innerWidth <= 320 ? '20px' : '8px',
+                  color: colors.textPrimary,
+                  fontSize: window.innerWidth <= 320 ? '13px' : '14px',
                   outline: 'none'
                 }}
               />
               <button 
                 type="submit"
                 style={{
-                  padding: '12px 24px',
+                  padding: window.innerWidth <= 320 ? '8px 16px' : '12px 24px',
                   background: newMessage.trim() 
-                    ? 'linear-gradient(135deg, #667eea, #764ba2)'
-                    : 'rgba(255, 255, 255, 0.1)',
+                    ? colors.primary
+                    : colors.bgTertiary,
                   border: 'none',
-                  borderRadius: '8px',
-                  color: '#fff',
-                  fontSize: '14px',
+                  borderRadius: window.innerWidth <= 320 ? '20px' : '8px',
+                  color: newMessage.trim() ? '#fff' : colors.textMuted,
+                  fontSize: window.innerWidth <= 320 ? '13px' : '14px',
                   cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
                   opacity: newMessage.trim() ? 1 : 0.5
                 }}
                 disabled={!newMessage.trim()}
               >
-                Send
+                {window.innerWidth <= 320 ? '➤' : 'Send'}
               </button>
             </form>
           </>
@@ -709,26 +720,12 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         )}
       </div>
 
-      {/* Invite Modal */}
-      {showInvite && (
-        <div className="modal-overlay" onClick={() => setShowInvite(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Invite Link Generated</h3>
-            <p>Share this link with your friend:</p>
-            <div className="invite-link-container">
-              <input
-                type="text"
-                value={inviteLink}
-                readOnly
-                className="invite-link-input"
-              />
-              <button onClick={handleCopyInvite} className="copy-btn">Copy</button>
-            </div>
-            <p className="warning">This link can only be used once and expires in 24 hours</p>
-            <button onClick={() => setShowInvite(false)} className="close-modal-btn">Close</button>
-          </div>
-        </div>
-      )}
+      {/* Modern Invite Modal */}
+      <InviteModal 
+        isOpen={showInvite}
+        onClose={() => setShowInvite(false)}
+        inviteLink={inviteLink}
+      />
 
       {/* DevTools - Using the new enhanced version */}
       <DevToolsWrapper />
