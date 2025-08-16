@@ -179,19 +179,14 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Only require invite if not admin setup
-    if (!isAdminSetup && !inviteCode) {
-      setError('Registration requires a valid invite');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
+      // Pass the invite code along with registration
       const result = await gunAuthService.register(username, password, nickname || username);
-      onRegister(result.user);
+      // Pass both user and invite code to parent
+      onRegister(result.user, inviteCode);
     } catch (err) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -886,7 +881,7 @@ function App() {
   }, []);
 
   // Handle login/register
-  const handleAuth = async (authUser) => {
+  const handleAuth = async (authUser, inviteCodeFromReg = null) => {
     console.log('🔐 Authentication successful:', authUser);
     setUser(authUser);
     
@@ -902,17 +897,18 @@ function App() {
     messageService.initialize();
     console.log('✅ Message service initialized');
 
-    // Handle invite if present
-    if (inviteCode) {
+    // Handle invite if present (from registration or from URL)
+    const codeToUse = inviteCodeFromReg || inviteCode;
+    if (codeToUse) {
       console.log('🎫 Processing invite after auth...');
-      console.log('📦 Invite code:', inviteCode);
+      console.log('📦 Invite code:', codeToUse);
       
       // Small delay to ensure services are ready
       setTimeout(async () => {
         try {
-          const result = await friendsService.acceptInvite(inviteCode);
+          const result = await friendsService.acceptInvite(codeToUse);
           console.log('✅ Invite acceptance result:', result);
-          alert('Friend added successfully!');
+          alert('Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
           
           // Refresh friends list
           if (typeof loadFriendsRef.current === 'function') {
@@ -920,7 +916,10 @@ function App() {
           }
         } catch (error) {
           console.error('❌ Failed to accept invite:', error);
-          alert('Failed to accept invite: ' + error.message);
+          // Don't show error for "already used" if it was just used by this user
+          if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
+            alert('Note: ' + error.message);
+          }
         }
         setInviteCode(null);
         // Clear the invite from URL

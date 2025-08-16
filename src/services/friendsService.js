@@ -158,7 +158,7 @@ class FriendsService {
           return;
         }
 
-        // Mark invite as used
+        // Mark invite as used FIRST (before adding friends)
         this.gun.get('invites').get(inviteCode).put({
           ...inviteData,
           used: true,
@@ -176,18 +176,40 @@ class FriendsService {
         // Create bidirectional friendship
         const conversationId = `conv_${Date.now()}_${Math.random()}`;
         
-        // Add friend for current user
-        await this.addFriend(inviteData.from, inviteData.nickname, conversationId);
+        // Get current user's nickname
+        const currentUserNickname = await this.getUserNickname() || user.alias || 'Anonymous';
         
-        // Add current user as friend for inviter
-        const myNickname = await this.getUserNickname();
-        this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put({
-          publicKey: user.pub,
-          nickname: myNickname || 'Friend',
-          addedAt: Date.now(),
-          conversationId: conversationId,
-          addedViaInvite: inviteCode // Track how they became friends
-        });
+        // Add friend for current user (the one accepting the invite)
+        await this.addFriend(inviteData.from, inviteData.nickname, conversationId);
+        console.log('✅ Added inviter as friend');
+
+        // Add current user as friend for the inviter
+        // This creates the bidirectional relationship
+        try {
+          // Store friendship in inviter's friends list
+          await new Promise((addResolve, addReject) => {
+            this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put({
+              publicKey: user.pub,
+              nickname: currentUserNickname,
+              addedAt: Date.now(),
+              conversationId: conversationId
+            }, (ack) => {
+              if (ack.err) {
+                console.error('Failed to add friend to inviter:', ack.err);
+                addReject(new Error(ack.err));
+              } else {
+                console.log('✅ Added current user to inviter\'s friends list');
+                addResolve();
+              }
+            });
+          });
+
+          // Also add to the inviter's local friends index for faster lookup
+          this.gun.get('~' + inviteData.from).get('friendsIndex').get(user.pub).put(true);
+        } catch (error) {
+          console.error('Error adding bidirectional friendship:', error);
+          // Continue even if reverse add fails - at least one direction worked
+        }
 
         console.log('✅ Invite accepted successfully');
         resolve({
@@ -195,7 +217,7 @@ class FriendsService {
           friend: {
             publicKey: inviteData.from,
             nickname: inviteData.nickname,
-            conversationId
+            conversationId: conversationId
           }
         });
       });
