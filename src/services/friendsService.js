@@ -93,7 +93,7 @@ class FriendsService {
       inviteCode // Include the code for reference
     });
 
-    const inviteLink = `${window.location.origin}/?invite=${inviteCode}`;
+    const inviteLink = `${window.location.origin}/#/invite/${inviteCode}`;
     
     console.log('🎫 Invite generated:', {
       code: inviteCode,

@@ -14,6 +14,7 @@ export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as ThemeToggle } from './ThemeToggle';
 export { default as EnhancedDevTools } from './EnhancedDevTools';
+export { default as OnlineUsers } from './OnlineUsers';
 
 // Future components can be added here as they are extracted:
 // export { default as RegisterView } from './RegisterView';

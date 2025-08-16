@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, ConnectionStatus } from './components';
+import { ThemeToggle, DevToolsWrapper, ConnectionStatus, OnlineUsers } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -549,24 +549,18 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       <div className="sidebar">
         <div className="sidebar-header">
           <h2>Contacts</h2>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button 
-              onClick={loadFriends} 
-              className="add-friend-btn" 
-              title="Refresh friends list"
-              style={{ 
-                background: '#2a2a2a',
-                border: '1px solid #444',
-                fontSize: '18px'
-              }}
-            >
-              🔄
-            </button>
-            <button 
-              onClick={handleGenerateInvite} 
-              className="add-friend-btn invite-primary" 
-              title="Invite a friend"
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <ThemeToggle />
+            <button
+              onClick={handleGenerateInvite}
+              className="generate-invite-btn"
               style={{
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                padding: '8px 16px',
+                cursor: 'pointer',
                 fontSize: '24px',
                 width: '40px',
                 height: '40px'
@@ -577,29 +571,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           </div>
         </div>
         
-        <div className="friends-list">
-          {friendsLoading ? (
-            <div className="no-friends">
-              <p>Loading friends...</p>
-            </div>
-          ) : friends.map(friend => (
-            <div
-              key={friend.publicKey}
-              className={`friend-item ${selectedFriend?.publicKey === friend.publicKey ? 'active' : ''}`}
-              onClick={() => setSelectedFriend(friend)}
-            >
-              <div className="friend-info">
-                <span className="friend-name">{escapeHtml(friend.nickname)}</span>
-                <span className={`status-indicator ${onlineStatus.get(friend.publicKey) ? 'online' : 'offline'}`} />
-              </div>
-            </div>
-          ))}
-          {friends.length === 0 && !friendsLoading && (
-            <div className="no-friends">
-              <p>No contacts yet</p>
-              <p className="hint">Click the + button above to invite friends</p>
-            </div>
-          )}
+        {/* Replace the existing friends list with OnlineUsers component */}
+        <div style={{ flex: 1, padding: '10px' }}>
+          <OnlineUsers
+            friends={friends}
+            selectedFriend={selectedFriend}
+            onSelectFriend={setSelectedFriend}
+            currentUser={user}
+          />
         </div>
 
         <div className="sidebar-footer">
