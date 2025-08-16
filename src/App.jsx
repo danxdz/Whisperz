@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, ConnectionStatus, ResizableSidebar } from './components';
+import { ThemeToggle, DevToolsWrapper, SwipeableChat } from './components';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -527,35 +527,22 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   };
 
   return (
-    <div style={{ 
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      display: 'flex',
-      margin: 0,
-      padding: 0,
-      background: 'linear-gradient(135deg, #0a0a0f 0%, #16161f 100%)'
-    }}>
-      {/* Resizable Sidebar */}
-      <ResizableSidebar
-        friends={friends}
-        selectedFriend={selectedFriend}
-        onSelectFriend={setSelectedFriend}
-        currentUser={user}
-        onFriendsUpdate={loadFriends}
-        onGenerateInvite={handleGenerateInvite}
-        userNickname={userNickname}
-        onLogout={onLogout}
-      />
-
+    <SwipeableChat
+      friends={friends}
+      selectedFriend={selectedFriend}
+      onSelectFriend={setSelectedFriend}
+      currentUser={user}
+      onFriendsUpdate={loadFriends}
+      onGenerateInvite={handleGenerateInvite}
+      userNickname={userNickname}
+      onLogout={onLogout}
+    >
       {/* Chat Area */}
       <div style={{ 
         flex: 1, 
         display: 'flex', 
         flexDirection: 'column',
-        minWidth: 0,
+        height: '100%',
         position: 'relative'
       }}>
         {selectedFriend ? (
@@ -585,10 +572,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   {onlineStatus.get(selectedFriend.publicKey) ? 'Online' : 'Offline'}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <ThemeToggle />
-                <ConnectionStatus />
-              </div>
+              <ThemeToggle />
             </div>
 
             <div style={{ 
@@ -742,7 +726,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
       {/* DevTools - Using the new enhanced version */}
       <DevToolsWrapper />
-    </div>
+    </SwipeableChat>
   );
 }
 

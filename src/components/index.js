@@ -18,6 +18,7 @@ export { default as OnlineUsers } from './OnlineUsers';
 export { default as ExpandableFriends } from './ExpandableFriends';
 export { default as CollapsibleSidebar } from './CollapsibleSidebar';
 export { default as ResizableSidebar } from './ResizableSidebar';
+export { default as SwipeableChat } from './SwipeableChat';
 
 // Future components can be added here as they are extracted:
 // export { default as RegisterView } from './RegisterView';
