@@ -75,7 +75,7 @@ function MobileDevTools({ onOpenDevTools }) {
         className="mobile-devtools-corner"
         style={{
           position: 'fixed',
-          bottom: 0,
+          top: 60,
           right: 0,
           width: '50px',
           height: '50px',

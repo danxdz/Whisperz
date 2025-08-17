@@ -49,7 +49,7 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
       <div
         style={{
           position: 'fixed',
-          bottom: 0,
+          top: 60,
           right: 0,
           width: '40px',
           height: '40px',

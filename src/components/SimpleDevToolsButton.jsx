@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * SimpleDevToolsButton Component
  * Minimal button for desktop to toggle DevTools
  */
 function SimpleDevToolsButton({ onClick, isOpen }) {
+  const { colors } = useTheme();
+  
   // Keyboard shortcut
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -24,19 +27,19 @@ function SimpleDevToolsButton({ onClick, isOpen }) {
       onClick={onClick}
       style={{
         position: 'fixed',
-        bottom: '20px',
+        top: '20px',
         right: '20px',
-        width: '48px',
-        height: '48px',
-        borderRadius: '50%',
+        width: '36px',
+        height: '36px',
+        borderRadius: '8px',
         background: isOpen 
-          ? 'linear-gradient(135deg, #ff6b6b, #c92a2a)' 
-          : 'linear-gradient(135deg, #667eea, #764ba2)',
-        border: 'none',
-        color: 'white',
-        fontSize: '20px',
+          ? colors.danger
+          : colors.bgCard,
+        border: `1px solid ${isOpen ? colors.danger : colors.borderColor}`,
+        color: isOpen ? '#fff' : colors.textPrimary,
+        fontSize: '16px',
         cursor: 'pointer',
-        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+        boxShadow: colors.shadow,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         zIndex: 9999,
         display: 'flex',
