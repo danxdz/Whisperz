@@ -188,6 +188,9 @@ class FriendsService {
                 friend: existingFriend
               });
               return;
+            } else {
+              console.log('⚠️ Invite used but friendship not found, will re-establish');
+              // Continue to re-establish the friendship
             }
           } else {
             reject(new Error('This invite has already been used'));
@@ -237,50 +240,59 @@ class FriendsService {
           return;
         }
 
-        // Mark invite as used FIRST (before adding friends)
-        this.gun.get('invites').get(inviteCode).put({
-          ...inviteData,
-          used: true,
-          usedBy: user.pub,
-          usedAt: Date.now()
-        });
-
-        // Also update in the inviter's space
-        this.gun.get('~' + inviteData.from).get('invites').get(inviteCode).put({
-          used: true,
-          usedBy: user.pub,
-          usedAt: Date.now()
-        });
-
-        // Create bidirectional friendship
+        // Create bidirectional friendship FIRST (before marking as used)
         const conversationId = `conv_${Date.now()}_${Math.random()}`;
         
         // Get current user's nickname
         const currentUserNickname = await this.getUserNickname() || user.alias || 'Anonymous';
         
+        console.log('🤝 Creating bidirectional friendship...');
+        console.log('Current user:', user.pub, currentUserNickname);
+        console.log('Inviter:', inviteData.from, inviteData.nickname);
+        
         // Add friend for current user (the one accepting the invite)
         await this.addFriend(inviteData.from, inviteData.nickname, conversationId);
-        console.log('✅ Added inviter as friend');
+        console.log('✅ Step 1: Added inviter as friend for current user');
 
         // Add current user as friend for the inviter
         // This creates the bidirectional relationship
         try {
           // Store friendship in inviter's friends list
           await new Promise((addResolve, addReject) => {
-            this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put({
+            const friendData = {
               publicKey: user.pub,
               nickname: currentUserNickname,
               addedAt: Date.now(),
               conversationId: conversationId
-            }, (ack) => {
+            };
+            
+            console.log('📝 Writing friend data to inviter:', friendData);
+            
+            this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put(friendData, (ack) => {
               if (ack.err) {
                 console.error('Failed to add friend to inviter:', ack.err);
                 addReject(new Error(ack.err));
               } else {
-                console.log('✅ Added current user to inviter\'s friends list');
+                console.log('✅ Step 2: Added current user to inviter\'s friends list');
                 addResolve();
               }
             });
+          });
+          
+          // Mark invite as used ONLY AFTER successful friend addition
+          console.log('📌 Marking invite as used...');
+          this.gun.get('invites').get(inviteCode).put({
+            ...inviteData,
+            used: true,
+            usedBy: user.pub,
+            usedAt: Date.now()
+          });
+
+          // Also update in the inviter's space
+          this.gun.get('~' + inviteData.from).get('invites').get(inviteCode).put({
+            used: true,
+            usedBy: user.pub,
+            usedAt: Date.now()
           });
 
           // Also add to the inviter's local friends index for faster lookup
