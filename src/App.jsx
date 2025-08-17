@@ -9,6 +9,7 @@ import encryptionService from './services/encryptionService';
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
+import { useConnectionState } from './hooks/useConnectionState';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -289,6 +290,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [friendsLoading, setFriendsLoading] = useState(true);
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
+  
+  // Connection state for selected friend
+  const { connectionState, attemptWebRTCConnection } = useConnectionState(
+    selectedFriend?.publicKey
+  );
 
   // Load user nickname on mount
   useEffect(() => {
@@ -471,6 +477,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     const sanitizedMessage = newMessage.trim().slice(0, 1000);
 
     try {
+      // Attempt WebRTC connection if not connected
+      if (connectionState.status === 'gun' && connectionState.isOnline) {
+        await attemptWebRTCConnection();
+      }
+      
       await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
       setNewMessage('');
     } catch (error) {
@@ -531,6 +542,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   };
 
   return (
+    <>
+      <style>{`
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
+      `}</style>
     <SwipeableChat
       friends={friends}
       selectedFriend={selectedFriend}
@@ -574,15 +593,43 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 }}>
                   {escapeHtml(selectedFriend.nickname)}
                 </h3>
-                <span style={{
-                  width: screen.isTiny ? '6px' : '8px',
-                  height: screen.isTiny ? '6px' : '8px',
-                  borderRadius: '50%',
-                  background: onlineStatus.get(selectedFriend.publicKey) 
-                    ? colors.success
-                    : colors.bgTertiary,
-                  display: 'inline-block'
-                }} />
+                {/* Connection Status Indicator */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: screen.isTiny ? '2px 4px' : '2px 6px',
+                  background: colors.bgTertiary,
+                  borderRadius: '10px',
+                  fontSize: screen.isTiny ? '9px' : '10px'
+                }}>
+                  <span style={{
+                    width: screen.isTiny ? '6px' : '7px',
+                    height: screen.isTiny ? '6px' : '7px',
+                    borderRadius: '50%',
+                    background: connectionState.status === 'webrtc' ? colors.success :
+                               connectionState.status === 'gun' ? colors.warning :
+                               connectionState.status === 'connecting' ? colors.primary :
+                               colors.textMuted,
+                    display: 'inline-block',
+                    animation: connectionState.status === 'connecting' ? 'pulse 1s infinite' : 'none'
+                  }} />
+                  <span style={{ 
+                    color: colors.textSecondary,
+                    textTransform: 'uppercase',
+                    fontWeight: '500'
+                  }}>
+                    {connectionState.status === 'webrtc' ? 'P2P' :
+                     connectionState.status === 'gun' ? 'GUN' :
+                     connectionState.status === 'connecting' ? '...' :
+                     'OFF'}
+                  </span>
+                  {connectionState.latency && (
+                    <span style={{ color: colors.textMuted }}>
+                      {connectionState.latency}ms
+                    </span>
+                  )}
+                </div>
               </div>
               <ThemeToggle />
             </div>
@@ -622,11 +669,33 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                       fontSize: screen.isTiny ? '8px' : screen.isMobile ? '9px' : '11px', 
                       opacity: 0.7,
                       marginTop: '1px',
-                      color: msg.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted
+                      color: msg.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      justifyContent: msg.from === user.pub ? 'flex-end' : 'flex-start'
                     }}>
-                      {new Date(msg.timestamp).toLocaleTimeString()}
+                      <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                      {msg.deliveryMethod && (
+                        <span style={{
+                          padding: '1px 3px',
+                          background: msg.deliveryMethod === 'webrtc' ? 'rgba(67, 233, 123, 0.2)' :
+                                     msg.deliveryMethod === 'gun' ? 'rgba(255, 193, 7, 0.2)' :
+                                     'transparent',
+                          borderRadius: '3px',
+                          fontSize: screen.isTiny ? '7px' : '8px',
+                          fontWeight: 'bold',
+                          color: msg.deliveryMethod === 'webrtc' ? colors.success :
+                                msg.deliveryMethod === 'gun' ? colors.warning :
+                                colors.textMuted
+                        }}>
+                          {msg.deliveryMethod === 'webrtc' ? 'P2P' :
+                           msg.deliveryMethod === 'gun' ? 'GUN' :
+                           'LOCAL'}
+                        </span>
+                      )}
                       {msg.from === user.pub && (
-                        <span style={{ marginLeft: '6px' }}>
+                        <span style={{ marginLeft: '2px' }}>
                           {msg.delivered ? '✓✓' : '✓'}
                         </span>
                       )}
@@ -734,6 +803,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
 
     </SwipeableChat>
+    </>
   );
 }
 
