@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import hybridGunService from '../services/hybridGunService';
 import friendsService from '../services/friendsService';
+import logger from '../utils/logger';
 
 /**
  * CollapsibleSidebar Component
@@ -63,7 +64,7 @@ function CollapsibleSidebar({
       alert(`${friend.nickname} has been removed from your friends.`);
       if (onFriendsUpdate) onFriendsUpdate();
     } catch (error) {
-      console.error('Failed to remove friend:', error);
+      logger.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
     setShowActions(null);
@@ -85,7 +86,7 @@ function CollapsibleSidebar({
       alert(`${friend.nickname} has been blocked.`);
       if (onFriendsUpdate) onFriendsUpdate();
     } catch (error) {
-      console.error('Failed to block friend:', error);
+      logger.error('Failed to block friend:', error);
       alert('Failed to block friend: ' + error.message);
     }
     setShowActions(null);

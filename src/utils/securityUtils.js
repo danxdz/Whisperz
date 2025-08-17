@@ -1,5 +1,6 @@
 // Security utilities for Whisperz
 import CryptoJS from 'crypto-js';
+import logger from '../utils/logger';
 
 class SecurityUtils {
   constructor() {
@@ -7,10 +8,10 @@ class SecurityUtils {
     try {
       this.initializeSecrets();
     } catch (error) {
-      console.error('Security initialization warning:', error.message);
+      logger.error('Security initialization warning:', error.message);
       // Allow app to start but log the security issue
       if (import.meta.env.DEV) {
-        console.warn('Running in development mode with security warnings. Please configure environment variables properly.');
+        logger.warn('Running in development mode with security warnings. Please configure environment variables properly.');
       }
     }
   }
@@ -23,14 +24,14 @@ class SecurityUtils {
     // In development, warn but don't crash
     if (import.meta.env.DEV) {
       if (!inviteSecret || inviteSecret === 'default-invite-secret' || inviteSecret === 'your-secret-key-here') {
-        console.warn('SECURITY WARNING: Invalid or default invite secret detected. Please run: npm run generate-secrets');
+        logger.warn('SECURITY WARNING: Invalid or default invite secret detected. Please run: npm run generate-secrets');
       }
       return;
     }
     
     // In production, enforce strict security
     if (!inviteSecret || inviteSecret === 'default-invite-secret' || inviteSecret === 'your-secret-key-here') {
-      console.error('SECURITY ERROR: Invalid or default invite secret detected');
+      logger.error('SECURITY ERROR: Invalid or default invite secret detected');
       throw new Error('Application requires secure configuration. Please set proper environment variables.');
     }
 

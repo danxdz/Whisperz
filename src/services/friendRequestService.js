@@ -1,5 +1,6 @@
 import gunAuthService from './gunAuthService';
 import friendsService from './friendsService';
+import logger from '../utils/logger';
 
 class FriendRequestService {
   constructor() {
@@ -58,7 +59,7 @@ class FriendRequestService {
       .get(requestId)
       .put(request);
 
-    console.log('📤 Friend request sent:', request);
+    logger.debug('📤 Friend request sent:', request);
     return request;
   }
 
@@ -109,7 +110,7 @@ class FriendRequestService {
         conversationId: conversationId
       });
 
-    console.log('✅ Friend request accepted:', requestId);
+    logger.debug('✅ Friend request accepted:', requestId);
     
     // Notify handlers
     this.notifyHandlers('accepted', request);
@@ -145,7 +146,7 @@ class FriendRequestService {
       .get(requestId)
       .put(request);
 
-    console.log('❌ Friend request rejected:', requestId);
+    logger.debug('❌ Friend request rejected:', requestId);
     
     // Notify handlers
     this.notifyHandlers('rejected', request);
@@ -291,7 +292,7 @@ class FriendRequestService {
       .get(requestId)
       .put(request);
 
-    console.log('🚫 Friend request cancelled:', requestId);
+    logger.debug('🚫 Friend request cancelled:', requestId);
     return request;
   }
 
@@ -306,7 +307,7 @@ class FriendRequestService {
       .map()
       .on((data, key) => {
         if (data && data.status === 'pending') {
-          console.log('📨 New friend request:', data);
+          logger.debug('📨 New friend request:', data);
           this.notifyHandlers('new', data);
         }
       });
@@ -324,7 +325,7 @@ class FriendRequestService {
       try {
         handler(type, request);
       } catch (error) {
-        console.error('Error in request handler:', error);
+        logger.error('Error in request handler:', error);
       }
     });
   }

@@ -4,6 +4,7 @@ import MobileDevTools from './MobileDevTools';
 import MobileDevToolsCompact from './MobileDevToolsCompact';
 import EnhancedDevTools from './EnhancedDevTools';
 import { APP_CONFIG } from '../config/app.config';
+import logger from '../utils/logger';
 
 /**
  * DevToolsWrapper Component
@@ -50,7 +51,7 @@ function DevToolsWrapper() {
       secretKeys.splice(-secretCode.length - 1, secretKeys.length - secretCode.length);
       
       if (JSON.stringify(secretKeys) === JSON.stringify(secretCode)) {
-        console.log('🎮 Konami Code activated! Dev tools enabled.');
+        logger.debug('🎮 Konami Code activated! Dev tools enabled.');
         localStorage.setItem('enableDevTools', 'true');
         setIsEnabled(true);
       }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import webrtcService from '../services/webrtcService';
+import logger from '../utils/logger';
 
 /**
  * ConnectionStatus Component
@@ -27,7 +28,7 @@ const ConnectionStatus = () => {
           setRelayStatus('setting up...');
         }
       } catch (error) {
-        console.error('Gun status check error:', error);
+        logger.error('Gun status check error:', error);
         setGunStatus('error');
         setRelayStatus('error');
       }
@@ -49,7 +50,7 @@ const ConnectionStatus = () => {
           setPeerStatus('initializing');
         }
       } catch (error) {
-        console.error('Peer status check error:', error);
+        logger.error('Peer status check error:', error);
         setPeerStatus('error');
       }
     };

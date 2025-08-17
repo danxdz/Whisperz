@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useResponsive } from '../hooks/useResponsive';
+import logger from '../utils/logger';
 
 function InviteModal({ isOpen, onClose, inviteLink }) {
   const { colors } = useTheme();
@@ -17,7 +18,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('Failed to copy:', err);
     }
   };
 
@@ -31,7 +32,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
         });
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('Share failed:', err);
+          logger.error('Share failed:', err);
         }
       }
     } else {

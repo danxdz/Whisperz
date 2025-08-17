@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js';
+import logger from '../utils/logger';
 
 // AES-GCM encryption service with authentication
 class EncryptionService {
@@ -11,11 +12,11 @@ class EncryptionService {
       this.validateConfiguration();
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.warn('Encryption service warning:', error.message);
-        console.warn('Running in development mode. Please configure environment variables for production.');
+        logger.warn('Encryption service warning:', error.message);
+        logger.warn('Running in development mode. Please configure environment variables for production.');
       } else {
         // In production, use a fallback but warn
-        console.error('SECURITY WARNING: Using fallback configuration. Please set VITE_INVITE_SECRET in Vercel!');
+        logger.error('SECURITY WARNING: Using fallback configuration. Please set VITE_INVITE_SECRET in Vercel!');
       }
     }
   }
@@ -27,21 +28,21 @@ class EncryptionService {
     // In development, warn but don't crash
     if (import.meta.env.DEV) {
       if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
-        console.warn('SECURITY WARNING: Using development mode. Configure VITE_INVITE_SECRET for production.');
+        logger.warn('SECURITY WARNING: Using development mode. Configure VITE_INVITE_SECRET for production.');
       }
       return;
     }
     
     // In production, use fallback if not configured (with warning)
     if (!secret) {
-      console.error('SECURITY WARNING: VITE_INVITE_SECRET not configured. Using fallback (NOT SECURE!)');
+      logger.error('SECURITY WARNING: VITE_INVITE_SECRET not configured. Using fallback (NOT SECURE!)');
       // Don't throw error to allow app to run
       return;
     }
     
     // Check for default values
     if (secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
-      console.error('SECURITY WARNING: Default secret detected. Please configure a proper secret.');
+      logger.error('SECURITY WARNING: Default secret detected. Please configure a proper secret.');
     }
   }
 
@@ -111,7 +112,7 @@ class EncryptionService {
 
       return btoa(JSON.stringify(combined));
     } catch (error) {
-      console.error('Encryption error:', error);
+      logger.error('Encryption error:', error);
       throw new Error('Failed to encrypt message securely');
     }
   }
@@ -159,7 +160,7 @@ class EncryptionService {
 
       return plaintext;
     } catch (error) {
-      console.error('Decryption error:', error);
+      logger.error('Decryption error:', error);
       throw new Error('Failed to decrypt message: ' + error.message);
     }
   }
@@ -241,7 +242,7 @@ class EncryptionService {
       // Handle UTF-8 decoding
       return decodeURIComponent(escape(decoded));
     } catch (error) {
-      console.error('Base64 decode error:', error);
+      logger.error('Base64 decode error:', error);
       throw new Error('Invalid base64 encoding: ' + error.message);
     }
   }
@@ -271,7 +272,7 @@ class EncryptionService {
         const exported = await window.crypto.subtle.exportKey('raw', key);
         return btoa(String.fromCharCode(...new Uint8Array(exported)));
       } catch (error) {
-        console.error('WebCrypto API error:', error);
+        logger.error('WebCrypto API error:', error);
         // Fallback to CryptoJS
         return CryptoJS.lib.WordArray.random(256/8).toString();
       }
