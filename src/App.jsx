@@ -76,7 +76,8 @@ function LoginView({ onLogin, inviteCode }) {
     try {
       const result = await gunAuthService.login(username, password);
       if (result && result.user) {
-        onLogin(result.user);
+        // Pass the invite code along with the user
+        onLogin(result.user, inviteCode);
       } else {
         setError('Login failed. Please check your credentials.');
       }
@@ -940,8 +941,10 @@ function App() {
           window.history.replaceState({}, document.title, window.location.pathname);
         } else if (code) {
           setInviteCode(code);
-          // If there's an invite, show register page
+          // If there's an invite, show register page by default
+          // But user can switch to login if they already have an account
           setAuthMode('register');
+          console.log('📧 Invite code detected:', code);
         }
 
         // Initialize Gun
