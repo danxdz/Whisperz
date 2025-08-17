@@ -171,6 +171,7 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
 
   // Parse invite data - simplified to just use the code directly
   useEffect(() => {
+    console.log('📧 RegisterView - inviteCode prop:', inviteCode);
     if (inviteCode) {
       // The invite code is now just a simple string, not base64 encoded
       // We'll fetch the actual invite data from Gun when accepting
@@ -178,6 +179,7 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
         code: inviteCode,
         message: 'You have a valid invite code'
       });
+      console.log('✅ Invite data set in RegisterView:', inviteCode);
     }
   }, [inviteCode]);
 
@@ -1025,11 +1027,14 @@ function App() {
     const codeToUse = inviteCodeFromReg || inviteCode;
     if (codeToUse) {
       console.log('🎫 Processing invite after auth...');
-      console.log('📦 Invite code:', codeToUse);
+      console.log('📦 Invite code from registration:', inviteCodeFromReg);
+      console.log('📦 Invite code from URL:', inviteCode);
+      console.log('📦 Using invite code:', codeToUse);
       
-      // Small delay to ensure services are ready
+      // Increased delay to ensure Gun.js is fully ready
       setTimeout(async () => {
         try {
+          console.log('🔄 Attempting to accept invite:', codeToUse);
           const result = await friendsService.acceptInvite(codeToUse);
           console.log('✅ Invite acceptance result:', result);
           

@@ -77,23 +77,34 @@ class GunAuthService {
       
       // Check if this is the first user (should be admin)
       let shouldBeAdmin = isAdmin;
-      if (!shouldBeAdmin) {
-        // Check if any users exist
+      
+      // Only auto-admin if explicitly requested OR no users exist
+      if (!shouldBeAdmin && isAdmin === false) {
+        // Check if any users exist - more thorough check
         const existingUsers = await new Promise((checkResolve) => {
-          let hasUsers = false;
-          this.gun.get('~@').once().map().once((data, key) => {
-            if (data && key) {
-              hasUsers = true;
+          let userCount = 0;
+          this.gun.get('~@').once((data) => {
+            if (data) {
+              // Count actual user entries
+              Object.keys(data).forEach(key => {
+                if (key && key !== '_' && data[key]) {
+                  userCount++;
+                }
+              });
             }
+            setTimeout(() => checkResolve(userCount > 0), 1000);
           });
-          setTimeout(() => checkResolve(hasUsers), 500);
         });
+        
+        console.log('🔍 Existing users found:', existingUsers);
         
         if (!existingUsers) {
           console.log('🎯 First user detected - setting as admin');
           shouldBeAdmin = true;
         }
       }
+      
+      console.log('📊 Final admin decision:', shouldBeAdmin, 'isAdmin param:', isAdmin);
 
       this.user.create(username, password, (ack) => {
         if (ack.err) {
