@@ -494,8 +494,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               Peer ID: {networkStats.peerId}
             </div>
           )}
-          {networkStats.connectedPeers > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Active P2P Connections:</span>
             <span style={{ 
               color: networkStats.connectedPeers > 0 ? colors.success : colors.textMuted 
@@ -518,7 +517,6 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 </div>
               ))}
             </div>
-          )}
           )}
         </div>
       </div>
