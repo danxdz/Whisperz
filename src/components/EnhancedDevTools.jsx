@@ -77,10 +77,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       
       setNetworkStats({
         gunStatus: gun ? 'connected' : 'disconnected',
-        webrtcStatus: peerId ? 'connected' : 'disconnected',
+        webrtcStatus: peerId ? 'initialized' : 'not initialized',
         peerId: peerId || 'Not initialized',
         connectedPeers: webrtcPeers.length,
-        gunPeers: peers
+        gunPeers: peers,
+        actualConnections: webrtcPeers
       });
       
       setStats({
@@ -479,7 +480,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>WebRTC:</span>
             <span style={{ 
-              color: networkStats.webrtcStatus === 'connected' ? '#43e97b' : '#ff6666'
+              color: networkStats.webrtcStatus === 'initialized' ? colors.warning : colors.danger
             }}>
               {networkStats.webrtcStatus}
             </span>
@@ -494,10 +495,30 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </div>
           )}
           {networkStats.connectedPeers > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Connected Peers:</span>
-              <span style={{ color: colors.success }}>{networkStats.connectedPeers}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Active P2P Connections:</span>
+            <span style={{ 
+              color: networkStats.connectedPeers > 0 ? colors.success : colors.textMuted 
+            }}>
+              {networkStats.connectedPeers} {networkStats.connectedPeers > 0 ? '✓' : '(none)'}
+            </span>
+          </div>
+          {networkStats.actualConnections && networkStats.actualConnections.length > 0 && (
+            <div style={{ 
+              marginTop: '8px', 
+              padding: '8px', 
+              background: colors.bgTertiary,
+              borderRadius: '4px',
+              fontSize: '11px'
+            }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Connected to:</div>
+              {networkStats.actualConnections.map((peerId, idx) => (
+                <div key={idx} style={{ color: colors.success, wordBreak: 'break-all' }}>
+                  • {peerId}
+                </div>
+              ))}
             </div>
+          )}
           )}
         </div>
       </div>
