@@ -228,11 +228,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           style={{
             padding: '6px 12px',
             background: activeTab === tab 
-              ? 'linear-gradient(135deg, #667eea, #764ba2)'
-              : 'rgba(255, 255, 255, 0.05)',
+              ? colors.primary
+              : colors.bgTertiary,
             border: 'none',
             borderRadius: '6px',
-            color: '#fff',
+            color: activeTab === tab ? '#fff' : colors.textPrimary,
             fontSize: '12px',
             fontWeight: activeTab === tab ? '600' : '400',
             cursor: 'pointer',
@@ -264,7 +264,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             background: 'linear-gradient(135deg, #667eea, #764ba2)',
             border: 'none',
             borderRadius: '4px',
-            color: 'white',
+            color: colors.textPrimary,
             fontSize: screen.isTiny ? '10px' : '12px',
             cursor: 'pointer'
           }}
@@ -296,7 +296,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               alignItems: 'center',
               padding: screen.isTiny ? '6px' : '8px',
               marginBottom: '4px',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: colors.bgTertiary,
               borderRadius: '4px',
               fontSize: screen.isTiny ? '11px' : '12px'
             }}>
@@ -326,7 +326,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   background: 'rgba(255, 0, 0, 0.2)',
                   border: '1px solid rgba(255, 0, 0, 0.5)',
                   borderRadius: '4px',
-                  color: '#ff6666',
+                  color: colors.danger,
                   fontSize: screen.isTiny ? '9px' : '10px',
                   cursor: 'pointer'
                 }}
@@ -369,7 +369,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div key={invite.code} style={{
               padding: screen.isTiny ? '6px' : '8px',
               marginBottom: '4px',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: colors.bgTertiary,
               borderRadius: '4px',
               fontSize: screen.isTiny ? '11px' : '12px'
             }}>
@@ -411,7 +411,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                       background: 'rgba(102, 126, 234, 0.2)',
                       border: '1px solid rgba(102, 126, 234, 0.5)',
                       borderRadius: '4px',
-                      color: '#667eea',
+                      color: colors.primary,
                       fontSize: screen.isTiny ? '9px' : '10px',
                       cursor: 'pointer',
                       marginRight: '4px'
@@ -426,7 +426,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                       background: 'rgba(255, 0, 0, 0.2)',
                       border: '1px solid rgba(255, 0, 0, 0.5)',
                       borderRadius: '4px',
-                      color: '#ff6666',
+                      color: colors.danger,
                       fontSize: screen.isTiny ? '9px' : '10px',
                       cursor: 'pointer'
                     }}
@@ -455,14 +455,14 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       <div style={{
         marginBottom: '16px',
         padding: '12px',
-        background: 'rgba(255, 255, 255, 0.03)',
+        background: colors.bgTertiary,
         borderRadius: '8px',
-        border: '1px solid rgba(255, 255, 255, 0.1)'
+        border: `1px solid ${colors.borderColor}`
       }}>
         <h5 style={{ 
           margin: '0 0 8px 0', 
           fontSize: '14px',
-          color: '#667eea'
+          color: colors.primary
         }}>
           🌐 Network Status
         </h5>
@@ -496,7 +496,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           {networkStats.connectedPeers > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Connected Peers:</span>
-              <span style={{ color: '#43e97b' }}>{networkStats.connectedPeers}</span>
+              <span style={{ color: colors.success }}>{networkStats.connectedPeers}</span>
             </div>
           )}
         </div>
@@ -513,7 +513,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         ).map(([key, value]) => (
           <div key={key} style={{
             padding: screen.isTiny ? '6px' : '8px',
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: colors.bgTertiary,
             borderRadius: '4px',
             fontSize: screen.isTiny ? '11px' : '12px'
           }}>
@@ -526,7 +526,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </div>
             <div style={{ 
               fontWeight: 'bold',
-              color: '#667eea'
+              color: colors.primary
             }}>
               {value}
             </div>
@@ -551,7 +551,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       {/* Storage Stats */}
       {storageStats && (
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
+          background: colors.bgTertiary,
           borderRadius: '8px',
           padding: '12px',
           marginBottom: '12px'
@@ -592,10 +592,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           style={{
             width: '100%',
             padding: '8px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: colors.bgTertiary,
+            border: `1px solid ${colors.borderColor}`,
             borderRadius: '6px',
-            color: '#fff',
+            color: colors.textPrimary,
             fontSize: '12px'
           }}
         />
@@ -615,7 +615,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             background: 'linear-gradient(135deg, #43e97b, #38f9d7)',
             border: 'none',
             borderRadius: '6px',
-            color: '#000',
+            color: colors.textPrimary,
             fontSize: '12px',
             fontWeight: '600',
             cursor: 'pointer'
@@ -629,7 +629,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           background: 'linear-gradient(135deg, #4facfe, #00f2fe)',
           border: 'none',
           borderRadius: '6px',
-          color: '#000',
+          color: colors.textPrimary,
           fontSize: '12px',
           fontWeight: '600',
           cursor: 'pointer',
@@ -647,7 +647,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
       {/* Clear Data Options */}
       <div style={{ marginBottom: '12px' }}>
-        <div style={{ fontSize: '12px', marginBottom: '8px', color: '#fa709a' }}>
+        <div style={{ fontSize: '12px', marginBottom: '8px', color: colors.primary }}>
           ⚠️ Danger Zone
         </div>
         <div style={{ 
@@ -662,7 +662,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               background: 'rgba(250, 112, 154, 0.1)',
               border: '1px solid rgba(250, 112, 154, 0.3)',
               borderRadius: '4px',
-              color: '#fa709a',
+              color: colors.primary,
               fontSize: '11px',
               cursor: 'pointer'
             }}
@@ -676,7 +676,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               background: 'rgba(250, 112, 154, 0.1)',
               border: '1px solid rgba(250, 112, 154, 0.3)',
               borderRadius: '4px',
-              color: '#fa709a',
+              color: colors.primary,
               fontSize: '11px',
               cursor: 'pointer'
             }}
@@ -690,7 +690,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               background: 'rgba(250, 112, 154, 0.1)',
               border: '1px solid rgba(250, 112, 154, 0.3)',
               borderRadius: '4px',
-              color: '#fa709a',
+              color: colors.primary,
               fontSize: '11px',
               cursor: 'pointer'
             }}
@@ -704,7 +704,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               background: 'rgba(255, 0, 0, 0.2)',
               border: '1px solid rgba(255, 0, 0, 0.5)',
               borderRadius: '4px',
-              color: '#ff4444',
+              color: colors.danger,
               fontSize: '11px',
               cursor: 'pointer',
               fontWeight: '600'
@@ -847,10 +847,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         <button
           onClick={onClose}
           style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            background: colors.bgTertiary,
+            border: `1px solid ${colors.borderColor}`,
             borderRadius: '4px',
-            color: 'white',
+            color: colors.textPrimary,
             padding: screen.isTiny ? '4px 8px' : '6px 12px',
             fontSize: screen.isTiny ? '12px' : '14px',
             cursor: 'pointer'
