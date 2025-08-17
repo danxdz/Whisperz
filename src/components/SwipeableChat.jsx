@@ -146,69 +146,57 @@ function SwipeableChat({
 
 
 
-      {/* Navigation Dots with Icons */}
+      {/* Minimal Navigation Dots - Top Center */}
       <div style={{
         position: 'absolute',
-        bottom: '16px',
+        top: '4px',
         left: '50%',
         transform: 'translateX(-50%)',
         display: 'flex',
-        gap: '12px',
-        zIndex: 1000,
-        padding: '8px 16px',
-        background: colors.bgCard,
-        borderRadius: '20px',
-        backdropFilter: 'blur(10px)',
-        border: `1px solid ${colors.borderColor}`
+        gap: '6px',
+        zIndex: 999,
+        padding: '4px 8px',
+        background: 'transparent'
       }}>
-        <button
+        <div
           onClick={() => setCurrentPanel(0)}
           style={{
-            background: currentPanel === 0 ? colors.primary : 'transparent',
-            border: 'none',
-            color: currentPanel === 0 ? '#fff' : colors.textMuted,
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: currentPanel === 0 ? colors.primary : colors.bgTertiary,
             cursor: 'pointer',
-            fontSize: '16px',
-            padding: '4px',
-            borderRadius: '4px',
-            transition: 'all 0.3s'
+            transition: 'all 0.2s',
+            opacity: currentPanel === 0 ? 1 : 0.5
           }}
           title="Chat"
-        >
-          💬
-        </button>
-        <button
+        />
+        <div
           onClick={() => setCurrentPanel(1)}
           style={{
-            background: currentPanel === 1 ? colors.primary : 'transparent',
-            border: 'none',
-            color: currentPanel === 1 ? '#fff' : colors.textMuted,
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: currentPanel === 1 ? colors.primary : colors.bgTertiary,
             cursor: 'pointer',
-            fontSize: '16px',
-            padding: '4px',
-            borderRadius: '4px',
-            transition: 'all 0.3s'
+            transition: 'all 0.2s',
+            opacity: currentPanel === 1 ? 1 : 0.5
           }}
           title="Friends"
-        >
-          👥
-        </button>
-        <button
+        />
+        <div
           onClick={() => setCurrentPanel(2)}
           style={{
-            background: currentPanel === 2 ? colors.primary : 'transparent',
-            border: 'none',
-            color: currentPanel === 2 ? '#fff' : colors.textMuted,
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: currentPanel === 2 ? colors.primary : colors.bgTertiary,
             cursor: 'pointer',
-            fontSize: '16px',
-            padding: '4px',
-            borderRadius: '4px',
-            transition: 'all 0.3s'
+            transition: 'all 0.2s',
+            opacity: currentPanel === 2 ? 1 : 0.5
           }}
           title="DevTools"
-        >
-          🛠️
-        </button>
+        />
       </div>
 
       {/* Content Container - 3 panels */}
