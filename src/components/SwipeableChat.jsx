@@ -142,58 +142,18 @@ function SwipeableChat({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Navigation Button - Shows current panel */}
-      {currentPanel === 0 && (
-        <button
-          onClick={() => setCurrentPanel(1)}
-          style={{
-            position: 'absolute',
-            top: '16px',
-            left: '16px',
-            zIndex: 1001,
-            width: '40px',
-            height: '40px',
-            background: colors.bgCard,
-            border: `1px solid ${colors.borderColor}`,
-            borderRadius: '8px',
-            color: colors.textPrimary,
-            fontSize: '20px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          ☰
-        </button>
-      )}
 
-      {/* Swipe Indicator - More subtle */}
+
+
+
+      {/* Navigation Dots with Icons */}
       <div style={{
         position: 'absolute',
-        top: '50%',
-        left: showFriends ? 'auto' : '4px',
-        right: showFriends ? '4px' : 'auto',
-        transform: 'translateY(-50%)',
-        zIndex: 1000,
-        width: '4px',
-        height: '60px',
-        background: 'rgba(255, 255, 255, 0.2)',
-        borderRadius: '2px',
-        opacity: 0.5,
-        pointerEvents: 'none',
-        transition: 'opacity 0.3s'
-      }}/>
-
-      {/* Navigation Dots */}
-      <div style={{
-        position: 'absolute',
-        bottom: '20px',
+        bottom: '16px',
         left: '50%',
         transform: 'translateX(-50%)',
         display: 'flex',
-        gap: '8px',
+        gap: '12px',
         zIndex: 1000,
         padding: '8px 16px',
         background: colors.bgCard,
@@ -201,42 +161,54 @@ function SwipeableChat({
         backdropFilter: 'blur(10px)',
         border: `1px solid ${colors.borderColor}`
       }}>
-        <div 
+        <button
           onClick={() => setCurrentPanel(0)}
           style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: currentPanel === 0 ? colors.primary : colors.bgTertiary,
+            background: currentPanel === 0 ? colors.primary : 'transparent',
+            border: 'none',
+            color: currentPanel === 0 ? '#fff' : colors.textMuted,
             cursor: 'pointer',
+            fontSize: '16px',
+            padding: '4px',
+            borderRadius: '4px',
             transition: 'all 0.3s'
           }}
           title="Chat"
-        />
-        <div 
+        >
+          💬
+        </button>
+        <button
           onClick={() => setCurrentPanel(1)}
           style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: currentPanel === 1 ? colors.primary : colors.bgTertiary,
+            background: currentPanel === 1 ? colors.primary : 'transparent',
+            border: 'none',
+            color: currentPanel === 1 ? '#fff' : colors.textMuted,
             cursor: 'pointer',
+            fontSize: '16px',
+            padding: '4px',
+            borderRadius: '4px',
             transition: 'all 0.3s'
           }}
           title="Friends"
-        />
-        <div 
+        >
+          👥
+        </button>
+        <button
           onClick={() => setCurrentPanel(2)}
           style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: currentPanel === 2 ? colors.primary : colors.bgTertiary,
+            background: currentPanel === 2 ? colors.primary : 'transparent',
+            border: 'none',
+            color: currentPanel === 2 ? '#fff' : colors.textMuted,
             cursor: 'pointer',
+            fontSize: '16px',
+            padding: '4px',
+            borderRadius: '4px',
             transition: 'all 0.3s'
           }}
           title="DevTools"
-        />
+        >
+          🛠️
+        </button>
       </div>
 
       {/* Content Container - 3 panels */}
@@ -288,7 +260,7 @@ function SwipeableChat({
                 Friends ({friends.length})
               </h3>
               <button
-                onClick={() => setShowFriends(false)}
+                onClick={() => setCurrentPanel(0)}
                 style={{
                   background: 'transparent',
                   border: `1px solid ${colors.borderColor}`,
@@ -315,7 +287,7 @@ function SwipeableChat({
                   key={friend.pub || friend.publicKey}
                   onClick={() => {
                     onSelectFriend(friend);
-                    setShowFriends(false); // Auto-switch to chat after selecting
+                    setCurrentPanel(0); // Auto-switch to chat after selecting
                   }}
                   style={{
                     display: 'flex',
