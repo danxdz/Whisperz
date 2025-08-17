@@ -152,10 +152,10 @@ function SwipeableChat({
             zIndex: 1001,
             width: '40px',
             height: '40px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            background: colors.bgCard,
+            border: `1px solid ${colors.borderColor}`,
             borderRadius: '8px',
-            color: '#fff',
+            color: colors.textPrimary,
             fontSize: '20px',
             cursor: 'pointer',
             display: 'flex',
@@ -195,9 +195,10 @@ function SwipeableChat({
         gap: '8px',
         zIndex: 1000,
         padding: '8px 16px',
-        background: 'rgba(0, 0, 0, 0.5)',
+        background: colors.bgCard,
         borderRadius: '20px',
-        backdropFilter: 'blur(10px)'
+        backdropFilter: 'blur(10px)',
+        border: `1px solid ${colors.borderColor}`
       }}>
         <div 
           onClick={() => setShowFriends(false)}
@@ -205,7 +206,7 @@ function SwipeableChat({
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            background: !showFriends ? '#667eea' : 'rgba(255, 255, 255, 0.3)',
+            background: !showFriends ? colors.primary : colors.bgTertiary,
             cursor: 'pointer',
             transition: 'all 0.3s'
           }}
@@ -216,7 +217,7 @@ function SwipeableChat({
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            background: showFriends ? '#667eea' : 'rgba(255, 255, 255, 0.3)',
+            background: showFriends ? colors.primary : colors.bgTertiary,
             cursor: 'pointer',
             transition: 'all 0.3s'
           }}
@@ -251,14 +252,14 @@ function SwipeableChat({
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            background: 'rgba(20, 20, 30, 0.95)',
-            borderLeft: '1px solid rgba(255, 255, 255, 0.1)'
+            background: colors.bgSecondary,
+            borderLeft: `1px solid ${colors.borderColor}`
           }}>
             {/* Mobile Friends Header */}
             <div style={{
               padding: '16px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-              background: 'rgba(0, 0, 0, 0.2)',
+              borderBottom: `1px solid ${colors.borderColor}`,
+              background: colors.bgCard,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between'
@@ -266,7 +267,7 @@ function SwipeableChat({
               <h3 style={{
                 margin: 0,
                 fontSize: '18px',
-                color: '#fff',
+                color: colors.textPrimary,
                 fontWeight: '600'
               }}>
                 Friends ({friends.length})
@@ -275,9 +276,9 @@ function SwipeableChat({
                 onClick={() => setShowFriends(false)}
                 style={{
                   background: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  border: `1px solid ${colors.borderColor}`,
                   borderRadius: '6px',
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: colors.textMuted,
                   width: '32px',
                   height: '32px',
                   cursor: 'pointer',
@@ -307,8 +308,8 @@ function SwipeableChat({
                     padding: '12px',
                     marginBottom: '8px',
                     background: selectedFriend?.publicKey === (friend.pub || friend.publicKey)
-                      ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2))'
-                      : 'rgba(255, 255, 255, 0.05)',
+                      ? colors.primaryBg
+                      : colors.bgTertiary,
                     borderRadius: '8px',
                     cursor: 'pointer',
                     transition: 'all 0.2s'
@@ -318,7 +319,7 @@ function SwipeableChat({
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    background: colors.primary,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -333,7 +334,7 @@ function SwipeableChat({
                     <div style={{
                       fontSize: '14px',
                       fontWeight: '500',
-                      color: '#fff'
+                      color: colors.textPrimary
                     }}>
                       {friend.nickname}
                     </div>
@@ -345,8 +346,8 @@ function SwipeableChat({
             {/* Bottom Actions */}
             <div style={{
               padding: '16px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              background: 'rgba(0, 0, 0, 0.2)',
+              borderTop: `1px solid ${colors.borderColor}`,
+              background: colors.bgCard,
               display: 'flex',
               gap: '8px'
             }}>
@@ -355,7 +356,7 @@ function SwipeableChat({
                 style={{
                   flex: 1,
                   padding: '10px',
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  background: colors.primary,
                   border: 'none',
                   borderRadius: '6px',
                   color: '#fff',
@@ -369,10 +370,10 @@ function SwipeableChat({
                 onClick={onLogout}
                 style={{
                   padding: '10px 16px',
-                  background: 'rgba(255, 0, 0, 0.1)',
-                  border: '1px solid rgba(255, 0, 0, 0.3)',
+                  background: colors.dangerBg,
+                  border: `1px solid ${colors.danger}`,
                   borderRadius: '6px',
-                  color: '#ff6666',
+                  color: colors.danger,
                   fontSize: '14px',
                   cursor: 'pointer'
                 }}
