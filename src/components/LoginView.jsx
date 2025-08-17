@@ -127,6 +127,24 @@ function LoginView({ onLogin, inviteCode }) {
         <p className="invite-only-notice">
           This is an invite-only chat. You need an invite link from an existing member to join.
         </p>
+        
+        {/* Link to create first admin account */}
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <a 
+            href="?setup=admin" 
+            style={{ 
+              color: '#667eea', 
+              textDecoration: 'none',
+              fontSize: '13px',
+              opacity: 0.7,
+              transition: 'opacity 0.3s'
+            }}
+            onMouseEnter={(e) => e.target.style.opacity = '1'}
+            onMouseLeave={(e) => e.target.style.opacity = '0.7'}
+          >
+            First time? Create admin account →
+          </a>
+        </div>
       </div>
     </div>
   );
