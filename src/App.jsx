@@ -969,7 +969,16 @@ function App() {
         // Check for existing session
         const currentUser = gunAuthService.getCurrentUser();
         if (currentUser) {
-          setUser(currentUser);
+          // Fetch the user's profile to get admin status
+          const profile = await gunAuthService.getUserProfile(currentUser.pub);
+          const userWithAdmin = {
+            ...currentUser,
+            isAdmin: profile?.isAdmin || false,
+            nickname: profile?.nickname || currentUser.alias
+          };
+          
+          console.log('🔄 Restored session - admin status:', userWithAdmin.isAdmin);
+          setUser(userWithAdmin);
           
           // Initialize WebRTC
           try {

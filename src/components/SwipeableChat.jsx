@@ -34,8 +34,12 @@ function SwipeableChat({
   useEffect(() => {
     console.log('🔍 SwipeableChat - User:', currentUser);
     console.log('🔍 SwipeableChat - Is Admin?:', currentUser?.isAdmin);
+    console.log('🔍 SwipeableChat - Admin type:', typeof currentUser?.isAdmin);
     console.log('🔍 SwipeableChat - User object keys:', currentUser ? Object.keys(currentUser) : 'No user');
   }, [currentUser]);
+  
+  // Ensure admin flag is properly evaluated
+  const isUserAdmin = currentUser?.isAdmin === true;
 
   // Update mobile detection on resize
   useEffect(() => {
