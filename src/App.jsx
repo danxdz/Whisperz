@@ -6,7 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
 import encryptionService from './services/encryptionService';
-import { ThemeToggle, DevToolsWrapper, SwipeableChat, InviteModal } from './components';
+import { ThemeToggle, SwipeableChat, InviteModal } from './components';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
 
@@ -732,8 +732,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         inviteLink={inviteLink}
       />
 
-      {/* DevTools - Using the new enhanced version */}
-      <DevToolsWrapper />
+
     </SwipeableChat>
   );
 }

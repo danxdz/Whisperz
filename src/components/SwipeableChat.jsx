@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ResizableSidebar from './ResizableSidebar';
+import EnhancedDevTools from './EnhancedDevTools';
 import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * SwipeableChat Component
- * Allows swiping between friends panel and chat on mobile devices
+ * Allows swiping between chat, friends panel, and dev tools on mobile devices
  */
 function SwipeableChat({ 
   children,
@@ -18,7 +19,7 @@ function SwipeableChat({
   onLogout
 }) {
   const { colors } = useTheme();
-  const [showFriends, setShowFriends] = useState(false);
+  const [currentPanel, setCurrentPanel] = useState(0); // 0: Chat, 1: Friends, 2: DevTools
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -43,9 +44,9 @@ function SwipeableChat({
   }, []);
 
   useEffect(() => {
-    // Reset swipe offset when switching views
+    // Reset swipe offset when switching panels
     setSwipeOffset(0);
-  }, [showFriends]);
+  }, [currentPanel]);
 
   const onTouchStart = (e) => {
     setTouchEnd(null);
@@ -81,14 +82,14 @@ function SwipeableChat({
 
     console.log('Swipe distance:', distance, 'Left:', isLeftSwipe, 'Right:', isRightSwipe);
 
-    if (isLeftSwipe && !showFriends) {
-      // Swipe left - show friends
-      console.log('Showing friends panel');
-      setShowFriends(true);
-    } else if (isRightSwipe && showFriends) {
-      // Swipe right - show chat
-      console.log('Showing chat');
-      setShowFriends(false);
+    if (isLeftSwipe && currentPanel < 2) {
+      // Swipe left - move to next panel
+      console.log('Moving to panel:', currentPanel + 1);
+      setCurrentPanel(currentPanel + 1);
+    } else if (isRightSwipe && currentPanel > 0) {
+      // Swipe right - move to previous panel
+      console.log('Moving to panel:', currentPanel - 1);
+      setCurrentPanel(currentPanel - 1);
     }
     
     setIsSwiping(false);
@@ -141,10 +142,10 @@ function SwipeableChat({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Hamburger Menu Button - Always visible on mobile */}
-      {!showFriends && (
+      {/* Navigation Button - Shows current panel */}
+      {currentPanel === 0 && (
         <button
-          onClick={() => setShowFriends(true)}
+          onClick={() => setCurrentPanel(1)}
           style={{
             position: 'absolute',
             top: '16px',
@@ -201,40 +202,54 @@ function SwipeableChat({
         border: `1px solid ${colors.borderColor}`
       }}>
         <div 
-          onClick={() => setShowFriends(false)}
+          onClick={() => setCurrentPanel(0)}
           style={{
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            background: !showFriends ? colors.primary : colors.bgTertiary,
+            background: currentPanel === 0 ? colors.primary : colors.bgTertiary,
             cursor: 'pointer',
             transition: 'all 0.3s'
           }}
+          title="Chat"
         />
         <div 
-          onClick={() => setShowFriends(true)}
+          onClick={() => setCurrentPanel(1)}
           style={{
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            background: showFriends ? colors.primary : colors.bgTertiary,
+            background: currentPanel === 1 ? colors.primary : colors.bgTertiary,
             cursor: 'pointer',
             transition: 'all 0.3s'
           }}
+          title="Friends"
+        />
+        <div 
+          onClick={() => setCurrentPanel(2)}
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: currentPanel === 2 ? colors.primary : colors.bgTertiary,
+            cursor: 'pointer',
+            transition: 'all 0.3s'
+          }}
+          title="DevTools"
         />
       </div>
 
-      {/* Content Container */}
+      {/* Content Container - 3 panels */}
       <div style={{
         display: 'flex',
-        width: '200%',
+        width: '300%',
         height: '100%',
-        transform: `translateX(${showFriends ? '-50%' : '0'}${swipeOffset ? ` translateX(${swipeOffset}px)` : ''})`,
+        transform: `translateX(-${currentPanel * 33.333}%)${swipeOffset ? ` translateX(${swipeOffset}px)` : ''}`,
         transition: isSwiping ? 'none' : 'transform 0.3s ease-out'
       }}>
         {/* Chat View */}
         <div style={{
-          width: '50%',
+          width: '33.333%',
           height: '100%',
           position: 'relative'
         }}>
@@ -243,7 +258,7 @@ function SwipeableChat({
 
         {/* Friends Panel */}
         <div style={{
-          width: '50%',
+          width: '33.333%',
           height: '100%',
           position: 'relative',
           display: 'flex'
@@ -382,6 +397,21 @@ function SwipeableChat({
               </button>
             </div>
           </div>
+        </div>
+
+        {/* DevTools Panel */}
+        <div style={{
+          width: '33.333%',
+          height: '100%',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <EnhancedDevTools 
+            isVisible={true}
+            onClose={() => setCurrentPanel(0)}
+            isMobilePanel={true}
+          />
         </div>
       </div>
     </div>

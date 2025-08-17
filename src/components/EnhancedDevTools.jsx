@@ -11,7 +11,7 @@ import { useResponsive } from '../hooks/useResponsive';
  * EnhancedDevTools Component
  * Advanced developer tools with user management, backup system, and mobile optimization
  */
-function EnhancedDevTools({ isVisible, onClose }) {
+function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const { colors } = useTheme();
   const screen = useResponsive();
   const [activeTab, setActiveTab] = useState('users');
@@ -796,24 +796,35 @@ function EnhancedDevTools({ isVisible, onClose }) {
 
   if (!isVisible) return null;
 
+  const containerStyle = isMobilePanel ? {
+    width: '100%',
+    height: '100%',
+    background: colors.bgSecondary,
+    color: colors.textPrimary,
+    fontFamily: 'Inter, -apple-system, sans-serif',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden'
+  } : {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: screen.isTiny ? '240px' : screen.isMobile ? '280px' : '320px',
+    background: colors.bgSecondary,
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    borderTop: `2px solid ${colors.primary}`,
+    color: colors.textPrimary,
+    fontFamily: 'Inter, -apple-system, sans-serif',
+    zIndex: 10000,
+    display: 'flex',
+    flexDirection: 'column',
+    animation: 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+  };
+
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: screen.isTiny ? '240px' : screen.isMobile ? '280px' : '320px',
-      background: colors.bgSecondary,
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderTop: `2px solid ${colors.primary}`,
-      color: colors.textPrimary,
-      fontFamily: 'Inter, -apple-system, sans-serif',
-      zIndex: 10000,
-      display: 'flex',
-      flexDirection: 'column',
-      animation: 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-    }}>
+    <div style={containerStyle}>
       {/* Header */}
       <div style={{
         display: 'flex',
