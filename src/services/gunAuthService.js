@@ -61,7 +61,7 @@ class GunAuthService {
   }
 
   // Register a new user
-  async register(username, password, nickname) {
+  async register(username, password, nickname, isAdmin = false) {
     return new Promise((resolve, reject) => {
       if (!this.user) {
         reject(new Error('Gun not initialized'));
@@ -82,7 +82,8 @@ class GunAuthService {
               nickname: nickname || username,
               username: username,
               createdAt: Date.now(),
-              publicKey: this.user.is.pub
+              publicKey: this.user.is.pub,
+              isAdmin: isAdmin || false
             };
             
             console.log('📝 Setting user profile:', profileData);
@@ -117,14 +118,28 @@ class GunAuthService {
         return;
       }
 
-      this.user.auth(username, password, (ack) => {
+      this.user.auth(username, password, async (ack) => {
         if (ack.err) {
           reject(new Error(ack.err));
           return;
         }
 
-        this.currentUser = ack.sea;
-        resolve({ success: true, user: ack.sea });
+        // Fetch user profile to get admin status
+        const profile = await new Promise((profileResolve) => {
+          this.user.get('profile').once((data) => {
+            profileResolve(data || {});
+          });
+        });
+
+        // Merge profile data with auth data
+        const userData = {
+          ...ack.sea,
+          isAdmin: profile.isAdmin || false,
+          nickname: profile.nickname || username
+        };
+
+        this.currentUser = userData;
+        resolve({ success: true, user: userData });
       });
     });
   }
@@ -141,6 +156,11 @@ class GunAuthService {
   // Get current user
   getCurrentUser() {
     return this.currentUser || this.user?.is;
+  }
+
+  // Get Gun instance (for admin operations)
+  getGun() {
+    return this.gun;
   }
 
   // Check if user is authenticated

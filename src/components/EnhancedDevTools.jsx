@@ -11,7 +11,7 @@ import { useResponsive } from '../hooks/useResponsive';
  * EnhancedDevTools Component
  * Advanced developer tools with user management, backup system, and mobile optimization
  */
-function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
+function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin = false, currentUser = null }) {
   const { colors } = useTheme();
   const screen = useResponsive();
   const [activeTab, setActiveTab] = useState('users');
@@ -42,6 +42,53 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const loadUsers = async () => {
     try {
+      // If admin, load ALL Gun.js users
+      if (isAdmin) {
+        const allUsers = [];
+        
+        // Get all users from Gun database
+        await new Promise((resolve) => {
+          gunAuthService.getGun().get('~@').once().map().once((data, key) => {
+            if (data && key && key.startsWith('~')) {
+              const publicKey = key.slice(1); // Remove the ~ prefix
+              
+              // Get user profile
+              gunAuthService.getGun().user(publicKey).get('profile').once((profile) => {
+                if (profile) {
+                  allUsers.push({
+                    id: publicKey,
+                    publicKey: publicKey,
+                    name: profile.nickname || profile.username || 'Unknown',
+                    username: profile.username,
+                    createdAt: profile.createdAt,
+                    isAdmin: profile.isAdmin || false,
+                    status: publicKey === currentUser?.pub ? 'self' : 'user'
+                  });
+                }
+              });
+            }
+          });
+          
+          // Wait a bit for all users to load
+          setTimeout(resolve, 2000);
+        });
+        
+        // Also add friends info
+        const friends = await friendsService.getFriends();
+        const friendKeys = new Set(friends.map(f => f.publicKey));
+        
+        // Merge friend status
+        const mergedUsers = allUsers.map(user => ({
+          ...user,
+          status: user.status === 'self' ? 'self' : 
+                  friendKeys.has(user.publicKey) ? 'friend' : 'user'
+        }));
+        
+        setUsers(mergedUsers);
+        return;
+      }
+      
+      // Non-admin: just show friends
       const friends = await friendsService.getFriends();
       const userList = friends.map(friend => ({
         ...friend,
@@ -211,6 +258,73 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   };
 
   // Full Gun.js database reset
+  // Admin functions for user management
+  const handleDeleteUser = async (userId) => {
+    if (!isAdmin) return;
+    
+    const userToDelete = users.find(u => u.id === userId);
+    if (!userToDelete) return;
+    
+    if (!confirm(`Delete user "${userToDelete.name}"?\nThis will remove all their data permanently!`)) return;
+    
+    try {
+      // Delete user from Gun database
+      const gun = gunAuthService.getGun();
+      
+      // Delete user profile and data
+      gun.user(userId).get('profile').put(null);
+      gun.user(userId).get('nickname').put(null);
+      gun.user(userId).get('messages').put(null);
+      gun.user(userId).get('friends').put(null);
+      
+      // Remove from auth index
+      gun.get('~@').get(userId).put(null);
+      
+      setBackupStatus('✅ User deleted successfully');
+      setTimeout(() => setBackupStatus(''), 3000);
+      loadUsers();
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      setBackupStatus(`❌ Failed to delete user: ${error.message}`);
+    }
+  };
+
+  const handleBlockUser = async (userId) => {
+    if (!isAdmin) return;
+    
+    const userToBlock = users.find(u => u.id === userId);
+    if (!userToBlock) return;
+    
+    if (!confirm(`Block user "${userToBlock.name}"?`)) return;
+    
+    try {
+      // Add to blocked list
+      const gun = gunAuthService.getGun();
+      gun.user().get('blocked').get(userId).put(true);
+      
+      // Also remove as friend if they are one
+      if (userToBlock.status === 'friend') {
+        await friendsService.removeFriend(userId);
+      }
+      
+      setBackupStatus('✅ User blocked successfully');
+      setTimeout(() => setBackupStatus(''), 3000);
+      loadUsers();
+    } catch (error) {
+      console.error('Failed to block user:', error);
+      setBackupStatus(`❌ Failed to block user: ${error.message}`);
+    }
+  };
+
+  const handleRemoveFriend = async (userId) => {
+    try {
+      await friendsService.removeFriend(userId);
+      loadUsers();
+    } catch (error) {
+      console.error('Failed to remove friend:', error);
+    }
+  };
+
   const handleGunDatabaseReset = async (quickReset = false) => {
     if (!quickReset) {
       const confirmed = window.confirm(
@@ -348,7 +462,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         marginBottom: '12px'
       }}>
         <h4 style={{ margin: 0, fontSize: screen.isTiny ? '14px' : '16px' }}>
-          Friends ({users.length})
+          {isAdmin ? `All Users (${users.length})` : `Friends (${users.length})`}
         </h4>
         <button
           onClick={handleGenerateInvite}
@@ -398,9 +512,40 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   fontWeight: 'bold',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
                   {user.name}
+                  {user.isAdmin && (
+                    <span style={{
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      color: '#fff',
+                      padding: '1px 4px',
+                      borderRadius: '3px',
+                      fontSize: '9px',
+                      fontWeight: 'bold'
+                    }}>ADMIN</span>
+                  )}
+                  {user.status === 'self' && (
+                    <span style={{
+                      background: colors.success,
+                      color: '#fff',
+                      padding: '1px 4px',
+                      borderRadius: '3px',
+                      fontSize: '9px'
+                    }}>YOU</span>
+                  )}
+                  {user.status === 'friend' && (
+                    <span style={{
+                      background: colors.primary,
+                      color: '#fff',
+                      padding: '1px 4px',
+                      borderRadius: '3px',
+                      fontSize: '9px'
+                    }}>FRIEND</span>
+                  )}
                 </div>
                 <div style={{ 
                   fontSize: screen.isTiny ? '9px' : '10px', 
@@ -412,20 +557,58 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   {user.id.substring(0, 20)}...
                 </div>
               </div>
-              <button
-                onClick={() => handleRemoveUser(user.id)}
-                style={{
-                  padding: screen.isTiny ? '2px 6px' : '4px 8px',
-                  background: 'rgba(255, 0, 0, 0.2)',
-                  border: '1px solid rgba(255, 0, 0, 0.5)',
-                  borderRadius: '4px',
-                  color: colors.danger,
-                  fontSize: screen.isTiny ? '9px' : '10px',
-                  cursor: 'pointer'
-                }}
-              >
-                Remove
-              </button>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {isAdmin && user.status !== 'self' && (
+                  <>
+                    <button
+                      onClick={() => handleBlockUser(user.id)}
+                      style={{
+                        padding: screen.isTiny ? '2px 6px' : '4px 8px',
+                        background: 'rgba(255, 165, 0, 0.2)',
+                        border: '1px solid rgba(255, 165, 0, 0.5)',
+                        borderRadius: '4px',
+                        color: colors.warning,
+                        fontSize: screen.isTiny ? '9px' : '10px',
+                        cursor: 'pointer'
+                      }}
+                      title="Block user"
+                    >
+                      Block
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user.id)}
+                      style={{
+                        padding: screen.isTiny ? '2px 6px' : '4px 8px',
+                        background: 'rgba(255, 0, 0, 0.2)',
+                        border: '1px solid rgba(255, 0, 0, 0.5)',
+                        borderRadius: '4px',
+                        color: colors.danger,
+                        fontSize: screen.isTiny ? '9px' : '10px',
+                        cursor: 'pointer'
+                      }}
+                      title="Delete user permanently"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+                {user.status === 'friend' && (
+                  <button
+                    onClick={() => handleRemoveFriend(user.id)}
+                    style={{
+                      padding: screen.isTiny ? '2px 6px' : '4px 8px',
+                      background: 'rgba(255, 0, 0, 0.2)',
+                      border: '1px solid rgba(255, 0, 0, 0.5)',
+                      borderRadius: '4px',
+                      color: colors.danger,
+                      fontSize: screen.isTiny ? '9px' : '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Unfriend
+                  </button>
+                )}
+              </div>
             </div>
           ))
         )}

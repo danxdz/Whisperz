@@ -187,8 +187,8 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
     setError('');
 
     try {
-      // Pass the invite code along with registration
-      const result = await gunAuthService.register(username, password, nickname || username);
+      // Pass the invite code along with registration, mark as admin if isAdminSetup
+      const result = await gunAuthService.register(username, password, nickname || username, isAdminSetup);
       // Pass both user and invite code to parent
       onRegister(result.user, inviteCode);
     } catch (err) {

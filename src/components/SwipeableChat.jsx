@@ -82,7 +82,10 @@ function SwipeableChat({
 
     console.log('Swipe distance:', distance, 'Left:', isLeftSwipe, 'Right:', isRightSwipe);
 
-    if (isLeftSwipe && currentPanel < 2) {
+    // Check if user is admin for DevTools access
+    const maxPanel = currentUser?.isAdmin ? 2 : 1;
+    
+    if (isLeftSwipe && currentPanel < maxPanel) {
       // Swipe left - move to next panel
       console.log('Moving to panel:', currentPanel + 1);
       setCurrentPanel(currentPanel + 1);
@@ -184,19 +187,21 @@ function SwipeableChat({
           }}
           title="Friends"
         />
-        <div
-          onClick={() => setCurrentPanel(2)}
-          style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            background: currentPanel === 2 ? colors.primary : colors.bgTertiary,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            opacity: currentPanel === 2 ? 1 : 0.5
-          }}
-          title="DevTools"
-        />
+        {currentUser?.isAdmin && (
+          <div
+            onClick={() => setCurrentPanel(2)}
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              background: currentPanel === 2 ? colors.primary : colors.bgTertiary,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              opacity: currentPanel === 2 ? 1 : 0.5
+            }}
+            title="DevTools"
+          />
+        )}
       </div>
 
       {/* Content Container - 3 panels */}
@@ -360,19 +365,28 @@ function SwipeableChat({
         </div>
 
         {/* DevTools Panel */}
-        <div style={{
-          width: '33.333%',
-          height: '100%',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <EnhancedDevTools 
-            isVisible={true}
-            onClose={() => setCurrentPanel(0)}
-            isMobilePanel={true}
-          />
-        </div>
+                {currentUser?.isAdmin ? (
+          <div style={{ 
+            width: '33.333%',
+            height: '100%',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <EnhancedDevTools 
+              isVisible={true}
+              onClose={() => setCurrentPanel(0)}
+              isMobilePanel={true}
+              isAdmin={true}
+              currentUser={currentUser}
+            />
+          </div>
+        ) : (
+          <div style={{ 
+            width: '33.333%',
+            height: '100%'
+          }} />
+        )}
       </div>
     </div>
   );
