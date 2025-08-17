@@ -94,7 +94,7 @@ function SwipeableChat({
     console.log('Swipe distance:', distance, 'Left:', isLeftSwipe, 'Right:', isRightSwipe);
 
     // Check if user is admin for DevTools access
-    const maxPanel = currentUser?.isAdmin ? 2 : 1;
+    const maxPanel = isUserAdmin ? 2 : 1;
     
     if (isLeftSwipe && currentPanel < maxPanel) {
       // Swipe left - move to next panel
@@ -198,7 +198,7 @@ function SwipeableChat({
           }}
           title="Friends"
         />
-        {currentUser?.isAdmin && (
+        {isUserAdmin && (
           <div
             onClick={() => setCurrentPanel(2)}
             style={{
@@ -376,7 +376,7 @@ function SwipeableChat({
         </div>
 
         {/* DevTools Panel */}
-                {currentUser?.isAdmin ? (
+                {isUserAdmin ? (
           <div style={{ 
             width: '33.333%',
             height: '100%',

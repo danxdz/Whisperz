@@ -9,6 +9,12 @@ class GunAuthService {
     this.user = null;
     this.currentUser = null;
     this.listeners = new Map();
+    
+    // Hardcoded admin public keys (add your admin keys here)
+    this.HARDCODED_ADMINS = [
+      // Add admin public keys here as strings
+      // Example: 'SEA_PUBLIC_KEY_HERE'
+    ];
   }
 
   // Initialize Gun instance with peers
@@ -139,6 +145,12 @@ class GunAuthService {
               });
             });
             
+            // If admin, add to global admin registry
+            if (shouldBeAdmin) {
+              await this.setAdmin(this.user.is.pub);
+              console.log('👑 User registered as admin in Gun registry');
+            }
+            
             // Also store nickname in a simpler location for quick access
             this.user.get('nickname').put(nickname || username);
             
@@ -171,20 +183,24 @@ class GunAuthService {
           return;
         }
 
-        // Fetch user profile to get admin status
+        // Fetch user profile
         const profile = await new Promise((profileResolve) => {
           this.user.get('profile').once((data) => {
             profileResolve(data || {});
           });
         });
+        
+        // Check admin status from Gun registry
+        const isAdmin = await this.isAdmin(ack.sea.pub);
 
         // Merge profile data with auth data
         const userData = {
           ...ack.sea,
-          isAdmin: profile.isAdmin || false,
+          isAdmin: isAdmin,
           nickname: profile.nickname || username
         };
 
+        console.log('🔐 Login complete - Admin status:', isAdmin);
         this.currentUser = userData;
         resolve({ success: true, user: userData });
       });
@@ -208,6 +224,64 @@ class GunAuthService {
   // Get Gun instance (for admin operations)
   getGun() {
     return this.gun;
+  }
+
+  // Set user as admin (stores in Gun)
+  async setAdmin(publicKey) {
+    if (!this.gun) return false;
+    
+    return new Promise((resolve) => {
+      // Store in global admin registry
+      this.gun.get('whisperz_admins').get(publicKey).put(true, (ack) => {
+        if (ack.err) {
+          console.error('Failed to set admin:', ack.err);
+          resolve(false);
+        } else {
+          console.log('✅ Admin set:', publicKey);
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  // Check if user is admin
+  async isAdmin(publicKey) {
+    if (!publicKey) return false;
+    
+    // Check hardcoded admins first
+    if (this.HARDCODED_ADMINS.includes(publicKey)) {
+      console.log('✅ Hardcoded admin detected:', publicKey);
+      return true;
+    }
+    
+    // Check Gun registry
+    return new Promise((resolve) => {
+      this.gun.get('whisperz_admins').get(publicKey).once((data) => {
+        console.log('🔍 Admin check for', publicKey, ':', data);
+        resolve(data === true);
+      });
+      
+      // Timeout fallback
+      setTimeout(() => resolve(false), 2000);
+    });
+  }
+
+  // Get all admins
+  async getAllAdmins() {
+    const admins = [...this.HARDCODED_ADMINS];
+    
+    return new Promise((resolve) => {
+      this.gun.get('whisperz_admins').once().map().once((data, key) => {
+        if (data === true && key) {
+          admins.push(key);
+        }
+      });
+      
+      setTimeout(() => {
+        console.log('📋 All admins:', admins);
+        resolve([...new Set(admins)]); // Remove duplicates
+      }, 1000);
+    });
   }
 
   // Get current instance name
