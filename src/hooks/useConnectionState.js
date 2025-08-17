@@ -14,6 +14,12 @@ export function useConnectionState(friendPublicKey) {
 
   useEffect(() => {
     if (!friendPublicKey) return;
+    
+    // Ensure services are available
+    if (!webrtcService || !friendsService) {
+      console.warn('Services not initialized for connection state');
+      return;
+    }
 
     let intervalId;
 
@@ -22,11 +28,13 @@ export function useConnectionState(friendPublicKey) {
         // Check friend's online presence
         const presence = await friendsService.getFriendPresence(friendPublicKey);
         
-        if (presence.isOnline && presence.peerId) {
+        if (presence && presence.isOnline && presence.peerId) {
           // Check WebRTC connection status
-          const connStatus = webrtcService.getConnectionStatus(presence.peerId);
+          const connStatus = webrtcService.getConnectionStatus ? 
+            webrtcService.getConnectionStatus(presence.peerId) : 
+            { connected: false };
           
-          if (connStatus.connected) {
+          if (connStatus && connStatus.connected) {
             setConnectionState({
               status: 'webrtc',
               peerId: presence.peerId,
@@ -73,37 +81,27 @@ export function useConnectionState(friendPublicKey) {
     // Check every 5 seconds
     intervalId = setInterval(checkConnection, 5000);
 
-    // Listen for WebRTC connection events
-    const handleConnection = (peerId) => {
-      checkConnection();
-    };
-
-    const handleDisconnection = (peerId) => {
-      checkConnection();
-    };
-
-    webrtcService.on('peer-connected', handleConnection);
-    webrtcService.on('peer-disconnected', handleDisconnection);
-
     return () => {
       clearInterval(intervalId);
-      webrtcService.off('peer-connected', handleConnection);
-      webrtcService.off('peer-disconnected', handleDisconnection);
     };
   }, [friendPublicKey]);
 
   const attemptWebRTCConnection = async () => {
-    if (connectionState.peerId && connectionState.isOnline) {
-      setConnectionState(prev => ({ ...prev, status: 'connecting' }));
-      try {
-        await webrtcService.connectToPeer(connectionState.peerId);
-        setConnectionState(prev => ({ ...prev, status: 'webrtc', method: 'webrtc' }));
-        return true;
-      } catch (error) {
-        console.error('Failed to establish WebRTC connection:', error);
-        setConnectionState(prev => ({ ...prev, status: 'gun', method: 'gun' }));
-        return false;
+    try {
+      if (connectionState.peerId && connectionState.isOnline && webrtcService?.connectToPeer) {
+        setConnectionState(prev => ({ ...prev, status: 'connecting' }));
+        try {
+          await webrtcService.connectToPeer(connectionState.peerId);
+          setConnectionState(prev => ({ ...prev, status: 'webrtc', method: 'webrtc' }));
+          return true;
+        } catch (error) {
+          console.error('Failed to establish WebRTC connection:', error);
+          setConnectionState(prev => ({ ...prev, status: 'gun', method: 'gun' }));
+          return false;
+        }
       }
+    } catch (error) {
+      console.error('Error in attemptWebRTCConnection:', error);
     }
     return false;
   };
