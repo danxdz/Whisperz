@@ -121,7 +121,9 @@ class FriendsService {
       inviteCode // Include the code for reference
     });
 
+    // Use hash-based routing for better compatibility
     const inviteLink = `${window.location.origin}/#/invite/${inviteCode}`;
+    console.log('🔗 Generated invite link:', inviteLink);
     
     console.log('🎫 Invite generated:', {
       code: inviteCode,
