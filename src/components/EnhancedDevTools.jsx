@@ -210,6 +210,98 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     }
   };
 
+  // Full Gun.js database reset
+  const handleGunDatabaseReset = async (quickReset = false) => {
+    if (!quickReset) {
+      const confirmed = window.confirm(
+        '🔴 FULL DATABASE RESET\n\n' +
+        'This will:\n' +
+        '• Delete ALL Gun.js data\n' +
+        '• Clear all localStorage\n' +
+        '• Remove all user accounts\n' +
+        '• Delete all messages & friends\n' +
+        '• Reset to factory state\n\n' +
+        'Are you absolutely sure?'
+      );
+      
+      if (!confirmed) return;
+      
+      const doubleConfirm = window.confirm(
+        '⚠️ FINAL WARNING\n\n' +
+        'This action CANNOT be undone!\n' +
+        'All data will be permanently deleted.\n\n' +
+        'Type "RESET" to confirm:'
+      );
+      
+      if (!doubleConfirm) return;
+      
+      const userInput = window.prompt('Type "RESET" to confirm database reset:');
+      if (userInput !== 'RESET') {
+        alert('Reset cancelled');
+        return;
+      }
+    } else {
+      // Quick reset for development (Ctrl+Click on button)
+      if (!window.confirm('Quick reset - Delete all data now?')) return;
+    }
+    
+    try {
+      setBackupStatus('🔄 Resetting database...');
+      
+      // Clear all Gun.js specific keys
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.startsWith('gun/') ||
+          key.startsWith('_gun_') ||
+          key.includes('SEA') ||
+          key === 'gun' ||
+          key === 'whisperz_' ||
+          key.startsWith('whisperz_')
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      // Remove Gun keys
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      // Clear hybrid service data
+      if (hybridGunService.clearAllData) {
+        await hybridGunService.clearAllData();
+      }
+      
+      // Clear all remaining localStorage
+      localStorage.clear();
+      
+      // Clear session storage
+      sessionStorage.clear();
+      
+      // Clear IndexedDB if exists
+      if (window.indexedDB) {
+        const databases = await indexedDB.databases();
+        for (const db of databases) {
+          await indexedDB.deleteDatabase(db.name);
+        }
+      }
+      
+      setBackupStatus('✅ Database reset complete. Reloading...');
+      
+      // Wait a moment then reload
+      setTimeout(() => {
+        window.location.href = window.location.origin;
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Database reset error:', error);
+      setBackupStatus(`❌ Reset failed: ${error.message}`);
+      alert('Failed to reset database: ' + error.message);
+    }
+  };
+
   const renderCompactTabs = () => (
     <div style={{
       display: 'flex',
@@ -732,6 +824,62 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             🗑️ Clear ALL
           </button>
         </div>
+      </div>
+
+      {/* Full Database Reset */}
+      <div style={{ 
+        marginTop: '20px',
+        padding: '15px',
+        background: 'rgba(255, 0, 0, 0.05)',
+        border: '2px dashed rgba(255, 0, 0, 0.3)',
+        borderRadius: '8px'
+      }}>
+        <div style={{ 
+          fontSize: '14px', 
+          fontWeight: '600',
+          marginBottom: '10px', 
+          color: colors.danger,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          🔴 Gun.js Database Reset
+        </div>
+        <div style={{
+          fontSize: '11px',
+          color: colors.textSecondary,
+          marginBottom: '12px',
+          lineHeight: '1.4'
+        }}>
+          Complete factory reset. Deletes ALL Gun.js data, accounts, messages, and friends. 
+          This cannot be undone!
+        </div>
+        <button
+          onClick={(e) => handleGunDatabaseReset(e.ctrlKey || e.metaKey)}
+          title="Click to reset database (Ctrl+Click for quick reset)"
+          style={{
+            width: '100%',
+            padding: '10px',
+            background: 'linear-gradient(135deg, #ff0000, #cc0000)',
+            border: 'none',
+            borderRadius: '6px',
+            color: '#fff',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            boxShadow: '0 2px 8px rgba(255, 0, 0, 0.3)'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #ff3333, #ff0000)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #ff0000, #cc0000)';
+          }}
+        >
+          🔄 Full Database Reset
+        </button>
       </div>
 
       {/* Status Message */}
