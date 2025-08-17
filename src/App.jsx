@@ -8,6 +8,7 @@ import './index.css';
 import encryptionService from './services/encryptionService';
 import { ThemeToggle, DevToolsWrapper, SwipeableChat, InviteModal } from './components';
 import { useTheme } from './contexts/ThemeContext';
+import { useResponsive } from './hooks/useResponsive';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
@@ -275,6 +276,7 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
 // Main Chat Component with proper nickname display
 function ChatView({ user, onLogout, onInviteAccepted }) {
   const { colors } = useTheme();
+  const screen = useResponsive();
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -550,21 +552,22 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         {selectedFriend ? (
           <>
             <div style={{ 
-              padding: window.innerWidth <= 320 ? '8px 12px' : '16px 20px',
+              padding: screen.isTiny ? '6px 8px' : screen.isMobile ? '8px 12px' : '16px 20px',
               background: colors.bgCard,
               borderBottom: `1px solid ${colors.borderColor}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              flexShrink: 0
+              flexShrink: 0,
+              minHeight: screen.isTiny ? '36px' : '48px'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: window.innerWidth <= 320 ? '6px' : '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: screen.isTiny ? '4px' : '8px' }}>
                 <h3 style={{ 
                   margin: 0, 
-                  fontSize: window.innerWidth <= 320 ? '14px' : '18px', 
+                  fontSize: screen.isTiny ? '13px' : screen.isMobile ? '15px' : '18px', 
                   fontWeight: '600', 
                   color: colors.textPrimary,
-                  maxWidth: window.innerWidth <= 320 ? '120px' : 'none',
+                  maxWidth: screen.isTiny ? '100px' : screen.isMobile ? '150px' : 'none',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
@@ -572,16 +575,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   {escapeHtml(selectedFriend.nickname)}
                 </h3>
                 <span style={{
-                  padding: window.innerWidth <= 320 ? '1px 4px' : '2px 8px',
+                  width: screen.isTiny ? '6px' : '8px',
+                  height: screen.isTiny ? '6px' : '8px',
+                  borderRadius: '50%',
                   background: onlineStatus.get(selectedFriend.publicKey) 
-                    ? colors.successBg
+                    ? colors.success
                     : colors.bgTertiary,
-                  borderRadius: '12px',
-                  fontSize: window.innerWidth <= 320 ? '10px' : '12px',
-                  color: onlineStatus.get(selectedFriend.publicKey) ? colors.success : colors.textMuted
-                }}>
-                  {onlineStatus.get(selectedFriend.publicKey) ? '●' : '○'}
-                </span>
+                  display: 'inline-block'
+                }} />
               </div>
               <ThemeToggle />
             </div>
@@ -589,7 +590,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             <div style={{ 
               flex: 1, 
               overflowY: 'auto',
-              padding: window.innerWidth <= 320 ? '8px' : '20px',
+              padding: screen.isTiny ? '4px 6px' : screen.isMobile ? '8px' : '20px',
               display: 'flex',
               flexDirection: 'column'
             }}>
@@ -599,25 +600,28 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   style={{
                     display: 'flex',
                     justifyContent: msg.from === user.pub ? 'flex-end' : 'flex-start',
-                    marginBottom: window.innerWidth <= 320 ? '6px' : '12px'
+                    marginBottom: screen.isTiny ? '3px' : screen.isMobile ? '6px' : '12px'
                   }}
                 >
                   <div style={{
-                    maxWidth: window.innerWidth <= 320 ? '85%' : '70%',
-                    padding: window.innerWidth <= 320 ? '6px 10px' : '10px 14px',
-                    borderRadius: '12px',
+                    maxWidth: screen.isTiny ? '90%' : screen.isMobile ? '85%' : '70%',
+                    padding: screen.isTiny ? '4px 8px' : screen.isMobile ? '6px 10px' : '10px 14px',
+                    borderRadius: screen.isTiny ? '8px' : '12px',
                     background: msg.from === user.pub 
                       ? colors.messageSent
                       : colors.messageReceived,
                     color: msg.from === user.pub ? '#fff' : colors.textPrimary
                   }}>
-                    <div style={{ fontSize: window.innerWidth <= 320 ? '13px' : '14px' }}>
+                    <div style={{ 
+                      fontSize: screen.isTiny ? '12px' : screen.isMobile ? '13px' : '14px',
+                      wordBreak: 'break-word'
+                    }}>
                       {escapeHtml(msg.content)}
                     </div>
                     <div style={{ 
-                      fontSize: window.innerWidth <= 320 ? '9px' : '11px', 
+                      fontSize: screen.isTiny ? '8px' : screen.isMobile ? '9px' : '11px', 
                       opacity: 0.7,
-                      marginTop: '2px',
+                      marginTop: '1px',
                       color: msg.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted
                     }}>
                       {new Date(msg.timestamp).toLocaleTimeString()}
