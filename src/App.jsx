@@ -1036,7 +1036,7 @@ function App() {
         setInviteCode(null);
         // Clear the invite from URL
         window.history.replaceState({}, document.title, window.location.pathname);
-      }, 2000); // 2 second delay to ensure Gun.js is ready
+      }, 4000); // 4 second delay to ensure Gun.js is ready for new users
     }
   };
 
