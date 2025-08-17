@@ -12,7 +12,7 @@ class GunAuthService {
   }
 
   // Initialize Gun instance with peers
-  initialize(peers = []) {
+  initialize(peers = [], instanceName = null) {
     // More reliable Gun.js relay servers
     const defaultPeers = [
       'https://relay.peer.ooo/gun',
@@ -26,7 +26,12 @@ class GunAuthService {
       ? import.meta.env.VITE_GUN_PEERS.split(',') 
       : [];
 
+    // Get or set instance name
+    const currentInstance = instanceName || localStorage.getItem('whisperz_instance') || 'main';
+    localStorage.setItem('whisperz_instance', currentInstance);
+
     console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
+    console.log('📦 Using instance:', currentInstance);
 
     this.gun = Gun({
       peers: [...customPeers, ...peers, ...defaultPeers],
@@ -37,7 +42,9 @@ class GunAuthService {
       ws: {
         reconnect: true,
         reconnectDelay: 1000
-      }
+      },
+      // Use instance name as file/storage prefix
+      file: `whisperz_${currentInstance}`
     });
 
     // Test connection to peers
@@ -161,6 +168,42 @@ class GunAuthService {
   // Get Gun instance (for admin operations)
   getGun() {
     return this.gun;
+  }
+
+  // Get current instance name
+  getCurrentInstance() {
+    return localStorage.getItem('whisperz_instance') || 'main';
+  }
+
+  // Get all available instances
+  getAvailableInstances() {
+    const instances = localStorage.getItem('whisperz_instances');
+    return instances ? JSON.parse(instances) : ['main'];
+  }
+
+  // Switch to a different instance
+  switchInstance(instanceName) {
+    // Save current instance to list
+    const instances = this.getAvailableInstances();
+    if (!instances.includes(this.getCurrentInstance())) {
+      instances.push(this.getCurrentInstance());
+    }
+    if (!instances.includes(instanceName)) {
+      instances.push(instanceName);
+    }
+    localStorage.setItem('whisperz_instances', JSON.stringify(instances));
+    
+    // Set new instance and reload
+    localStorage.setItem('whisperz_instance', instanceName);
+    window.location.reload();
+  }
+
+  // Create new instance
+  createNewInstance(instanceName) {
+    if (!instanceName || instanceName.trim() === '') {
+      instanceName = 'instance_' + Date.now();
+    }
+    this.switchInstance(instanceName);
   }
 
   // Check if user is authenticated

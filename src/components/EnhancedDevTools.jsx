@@ -31,6 +31,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
   const [backupPassword, setBackupPassword] = useState('');
   const [storageStats, setStorageStats] = useState(null);
   const [backupStatus, setBackupStatus] = useState('');
+  
+  // Instance state
+  const [currentInstance, setCurrentInstance] = useState(gunAuthService.getCurrentInstance());
+  const [availableInstances, setAvailableInstances] = useState(gunAuthService.getAvailableInstances());
+  const [newInstanceName, setNewInstanceName] = useState('');
 
   // Load users (friends)
   useEffect(() => {
@@ -1009,6 +1014,133 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
         </div>
       </div>
 
+      {/* Instance Switcher */}
+      <div style={{ 
+        marginTop: '20px',
+        padding: '15px',
+        background: 'rgba(102, 126, 234, 0.05)',
+        border: '2px solid rgba(102, 126, 234, 0.3)',
+        borderRadius: '8px'
+      }}>
+        <div style={{ 
+          fontSize: '14px', 
+          fontWeight: '600',
+          marginBottom: '10px', 
+          color: colors.primary,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          📦 Database Instances
+        </div>
+        <div style={{
+          fontSize: '11px',
+          color: colors.textSecondary,
+          marginBottom: '12px',
+          lineHeight: '1.4'
+        }}>
+          Current instance: <strong>{currentInstance}</strong>
+        </div>
+        
+        {/* Switch to existing instance */}
+        <div style={{ marginBottom: '12px' }}>
+          <select
+            value={currentInstance}
+            onChange={(e) => gunAuthService.switchInstance(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px',
+              background: colors.bgSecondary,
+              border: `1px solid ${colors.borderColor}`,
+              borderRadius: '4px',
+              color: colors.textPrimary,
+              fontSize: '12px',
+              marginBottom: '8px'
+            }}
+          >
+            {availableInstances.map(instance => (
+              <option key={instance} value={instance}>
+                {instance} {instance === currentInstance ? '(current)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        {/* Create new instance */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            placeholder="New instance name..."
+            value={newInstanceName}
+            onChange={(e) => setNewInstanceName(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '8px',
+              background: colors.bgSecondary,
+              border: `1px solid ${colors.borderColor}`,
+              borderRadius: '4px',
+              color: colors.textPrimary,
+              fontSize: '12px'
+            }}
+          />
+          <button
+            onClick={() => {
+              gunAuthService.createNewInstance(newInstanceName || 'instance_' + Date.now());
+              setNewInstanceName('');
+            }}
+            style={{
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              border: 'none',
+              borderRadius: '4px',
+              color: '#fff',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Create & Switch
+          </button>
+        </div>
+        
+        <div style={{
+          marginTop: '12px',
+          padding: '10px',
+          background: 'rgba(67, 233, 123, 0.1)',
+          borderRadius: '4px',
+          fontSize: '10px',
+          color: colors.success
+        }}>
+          💡 Tip: Creating a new instance gives you a fresh database without losing data in other instances!
+        </div>
+        
+        {/* Quick Reset Button */}
+        <button
+          onClick={() => {
+            const timestamp = Date.now();
+            const newName = `fresh_${timestamp}`;
+            if (confirm(`Create new instance "${newName}" and switch to it?\n\nThis gives you a fresh start without deleting anything.`)) {
+              gunAuthService.createNewInstance(newName);
+            }
+          }}
+          style={{
+            width: '100%',
+            marginTop: '12px',
+            padding: '10px',
+            background: 'linear-gradient(135deg, #43e97b, #38f9d7)',
+            border: 'none',
+            borderRadius: '6px',
+            color: colors.bgPrimary,
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(67, 233, 123, 0.3)'
+          }}
+        >
+          🚀 Quick Fresh Start (New Instance)
+        </button>
+      </div>
+
       {/* Full Database Reset */}
       <div style={{ 
         marginTop: '20px',
@@ -1026,7 +1158,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
           alignItems: 'center',
           gap: '8px'
         }}>
-          🔴 Gun.js Database Reset
+          🔴 Gun.js Database Reset (Current Instance)
         </div>
         <div style={{
           fontSize: '11px',
@@ -1034,8 +1166,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
           marginBottom: '12px',
           lineHeight: '1.4'
         }}>
-          Complete factory reset. Deletes ALL Gun.js data, accounts, messages, and friends. 
-          This cannot be undone!
+          Resets the <strong>{currentInstance}</strong> instance only. Deletes all data in this instance.
+          Other instances remain untouched. This cannot be undone!
         </div>
         <button
           onClick={(e) => handleGunDatabaseReset(e.ctrlKey || e.metaKey)}
