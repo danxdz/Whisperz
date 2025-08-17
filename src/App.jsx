@@ -929,9 +929,20 @@ function App() {
           code = hashPath.replace('invite/', '');
         }
         
-        // Check for admin setup parameter
+        // Check for URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const setupMode = urlParams.get('setup');
+        const instanceParam = urlParams.get('instance');
+        
+        // Check for instance switch parameter
+        if (instanceParam) {
+          const currentInstance = gunAuthService.getCurrentInstance();
+          if (instanceParam !== currentInstance) {
+            console.log('🔄 Switching to instance:', instanceParam);
+            gunAuthService.switchInstance(instanceParam);
+            return; // Will reload page
+          }
+        }
         
         // Enable registration for first user with ?setup=admin
         if (setupMode === 'admin' || setupMode === 'first') {
