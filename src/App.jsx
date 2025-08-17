@@ -10,7 +10,7 @@ import { ThemeToggle, SwipeableChat, InviteModal } from './components';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
 import { useConnectionState } from './hooks/useConnectionState';
-import logger from '../utils/logger';
+import logger from './utils/logger';
 
 // Create rate limiter for login attempts
 const loginRateLimiter = (() => {
