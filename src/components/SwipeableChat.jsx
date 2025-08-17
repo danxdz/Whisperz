@@ -29,6 +29,13 @@ function SwipeableChat({
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
+  
+  // Debug admin status
+  useEffect(() => {
+    console.log('🔍 SwipeableChat - User:', currentUser);
+    console.log('🔍 SwipeableChat - Is Admin?:', currentUser?.isAdmin);
+    console.log('🔍 SwipeableChat - User object keys:', currentUser ? Object.keys(currentUser) : 'No user');
+  }, [currentUser]);
 
   // Update mobile detection on resize
   useEffect(() => {

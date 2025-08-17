@@ -188,7 +188,9 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
 
     try {
       // Pass the invite code along with registration, mark as admin if isAdminSetup
+      console.log('🚀 Registering with admin flag:', isAdminSetup);
       const result = await gunAuthService.register(username, password, nickname || username, isAdminSetup);
+      console.log('✅ Registration result:', result);
       // Pass both user and invite code to parent
       onRegister(result.user, inviteCode);
     } catch (err) {
@@ -1003,6 +1005,8 @@ function App() {
   // Handle login/register
   const handleAuth = async (authUser, inviteCodeFromReg = null) => {
     console.log('🔐 Authentication successful:', authUser);
+    console.log('👤 User admin status:', authUser?.isAdmin);
+    console.log('📋 Full user object:', JSON.stringify(authUser, null, 2));
     setUser(authUser);
     
     // Initialize WebRTC

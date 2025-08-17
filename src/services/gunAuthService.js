@@ -69,10 +69,30 @@ class GunAuthService {
 
   // Register a new user
   async register(username, password, nickname, isAdmin = false) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!this.user) {
         reject(new Error('Gun not initialized'));
         return;
+      }
+      
+      // Check if this is the first user (should be admin)
+      let shouldBeAdmin = isAdmin;
+      if (!shouldBeAdmin) {
+        // Check if any users exist
+        const existingUsers = await new Promise((checkResolve) => {
+          let hasUsers = false;
+          this.gun.get('~@').once().map().once((data, key) => {
+            if (data && key) {
+              hasUsers = true;
+            }
+          });
+          setTimeout(() => checkResolve(hasUsers), 500);
+        });
+        
+        if (!existingUsers) {
+          console.log('🎯 First user detected - setting as admin');
+          shouldBeAdmin = true;
+        }
       }
 
       this.user.create(username, password, (ack) => {
@@ -90,10 +110,11 @@ class GunAuthService {
               username: username,
               createdAt: Date.now(),
               publicKey: this.user.is.pub,
-              isAdmin: isAdmin || false
+              isAdmin: shouldBeAdmin || false
             };
             
             console.log('📝 Setting user profile:', profileData);
+            console.log('🔑 Admin flag during registration:', shouldBeAdmin);
             
             // Store profile with callback to ensure it's saved
             await new Promise((profileResolve) => {
@@ -110,7 +131,15 @@ class GunAuthService {
             // Also store nickname in a simpler location for quick access
             this.user.get('nickname').put(nickname || username);
             
-            resolve({ success: true, user: this.user.is });
+            // Return user data with admin flag
+            const userData = {
+              ...this.user.is,
+              isAdmin: shouldBeAdmin || false,
+              nickname: nickname || username
+            };
+            
+            console.log('🎯 Returning user data with admin:', userData.isAdmin);
+            resolve({ success: true, user: userData });
           })
           .catch(reject);
       });
