@@ -4,12 +4,16 @@ import friendsService from '../services/friendsService';
 import hybridGunService from '../services/hybridGunService';
 import webrtcService from '../services/webrtcService';
 import backupService from '../services/backupService';
+import { useTheme } from '../contexts/ThemeContext';
+import { useResponsive } from '../hooks/useResponsive';
 
 /**
  * EnhancedDevTools Component
  * Advanced developer tools with user management, backup system, and mobile optimization
  */
 function EnhancedDevTools({ isVisible, onClose }) {
+  const { colors } = useTheme();
+  const screen = useResponsive();
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [invites, setInvites] = useState([]);
@@ -22,21 +26,11 @@ function EnhancedDevTools({ isVisible, onClose }) {
     gunPeers: 0
   });
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isCompact, setIsCompact] = useState(window.innerWidth <= 375);
   
   // Backup state
   const [backupPassword, setBackupPassword] = useState('');
   const [storageStats, setStorageStats] = useState(null);
   const [backupStatus, setBackupStatus] = useState('');
-
-  // Detect screen size
-  useEffect(() => {
-    const handleResize = () => {
-      setIsCompact(window.innerWidth <= 375);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Load users (friends)
   useEffect(() => {
@@ -253,25 +247,25 @@ function EnhancedDevTools({ isVisible, onClose }) {
   );
 
   const renderUsersTab = () => (
-    <div style={{ padding: isCompact ? '8px' : '12px' }}>
+    <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
         marginBottom: '12px'
       }}>
-        <h4 style={{ margin: 0, fontSize: isCompact ? '14px' : '16px' }}>
+        <h4 style={{ margin: 0, fontSize: screen.isTiny ? '14px' : '16px' }}>
           Friends ({users.length})
         </h4>
         <button
           onClick={handleGenerateInvite}
           style={{
-            padding: isCompact ? '4px 8px' : '6px 12px',
+            padding: screen.isTiny ? '4px 8px' : '6px 12px',
             background: 'linear-gradient(135deg, #667eea, #764ba2)',
             border: 'none',
             borderRadius: '4px',
             color: 'white',
-            fontSize: isCompact ? '10px' : '12px',
+            fontSize: screen.isTiny ? '10px' : '12px',
             cursor: 'pointer'
           }}
         >
@@ -280,7 +274,7 @@ function EnhancedDevTools({ isVisible, onClose }) {
       </div>
       
       <div style={{ 
-        maxHeight: isCompact ? '200px' : '300px', 
+        maxHeight: screen.isTiny ? '200px' : '300px', 
         overflowY: 'auto',
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '8px',
@@ -290,7 +284,7 @@ function EnhancedDevTools({ isVisible, onClose }) {
           <p style={{ 
             textAlign: 'center', 
             color: 'rgba(255, 255, 255, 0.5)',
-            fontSize: isCompact ? '11px' : '12px'
+            fontSize: screen.isTiny ? '11px' : '12px'
           }}>
             No friends yet. Generate an invite to add friends.
           </p>
@@ -300,11 +294,11 @@ function EnhancedDevTools({ isVisible, onClose }) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: isCompact ? '6px' : '8px',
+              padding: screen.isTiny ? '6px' : '8px',
               marginBottom: '4px',
               background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '4px',
-              fontSize: isCompact ? '11px' : '12px'
+              fontSize: screen.isTiny ? '11px' : '12px'
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ 
@@ -316,7 +310,7 @@ function EnhancedDevTools({ isVisible, onClose }) {
                   {user.name}
                 </div>
                 <div style={{ 
-                  fontSize: isCompact ? '9px' : '10px', 
+                  fontSize: screen.isTiny ? '9px' : '10px', 
                   color: 'rgba(255, 255, 255, 0.5)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -328,12 +322,12 @@ function EnhancedDevTools({ isVisible, onClose }) {
               <button
                 onClick={() => handleRemoveUser(user.id)}
                 style={{
-                  padding: isCompact ? '2px 6px' : '4px 8px',
+                  padding: screen.isTiny ? '2px 6px' : '4px 8px',
                   background: 'rgba(255, 0, 0, 0.2)',
                   border: '1px solid rgba(255, 0, 0, 0.5)',
                   borderRadius: '4px',
                   color: '#ff6666',
-                  fontSize: isCompact ? '9px' : '10px',
+                  fontSize: screen.isTiny ? '9px' : '10px',
                   cursor: 'pointer'
                 }}
               >
@@ -347,16 +341,16 @@ function EnhancedDevTools({ isVisible, onClose }) {
   );
 
   const renderInvitesTab = () => (
-    <div style={{ padding: isCompact ? '8px' : '12px' }}>
+    <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
       <h4 style={{ 
         margin: '0 0 12px 0', 
-        fontSize: isCompact ? '14px' : '16px' 
+        fontSize: screen.isTiny ? '14px' : '16px' 
       }}>
         Invites ({invites.length})
       </h4>
       
       <div style={{ 
-        maxHeight: isCompact ? '200px' : '300px', 
+        maxHeight: screen.isTiny ? '200px' : '300px', 
         overflowY: 'auto',
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '8px',
@@ -366,18 +360,18 @@ function EnhancedDevTools({ isVisible, onClose }) {
           <p style={{ 
             textAlign: 'center', 
             color: 'rgba(255, 255, 255, 0.5)',
-            fontSize: isCompact ? '11px' : '12px'
+            fontSize: screen.isTiny ? '11px' : '12px'
           }}>
             No invites generated yet.
           </p>
         ) : (
           invites.map(invite => (
             <div key={invite.code} style={{
-              padding: isCompact ? '6px' : '8px',
+              padding: screen.isTiny ? '6px' : '8px',
               marginBottom: '4px',
               background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '4px',
-              fontSize: isCompact ? '11px' : '12px'
+              fontSize: screen.isTiny ? '11px' : '12px'
             }}>
               <div style={{ 
                 display: 'flex', 
@@ -391,14 +385,14 @@ function EnhancedDevTools({ isVisible, onClose }) {
                 }}>
                   {invite.used ? '✅ Used' : invite.revoked ? '❌ Revoked' : '⏳ Pending'}
                 </span>
-                <span style={{ fontSize: isCompact ? '9px' : '10px' }}>
+                <span style={{ fontSize: screen.isTiny ? '9px' : '10px' }}>
                   {new Date(invite.createdAt).toLocaleDateString()}
                 </span>
               </div>
               
               {invite.used && invite.usedBy && (
                 <div style={{ 
-                  fontSize: isCompact ? '9px' : '10px',
+                  fontSize: screen.isTiny ? '9px' : '10px',
                   color: 'rgba(255, 255, 255, 0.5)'
                 }}>
                   Used by: {invite.usedBy.substring(0, 20)}...
@@ -413,12 +407,12 @@ function EnhancedDevTools({ isVisible, onClose }) {
                       alert('Invite link copied!');
                     }}
                     style={{
-                      padding: isCompact ? '2px 6px' : '4px 8px',
+                      padding: screen.isTiny ? '2px 6px' : '4px 8px',
                       background: 'rgba(102, 126, 234, 0.2)',
                       border: '1px solid rgba(102, 126, 234, 0.5)',
                       borderRadius: '4px',
                       color: '#667eea',
-                      fontSize: isCompact ? '9px' : '10px',
+                      fontSize: screen.isTiny ? '9px' : '10px',
                       cursor: 'pointer',
                       marginRight: '4px'
                     }}
@@ -428,12 +422,12 @@ function EnhancedDevTools({ isVisible, onClose }) {
                   <button
                     onClick={() => handleRevokeInvite(invite.code)}
                     style={{
-                      padding: isCompact ? '2px 6px' : '4px 8px',
+                      padding: screen.isTiny ? '2px 6px' : '4px 8px',
                       background: 'rgba(255, 0, 0, 0.2)',
                       border: '1px solid rgba(255, 0, 0, 0.5)',
                       borderRadius: '4px',
                       color: '#ff6666',
-                      fontSize: isCompact ? '9px' : '10px',
+                      fontSize: screen.isTiny ? '9px' : '10px',
                       cursor: 'pointer'
                     }}
                   >
@@ -449,10 +443,10 @@ function EnhancedDevTools({ isVisible, onClose }) {
   );
 
   const renderStatsTab = () => (
-    <div style={{ padding: isCompact ? '8px' : '12px' }}>
+    <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
       <h4 style={{ 
         margin: '0 0 12px 0', 
-        fontSize: isCompact ? '14px' : '16px' 
+        fontSize: screen.isTiny ? '14px' : '16px' 
       }}>
         Statistics
       </h4>
@@ -511,20 +505,20 @@ function EnhancedDevTools({ isVisible, onClose }) {
       {/* General Stats */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isCompact ? '1fr' : 'repeat(2, 1fr)',
+        gridTemplateColumns: screen.isTiny ? '1fr' : 'repeat(2, 1fr)',
         gap: '8px'
       }}>
         {Object.entries(stats).filter(([key]) => 
           !['gunPeers', 'webrtcStatus'].includes(key) // Filter out duplicate network stats
         ).map(([key, value]) => (
           <div key={key} style={{
-            padding: isCompact ? '6px' : '8px',
+            padding: screen.isTiny ? '6px' : '8px',
             background: 'rgba(255, 255, 255, 0.05)',
             borderRadius: '4px',
-            fontSize: isCompact ? '11px' : '12px'
+            fontSize: screen.isTiny ? '11px' : '12px'
           }}>
             <div style={{ 
-              fontSize: isCompact ? '9px' : '10px',
+              fontSize: screen.isTiny ? '9px' : '10px',
               color: 'rgba(255, 255, 255, 0.5)',
               marginBottom: '2px'
             }}>
@@ -808,12 +802,12 @@ function EnhancedDevTools({ isVisible, onClose }) {
       bottom: 0,
       left: 0,
       right: 0,
-      height: isCompact ? '320px' : '400px',
-      background: 'linear-gradient(to top, rgba(10, 10, 15, 0.98), rgba(22, 22, 31, 0.95))',
+      height: screen.isTiny ? '240px' : screen.isMobile ? '280px' : '320px',
+      background: colors.bgSecondary,
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      borderTop: '2px solid rgba(102, 126, 234, 0.5)',
-      color: 'white',
+      borderTop: `2px solid ${colors.primary}`,
+      color: colors.textPrimary,
       fontFamily: 'Inter, -apple-system, sans-serif',
       zIndex: 10000,
       display: 'flex',
@@ -825,13 +819,13 @@ function EnhancedDevTools({ isVisible, onClose }) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: isCompact ? '8px 12px' : '12px 16px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        background: 'rgba(0, 0, 0, 0.3)'
+        padding: screen.isTiny ? '6px 10px' : screen.isMobile ? '8px 12px' : '10px 14px',
+        borderBottom: `1px solid ${colors.borderColor}`,
+        background: colors.bgCard
       }}>
         <h3 style={{ 
           margin: 0, 
-          fontSize: isCompact ? '14px' : '16px',
+          fontSize: screen.isTiny ? '14px' : '16px',
           background: 'linear-gradient(135deg, #667eea, #764ba2)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
@@ -846,8 +840,8 @@ function EnhancedDevTools({ isVisible, onClose }) {
             border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '4px',
             color: 'white',
-            padding: isCompact ? '4px 8px' : '6px 12px',
-            fontSize: isCompact ? '12px' : '14px',
+            padding: screen.isTiny ? '4px 8px' : '6px 12px',
+            fontSize: screen.isTiny ? '12px' : '14px',
             cursor: 'pointer'
           }}
         >

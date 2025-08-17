@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useResponsive } from '../hooks/useResponsive';
 
 function InviteModal({ isOpen, onClose, inviteLink }) {
   const { colors } = useTheme();
+  const screen = useResponsive();
   const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   
   if (!isOpen) return null;
 
@@ -72,19 +75,19 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 10000,
-        padding: '16px'
+        padding: screen.isTiny ? '8px' : '16px'
       }}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
         style={{
           background: colors.bgSecondary,
-          borderRadius: '16px',
-          padding: isMobile ? '16px' : '24px',
-          maxWidth: isMobile ? '100%' : '480px',
+          borderRadius: '12px',
+          padding: screen.isTiny ? '12px' : screen.isMobile ? '16px' : '20px',
+          maxWidth: screen.isTiny ? '100%' : screen.isMobile ? '360px' : '420px',
           width: '100%',
           boxShadow: colors.shadow,
-          maxHeight: '90vh',
+          maxHeight: screen.isTiny ? '85vh' : '90vh',
           overflowY: 'auto'
         }}
       >
@@ -93,27 +96,27 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '16px'
+          marginBottom: screen.isTiny ? '8px' : '12px'
         }}>
           <h3 style={{
             margin: 0,
-            fontSize: isMobile ? '18px' : '20px',
+            fontSize: screen.isTiny ? '16px' : '18px',
             color: colors.textPrimary,
             fontWeight: '600'
           }}>
-            Invite Friend
+            Share Invite
           </h3>
           <button
             onClick={onClose}
             style={{
               background: 'transparent',
               border: 'none',
-              fontSize: '24px',
+              fontSize: '20px',
               color: colors.textMuted,
               cursor: 'pointer',
               padding: '0',
-              width: '32px',
-              height: '32px',
+              width: '28px',
+              height: '28px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -123,32 +126,15 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
           </button>
         </div>
 
-        {/* QR Code */}
-        <div style={{
-          background: '#fff',
-          padding: '16px',
-          borderRadius: '12px',
-          marginBottom: '16px',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
-          <QRCodeSVG 
-            value={inviteLink} 
-            size={isMobile ? 160 : 200}
-            level="H"
-            includeMargin={false}
-          />
-        </div>
-
-        {/* Invite Link */}
+        {/* Compact Link Display */}
         <div style={{
           background: colors.bgTertiary,
           borderRadius: '8px',
-          padding: '12px',
-          marginBottom: '16px',
+          padding: screen.isTiny ? '8px' : '10px',
+          marginBottom: screen.isTiny ? '8px' : '12px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '6px'
         }}>
           <input
             type="text"
@@ -159,7 +145,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
               background: 'transparent',
               border: 'none',
               color: colors.textSecondary,
-              fontSize: isMobile ? '12px' : '14px',
+              fontSize: screen.isTiny ? '11px' : '12px',
               outline: 'none',
               fontFamily: 'monospace',
               overflow: 'hidden',
@@ -169,49 +155,68 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
           <button
             onClick={handleCopy}
             style={{
-              padding: '6px 12px',
-              background: colors.primary,
+              padding: screen.isTiny ? '4px 8px' : '6px 10px',
+              background: copied ? colors.success : colors.primary,
               border: 'none',
               borderRadius: '6px',
               color: '#fff',
-              fontSize: '12px',
+              fontSize: screen.isTiny ? '11px' : '12px',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              minWidth: '60px'
+              transition: 'background 0.2s'
             }}
           >
             {copied ? '✓' : 'Copy'}
           </button>
         </div>
 
-        {/* Share Options */}
+        {/* Quick Share Buttons */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-          gap: '8px',
-          marginBottom: '16px'
+          gridTemplateColumns: screen.isTiny ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)',
+          gap: screen.isTiny ? '6px' : '8px',
+          marginBottom: screen.isTiny ? '8px' : '12px'
         }}>
+          {/* QR Code Button */}
+          <button
+            onClick={() => setShowQR(!showQR)}
+            style={{
+              padding: screen.isTiny ? '8px' : '10px',
+              background: showQR ? colors.primary : colors.bgTertiary,
+              border: `1px solid ${showQR ? colors.primary : colors.borderColor}`,
+              borderRadius: '6px',
+              color: showQR ? '#fff' : colors.textPrimary,
+              fontSize: screen.isTiny ? '18px' : '20px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}
+            title="QR Code"
+          >
+            {showQR ? '✕' : '⬚'}
+          </button>
+
           {/* Native Share (if available) */}
           {navigator.share && (
             <button
               onClick={handleShare}
               style={{
-                padding: '12px',
+                padding: screen.isTiny ? '8px' : '10px',
                 background: colors.primary,
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 color: '#fff',
-                fontSize: '14px',
+                fontSize: screen.isTiny ? '18px' : '20px',
                 cursor: 'pointer',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
-                gap: '4px',
-                gridColumn: isMobile ? 'span 2' : 'span 1'
+                justifyContent: 'center'
               }}
+              title="Share"
             >
-              <span style={{ fontSize: '20px' }}>📤</span>
-              <span style={{ fontSize: '11px' }}>Share</span>
+              📤
             </button>
           )}
 
@@ -219,76 +224,92 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
           <button
             onClick={shareToWhatsApp}
             style={{
-              padding: '12px',
+              padding: screen.isTiny ? '8px' : '10px',
               background: '#25D366',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               color: '#fff',
-              fontSize: '14px',
+              fontSize: screen.isTiny ? '18px' : '20px',
               cursor: 'pointer',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: '4px'
+              justifyContent: 'center'
             }}
+            title="WhatsApp"
           >
-            <span style={{ fontSize: '20px' }}>💬</span>
-            <span style={{ fontSize: '11px' }}>WhatsApp</span>
+            💬
           </button>
 
           {/* Telegram */}
           <button
             onClick={shareToTelegram}
             style={{
-              padding: '12px',
+              padding: screen.isTiny ? '8px' : '10px',
               background: '#0088cc',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               color: '#fff',
-              fontSize: '14px',
+              fontSize: screen.isTiny ? '18px' : '20px',
               cursor: 'pointer',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: '4px'
+              justifyContent: 'center'
             }}
+            title="Telegram"
           >
-            <span style={{ fontSize: '20px' }}>✈️</span>
-            <span style={{ fontSize: '11px' }}>Telegram</span>
+            ✈️
           </button>
 
           {/* Email */}
           <button
             onClick={shareToEmail}
             style={{
-              padding: '12px',
+              padding: screen.isTiny ? '8px' : '10px',
               background: colors.bgTertiary,
               border: `1px solid ${colors.borderColor}`,
-              borderRadius: '8px',
+              borderRadius: '6px',
               color: colors.textPrimary,
-              fontSize: '14px',
+              fontSize: screen.isTiny ? '18px' : '20px',
               cursor: 'pointer',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: '4px'
+              justifyContent: 'center'
             }}
+            title="Email"
           >
-            <span style={{ fontSize: '20px' }}>📧</span>
-            <span style={{ fontSize: '11px' }}>Email</span>
+            📧
           </button>
         </div>
 
+        {/* QR Code Display */}
+        {showQR && (
+          <div style={{
+            background: '#fff',
+            padding: screen.isTiny ? '12px' : '16px',
+            borderRadius: '8px',
+            marginBottom: screen.isTiny ? '8px' : '12px',
+            display: 'flex',
+            justifyContent: 'center'
+          }}>
+            <QRCodeSVG 
+              value={inviteLink} 
+              size={screen.isTiny ? 120 : screen.isMobile ? 140 : 160}
+              level="H"
+              includeMargin={false}
+            />
+          </div>
+        )}
+
         {/* Info */}
         <div style={{
-          padding: '12px',
+          padding: screen.isTiny ? '8px' : '10px',
           background: colors.bgTertiary,
-          borderRadius: '8px',
-          fontSize: '12px',
+          borderRadius: '6px',
+          fontSize: screen.isTiny ? '10px' : '11px',
           color: colors.textMuted,
           textAlign: 'center'
         }}>
-          ⏱️ This invite expires in 24 hours and can only be used once
+          ⏱️ Expires in 24h • Single use
         </div>
       </div>
     </div>

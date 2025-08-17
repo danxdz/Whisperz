@@ -656,11 +656,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             </div>
 
             <form onSubmit={handleSendMessage} style={{
-              padding: window.innerWidth <= 320 ? '8px' : '16px 20px',
+              padding: screen.isTiny ? '6px' : screen.isMobile ? '8px' : '12px 16px',
               background: colors.bgCard,
               borderTop: `1px solid ${colors.borderColor}`,
               display: 'flex',
-              gap: window.innerWidth <= 320 ? '6px' : '12px'
+              gap: screen.isTiny ? '4px' : '8px'
             }}>
               <input
                 type="text"
@@ -671,32 +671,33 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 maxLength={1000}
                 style={{
                   flex: 1,
-                  padding: window.innerWidth <= 320 ? '8px 10px' : '12px 16px',
+                  padding: screen.isTiny ? '6px 10px' : screen.isMobile ? '8px 12px' : '10px 14px',
                   background: colors.bgTertiary,
                   border: `1px solid ${colors.borderColor}`,
-                  borderRadius: window.innerWidth <= 320 ? '20px' : '8px',
+                  borderRadius: screen.isTiny ? '16px' : '8px',
                   color: colors.textPrimary,
-                  fontSize: window.innerWidth <= 320 ? '13px' : '14px',
+                  fontSize: screen.isTiny ? '12px' : screen.isMobile ? '13px' : '14px',
                   outline: 'none'
                 }}
               />
               <button 
                 type="submit"
                 style={{
-                  padding: window.innerWidth <= 320 ? '8px 16px' : '12px 24px',
+                  padding: screen.isTiny ? '6px 12px' : screen.isMobile ? '8px 16px' : '10px 20px',
                   background: newMessage.trim() 
                     ? colors.primary
                     : colors.bgTertiary,
                   border: 'none',
-                  borderRadius: window.innerWidth <= 320 ? '20px' : '8px',
+                  borderRadius: screen.isTiny ? '16px' : '8px',
                   color: newMessage.trim() ? '#fff' : colors.textMuted,
-                  fontSize: window.innerWidth <= 320 ? '13px' : '14px',
+                  fontSize: screen.isTiny ? '16px' : screen.isMobile ? '13px' : '14px',
                   cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
-                  opacity: newMessage.trim() ? 1 : 0.5
+                  opacity: newMessage.trim() ? 1 : 0.5,
+                  minWidth: screen.isTiny ? '36px' : 'auto'
                 }}
                 disabled={!newMessage.trim()}
               >
-                {window.innerWidth <= 320 ? '➤' : 'Send'}
+                {screen.isTiny ? '➤' : 'Send'}
               </button>
             </form>
           </>
