@@ -232,7 +232,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               : colors.bgTertiary,
             border: 'none',
             borderRadius: '6px',
-            color: activeTab === tab ? '#fff' : colors.textPrimary,
+            color: colors.textPrimary,
             fontSize: '12px',
             fontWeight: activeTab === tab ? '600' : '400',
             cursor: 'pointer',
