@@ -298,7 +298,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch'
     }}>
-      {['users', 'invites', 'stats', 'backup', 'logs', 'gundb'].map(tab => (
+      {['friends', 'network', 'gundb', 'backup'].map(tab => (
         <button
           key={tab}
           onClick={() => {
