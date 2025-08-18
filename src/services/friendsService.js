@@ -117,6 +117,21 @@ class FriendsService {
       inviteCode // Include the code for reference
     });
 
+    // Store as pending friend for the inviter
+    const pendingFriend = {
+      inviteCode: inviteCode,
+      status: 'pending',
+      sentAt: Date.now(),
+      expiresAt: inviteData.expiresAt,
+      type: 'sent_invite'
+    };
+    
+    // Store in inviter's pending friends list
+    this.user.get('pending_friends').get(inviteCode).put(pendingFriend);
+    
+    // Store in local invites map
+    this.invites.set(inviteCode, inviteData);
+
     // Use hash-based routing for better compatibility
     const inviteLink = `${window.location.origin}/#/invite/${inviteCode}`;
     // console.log('🔗 Generated invite link:', inviteLink);
