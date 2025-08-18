@@ -31,6 +31,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const [backupPassword, setBackupPassword] = useState('');
   const [storageStats, setStorageStats] = useState(null);
   const [backupStatus, setBackupStatus] = useState('');
+  
+  // Gun DB state
+  const [customRelay, setCustomRelay] = useState('');
+  const [currentRelays, setCurrentRelays] = useState([]);
+  const [savedRelays, setSavedRelays] = useState([]);
 
   // Load users (friends)
   useEffect(() => {
@@ -38,6 +43,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadUsers();
     loadInvites();
     loadStats();
+    loadRelayConfig();
   }, [isVisible]);
 
   const loadUsers = async () => {
@@ -219,7 +225,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch'
     }}>
-      {['users', 'invites', 'stats', 'backup', 'logs'].map(tab => (
+      {['users', 'invites', 'stats', 'backup', 'logs', 'gundb'].map(tab => (
         <button
           key={tab}
           onClick={() => {
