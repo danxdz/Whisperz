@@ -444,6 +444,7 @@ class FriendsService {
 
     this.notifyFriendListeners('added', friendData);
     return friendData;
+  }
 
   // Add friend directly (for friend requests - creates bidirectional relationship)
   async addFriendDirectly(publicKey, nickname, conversationId = null) {
@@ -474,7 +475,6 @@ class FriendsService {
     });
 
     return { publicKey, nickname, conversationId: conversationId || friendshipKey };
-  }
   }
 
   // Block/Ignore a user - prevents them from adding you again
