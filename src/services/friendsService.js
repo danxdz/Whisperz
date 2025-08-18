@@ -73,8 +73,8 @@ class FriendsService {
       
       if (!isValid) {
       }
-      
-      return isValid;
+        //   expected: dataToVerify,
+        //   got: verified
     } catch (_error) {
       // console.error('Error verifying invite signature:', error);
       return false;
@@ -122,10 +122,10 @@ class FriendsService {
     // console.log('🔗 Generated invite link:', inviteLink);
     
     // console.log('🎫 Invite generated:', {
-      code: inviteCode,
-      link: inviteLink,
-      expiresAt: new Date(inviteData.expiresAt).toLocaleString()
-    });
+    //       code: inviteCode,
+    //       link: inviteLink,
+    //       expiresAt: new Date(inviteData.expiresAt).toLocaleString()
+    //     });
 
     return { inviteCode, inviteLink, inviteData };
   }
