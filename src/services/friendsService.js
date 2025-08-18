@@ -72,14 +72,10 @@ class FriendsService {
       const isValid = verified === dataToVerify;
       
       if (!isValid) {
-        // console.error('Signature valid but data mismatch:', {
-          expected: dataToVerify,
-          got: verified
-        });
       }
       
       return isValid;
-    } catch (error) {
+    } catch (_error) {
       // console.error('Error verifying invite signature:', error);
       return false;
     }
