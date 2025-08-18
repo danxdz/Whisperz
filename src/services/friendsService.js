@@ -299,8 +299,12 @@ class FriendsService {
             usedAt: Date.now()
           });
 
-          // Note: We cannot write to another user's private space in Gun.js
-          // The friendship is established through the public 'friendships' space
+          // Update the inviter's pending friend to actual friend
+          // Remove from pending_friends
+          this.gun.get('~' + inviteData.from).get('pending_friends').get(inviteCode).put(null);
+          
+          // Note: The friendship is established through the public 'friendships' space
+          // Both users will see each other when they check the friendships space
         } catch (error) {
           // console.error('Error adding bidirectional friendship:', error);
           // Continue even if reverse add fails - at least one direction worked
