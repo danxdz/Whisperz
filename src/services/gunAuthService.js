@@ -22,9 +22,13 @@ class GunAuthService {
       'https://e2eec.herokuapp.com/gun'
     ];
 
-    const customPeers = import.meta.env.VITE_GUN_PEERS 
-      ? import.meta.env.VITE_GUN_PEERS.split(',') 
-      : [];
+    // Check localStorage first, then environment variable
+    const localStoragePeers = localStorage.getItem('GUN_CUSTOM_PEERS');
+    const customPeers = localStoragePeers 
+      ? localStoragePeers.split(',').filter(p => p.trim())
+      : (import.meta.env.VITE_GUN_PEERS 
+        ? import.meta.env.VITE_GUN_PEERS.split(',') 
+        : []);
 
     // console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
 
