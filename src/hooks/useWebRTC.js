@@ -55,7 +55,7 @@ export function useWebRTC() {
           }
         }, 30000); // Update every 30 seconds
         
-      } catch (err) {
+      } catch {
         if (!mounted) return;
         
         // console.error('❌ WebRTC initialization failed:', err);
@@ -121,7 +121,7 @@ export function useWebRTC() {
         webrtcEnabled: true,
         timestamp: Date.now()
       });
-    } catch (err) {
+    } catch {
       setWebrtcStatus('error');
       setError(err.message);
     }
@@ -132,7 +132,7 @@ export function useWebRTC() {
     try {
       await webrtcService.connectToPeer(targetPeerId, metadata);
       return true;
-    } catch (err) {
+    } catch {
       // console.error('Failed to connect to peer:', err);
       return false;
     }
@@ -143,7 +143,7 @@ export function useWebRTC() {
     try {
       await webrtcService.sendMessage(targetPeerId, data);
       return true;
-    } catch (err) {
+    } catch {
       // console.error('Failed to send to peer:', err);
       return false;
     }

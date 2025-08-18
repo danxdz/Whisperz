@@ -8,13 +8,13 @@ import { useState, useEffect } from 'react';
  * @param {*} initialValue - The initial value if no value exists in localStorage
  * @returns {[*, Function]} - Current value and setter function
  */
-export function useLocalStorage(key, initialValue) {
+export function useLocalStorage(_, initialValue) {
   // Get initial value from localStorage or use provided initial value
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
+    } catch {
       // console.error(`Error loading localStorage key "${key}":`, error);
       return initialValue;
     }
@@ -27,13 +27,13 @@ export function useLocalStorage(key, initialValue) {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       
       setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      window.localStorage.setItem(_, JSON.stringify(valueToStore));
       
       // Dispatch a custom event to sync across tabs
       window.dispatchEvent(new CustomEvent('localStorage-update', {
         detail: { key, value: valueToStore }
       }));
-    } catch (error) {
+    } catch {
       // console.error(`Error saving to localStorage key "${key}":`, error);
     }
   };
@@ -44,7 +44,7 @@ export function useLocalStorage(key, initialValue) {
       if (e.key === key && e.newValue) {
         try {
           setStoredValue(JSON.parse(e.newValue));
-        } catch (error) {
+        } catch {
           // console.error(`Error parsing localStorage change for key "${key}":`, error);
         }
       }

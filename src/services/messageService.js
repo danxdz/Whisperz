@@ -47,7 +47,7 @@ class MessageService {
     let encryptedMessage;
     try {
       encryptedMessage = await gunAuthService.encryptFor(message, recipientPublicKey);
-    } catch (error) {
+    } catch {
       // console.error('Failed to encrypt message:', error);
       encryptedMessage = message; // Fallback to unencrypted
     }
@@ -83,7 +83,7 @@ class MessageService {
         message.deliveryMethod = 'webrtc';
         message.delivered = true;
         // console.log('✅ Message sent via WebRTC');
-      } catch (error) {
+      } catch {
         // console.warn('❌ WebRTC send failed, will use Gun:', error);
       }
     }
@@ -119,7 +119,7 @@ class MessageService {
       if (message.from) {
         try {
           message = await gunAuthService.decryptFrom(data.data, message.from);
-        } catch (error) {
+        } catch {
           // console.error('Failed to decrypt message:', error);
         }
       }
@@ -147,7 +147,7 @@ class MessageService {
       // Notify handlers
       this.notifyHandlers('received', message);
 
-    } catch (error) {
+    } catch {
       // console.error('Error handling incoming message:', error);
     }
   }
@@ -164,7 +164,7 @@ class MessageService {
         let decrypted;
         try {
           decrypted = await gunAuthService.decryptFrom(msg, msg.from);
-        } catch (error) {
+        } catch {
           // console.error('Failed to decrypt offline message:', error);
           decrypted = msg;
         }
@@ -187,7 +187,7 @@ class MessageService {
         // Mark as delivered
         hybridGunService.markMessageDelivered(msg.key);
       }
-    } catch (error) {
+    } catch {
       // console.error('Error checking offline messages:', error);
     }
   }
@@ -238,7 +238,7 @@ class MessageService {
     this.messageHandlers.forEach(handler => {
       try {
         handler(event, data);
-      } catch (error) {
+      } catch {
         // console.error('Message handler error:', error);
       }
     });
@@ -299,7 +299,7 @@ class MessageService {
         // console.warn(`Offline message queue full for ${recipientPub} (${messageCount} messages)`);
         // Remove oldest messages if queue is full
         const messages = [];
-        offlineRef.map().once((data, key) => {
+        offlineRef.map().once((data, _key) => {
           if (data) messages.push({ key, timestamp: data.timestamp });
         });
         
@@ -318,9 +318,9 @@ class MessageService {
       offlineRef.get(messageId).put(message);
       
       // console.log(`📥 Stored offline message for ${recipientPub} (queue: ${messageCount + 1}/${MAX_OFFLINE_MESSAGES})`);
-    } catch (error) {
+    } catch {
       // console.error('Failed to store offline message:', error);
-      throw error;
+      throw _error;
     }
   }
 }

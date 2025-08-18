@@ -177,7 +177,7 @@ class FriendRequestService {
       this.user.get('friend_requests')
         .get('sent')
         .map()
-        .once((data, key) => {
+        .once((data, _key) => {
           if (data && data.id) {
             sent.push(data);
           }
@@ -193,7 +193,7 @@ class FriendRequestService {
         .get(currentUser.pub)
         .get('received')
         .map()
-        .once((data, key) => {
+        .once((data, _key) => {
           if (data && data.id) {
             received.push(data);
           }
@@ -215,7 +215,7 @@ class FriendRequestService {
         .get(to)
         .get('received')
         .map()
-        .once((data, key) => {
+        .once((data, _key) => {
           if (data && data.from === from && data.to === to && !found) {
             found = true;
             resolve(data);
@@ -304,7 +304,7 @@ class FriendRequestService {
       .get(currentUser.pub)
       .get('received')
       .map()
-      .on((data, key) => {
+      .on((data, _key) => {
         if (data && data.status === 'pending') {
           // console.log('📨 New friend request:', data);
           this.notifyHandlers('new', data);
@@ -323,7 +323,7 @@ class FriendRequestService {
     this.requestHandlers.forEach(handler => {
       try {
         handler(type, request);
-      } catch (error) {
+      } catch {
         // console.error('Error in request handler:', error);
       }
     });

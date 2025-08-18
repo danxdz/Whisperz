@@ -93,7 +93,7 @@ class WebRTCService {
           }
         }, 10000);
 
-      } catch (error) {
+      } catch {
         reject(error);
       }
     });
@@ -147,7 +147,7 @@ class WebRTCService {
           }
         }, 10000);
 
-      } catch (error) {
+      } catch {
         reject(error);
       }
     });
@@ -188,9 +188,9 @@ class WebRTCService {
     try {
       conn.send(message);
       return true;
-    } catch (error) {
+    } catch {
       // console.error(`Failed to send message to ${peerId}:`, error);
-      throw error;
+      throw _error;
     }
   }
 
@@ -202,7 +202,7 @@ class WebRTCService {
         try {
           conn.send(message);
           results.push({ peerId, success: true });
-        } catch (error) {
+        } catch {
           results.push({ peerId, success: false, error });
         }
       }
@@ -215,7 +215,7 @@ class WebRTCService {
     this.messageHandlers.forEach(handler => {
       try {
         handler(peerId, data);
-      } catch (error) {
+      } catch {
         // console.error('Message handler error:', error);
       }
     });
@@ -238,7 +238,7 @@ class WebRTCService {
     this.connectionHandlers.forEach(handler => {
       try {
         handler(event, peerId, metadata);
-      } catch (error) {
+      } catch {
         // console.error('Connection handler error:', error);
       }
     });

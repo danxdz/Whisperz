@@ -7,7 +7,7 @@ import friendsService from '../services/friendsService';
  * Collapsible friends list that can expand to show all friends or just online ones
  * With friend management (remove/block)
  */
-function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUser, onFriendsUpdate }) {
+function ExpandableFriends({ friends, selectedFriend, onSelectFriend, onFriendsUpdate }) {
   const [onlineStatus, setOnlineStatus] = useState({});
   const [isExpanded, setIsExpanded] = useState(false);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
@@ -25,7 +25,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
         try {
           const presence = await hybridGunService.getPresence(friend.pub || friend.publicKey);
           status[friend.pub || friend.publicKey] = presence;
-        } catch (error) {
+        } catch {
           status[friend.pub || friend.publicKey] = { online: false };
         }
       }
@@ -51,7 +51,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
       if (onFriendsUpdate) {
         onFriendsUpdate();
       }
-    } catch (error) {
+    } catch {
       // console.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
@@ -79,7 +79,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
       if (onFriendsUpdate) {
         onFriendsUpdate();
       }
-    } catch (error) {
+    } catch {
       // console.error('Failed to block friend:', error);
       alert('Failed to block friend: ' + error.message);
     }
@@ -92,7 +92,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     onlineStatus[friend.pub || friend.publicKey]?.online
   );
   
-  const offlineFriends = friends.filter(friend => 
+  // const offlineFriends = friends.filter(friend => 
     !onlineStatus[friend.pub || friend.publicKey]?.online
   );
 

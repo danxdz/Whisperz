@@ -68,7 +68,7 @@ class GunAuthService {
         return;
       }
 
-      this.user.create(username, password, (ack) => {
+      this.user.create(username, password, () => {
         if (ack.err) {
           reject(new Error(ack.err));
           return;
@@ -76,7 +76,7 @@ class GunAuthService {
 
         // Auto-login after registration
         this.login(username, password)
-          .then(async (loginResult) => {
+          .then(async () => {
             // Set user profile data with proper await
             const profileData = {
               nickname: nickname || username,
@@ -89,7 +89,7 @@ class GunAuthService {
             
             // Store profile with callback to ensure it's saved
             await new Promise((profileResolve) => {
-              this.user.get('profile').put(profileData, (ack) => {
+              this.user.get('profile').put(profileData, () => {
                 if (ack.err) {
                   // console.error('Error saving profile:', ack.err);
                 } else {
@@ -117,7 +117,7 @@ class GunAuthService {
         return;
       }
 
-      this.user.auth(username, password, (ack) => {
+      this.user.auth(username, password, () => {
         if (ack.err) {
           reject(new Error(ack.err));
           return;
@@ -182,7 +182,7 @@ class GunAuthService {
       setTimeout(() => {
         if (!profileFound) {
           profileFound = true;
-          // console.log('📋 No profile found for:', key);
+          // console.log('📋 No profile found for:', _key);
           resolve(null);
         }
       }, 1000);

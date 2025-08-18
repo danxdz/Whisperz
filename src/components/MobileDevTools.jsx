@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
  * Mobile-optimized dev tools access with touch gestures
  */
 function MobileDevTools({ onOpenDevTools }) {
-  const [touchCount, setTouchCount] = useState(0);
+  // const [touchCount, setTouchCount] = useState(0);
   const touchTimeoutRef = useRef(null);
   const lastTapRef = useRef(0);
 

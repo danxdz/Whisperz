@@ -25,7 +25,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     connectedPeers: 0,
     gunPeers: 0
   });
-  const [selectedUser, setSelectedUser] = useState(null);
+  // const [selectedUser, setSelectedUser] = useState(null); // Not used currently
   
   // Backup state
   const [backupPassword, setBackupPassword] = useState('');
@@ -52,7 +52,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         lastSeen: friend.lastSeen || 'Unknown'
       }));
       setUsers(userList);
-    } catch (error) {
+    } catch {
       // console.error('Failed to load users:', error);
     }
   };
@@ -61,7 +61,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     try {
       const myInvites = await friendsService.getMyInvites();
       setInvites(myInvites);
-    } catch (error) {
+    } catch {
       // console.error('Failed to load invites:', error);
     }
   };
@@ -93,7 +93,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         gunPeers: peers,
         webrtcStatus: webrtcService.peer?.open ? 'Connected' : 'Disconnected'
       });
-    } catch (error) {
+    } catch {
       // console.error('Failed to load stats:', error);
     }
   };
@@ -103,7 +103,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     try {
       const stats = backupService.getStorageStats();
       setStorageStats(stats);
-    } catch (error) {
+    } catch {
       // console.error('Failed to load storage stats:', error);
     }
   };
@@ -115,7 +115,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       const result = backupService.exportToFile(backupPassword || null);
       setBackupStatus(`✅ Backup exported: ${result.filename} (${result.encrypted ? 'Encrypted' : 'Not encrypted'})`);
       setTimeout(() => setBackupStatus(''), 5000);
-    } catch (error) {
+    } catch {
       setBackupStatus(`❌ Export failed: ${error.message}`);
     }
   };
@@ -136,7 +136,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       } else if (result.cancelled) {
         setBackupStatus('Import cancelled');
       }
-    } catch (error) {
+    } catch {
       setBackupStatus(`❌ Import failed: ${error.message}`);
     }
     
@@ -169,7 +169,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       await friendsService.removeFriend(userId);
       loadUsers();
       alert('Friend removed successfully');
-    } catch (error) {
+    } catch {
       alert('Failed to remove friend: ' + error.message);
     }
   };
@@ -181,7 +181,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       await friendsService.revokeInvite(inviteCode);
       loadInvites();
       alert('Invite revoked successfully');
-    } catch (error) {
+    } catch {
       alert('Failed to revoke invite: ' + error.message);
     }
   };
@@ -192,12 +192,12 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       await navigator.clipboard.writeText(result.inviteLink);
       alert('New invite generated and copied to clipboard!');
       loadInvites();
-    } catch (error) {
+    } catch {
       alert('Failed to generate invite: ' + error.message);
     }
   };
 
-  const handleClearAllData = async () => {
+  // const handleClearAllData = async () => {
     if (!confirm('This will delete ALL data including messages, friends, and settings. Are you sure?')) return;
     if (!confirm('This action cannot be undone. Continue?')) return;
     
@@ -206,7 +206,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       localStorage.clear();
       sessionStorage.clear();
       window.location.reload();
-    } catch (error) {
+    } catch {
       alert('Failed to clear data: ' + error.message);
     }
   };

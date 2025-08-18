@@ -6,7 +6,7 @@ class SecurityUtils {
     // Initialize in a try-catch to prevent app crash
     try {
       this.initializeSecrets();
-    } catch (error) {
+    } catch {
       // console.error('Security initialization warning:', error.message);
       // Allow app to start but log the security issue
       if (import.meta.env.DEV) {

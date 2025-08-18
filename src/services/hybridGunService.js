@@ -47,7 +47,7 @@ class HybridGunService {
       this.gun.get('offline_messages')
         .get(user.pub)
         .map()
-        .once((data, key) => {
+        .once((data, _key) => {
           if (data && !data.delivered) {
             messages.push({ ...data, key });
           }
@@ -132,9 +132,9 @@ class HybridGunService {
         .get(conversationId)
         .get('messages')
         .map()
-        .once((data, key) => {
+        .once((data, _key) => {
           if (data && data.content) {
-            messages.set(key, data);
+            messages.set(_, data);
           }
         });
 
@@ -148,9 +148,9 @@ class HybridGunService {
         .get(conversationId)
         .get('messages')
         .map()
-        .once((data, key) => {
+        .once((data, _key) => {
           if (data && data.content) {
-            messages.set(key, data);
+            messages.set(_, data);
           }
         });
 
@@ -172,7 +172,7 @@ class HybridGunService {
       .get(conversationId)
       .get('messages')
       .map()
-      .on((data, key) => {
+      .on((data, _key) => {
         if (data && data.content) {
           // console.log('📨 New private message:', data);
           callback({ ...data, key });
@@ -186,7 +186,7 @@ class HybridGunService {
       .get(conversationId)
       .get('messages')
       .map()
-      .on((data, key) => {
+      .on((data, _key) => {
         if (data && data.content) {
           // console.log('📨 New public message:', data);
           callback({ ...data, key });
@@ -277,9 +277,9 @@ class HybridGunService {
     const sub = this.gun.get('typing')
       .get(conversationId)
       .map()
-      .on((data, key) => {
+      .on((data, _key) => {
         if (data && data.timestamp > Date.now() - 5000) {
-          callback(key, data.isTyping);
+          callback(_, data.isTyping);
         }
       });
 

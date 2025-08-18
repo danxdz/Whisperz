@@ -26,7 +26,7 @@ const ConnectionStatus = () => {
           setGunStatus('initializing');
           setRelayStatus('setting up...');
         }
-      } catch (error) {
+      } catch {
         // console.error('Gun status check error:', error);
         setGunStatus('error');
         setRelayStatus('error');
@@ -48,7 +48,7 @@ const ConnectionStatus = () => {
         } else {
           setPeerStatus('initializing');
         }
-      } catch (error) {
+      } catch {
         // console.error('Peer status check error:', error);
         setPeerStatus('error');
       }

@@ -65,7 +65,7 @@ export function useConnectionState(friendPublicKey) {
             method: 'local'
           });
         }
-      } catch (error) {
+      } catch {
         // console.error('Error checking connection state:', error);
         setConnectionState(prev => ({
           ...prev,
@@ -94,13 +94,13 @@ export function useConnectionState(friendPublicKey) {
           await webrtcService.connectToPeer(connectionState.peerId);
           setConnectionState(prev => ({ ...prev, status: 'webrtc', method: 'webrtc' }));
           return true;
-        } catch (error) {
+        } catch {
           // console.error('Failed to establish WebRTC connection:', error);
           setConnectionState(prev => ({ ...prev, status: 'gun', method: 'gun' }));
           return false;
         }
       }
-    } catch (error) {
+    } catch {
       // console.error('Error in attemptWebRTCConnection:', error);
     }
     return false;

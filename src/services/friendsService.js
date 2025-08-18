@@ -1,7 +1,7 @@
 import Gun from 'gun/gun';
 import 'gun/sea';
 import gunAuthService from './gunAuthService';
-import encryptionService from './encryptionService';
+// import encryptionService from './encryptionService';
 
 // Friends service for managing relationships
 class FriendsService {
@@ -79,7 +79,7 @@ class FriendsService {
       }
       
       return isValid;
-    } catch (error) {
+    } catch {
       // console.error('Error verifying invite signature:', error);
       return false;
     }
@@ -109,7 +109,7 @@ class FriendsService {
 
     // Store invite in Gun
     await new Promise((resolve, reject) => {
-      this.user.get('invites').get(inviteCode).put(inviteData, (ack) => {
+      this.user.get('invites').get(inviteCode).put(inviteData, () => {
         if (ack.err) reject(new Error(ack.err));
         else resolve();
       });
@@ -268,7 +268,7 @@ class FriendsService {
             
             // console.log('📝 Writing friend data to inviter:', friendData);
             
-            this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put(friendData, (ack) => {
+            this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put(friendData, () => {
               if (ack.err) {
                 // console.error('Failed to add friend to inviter:', ack.err);
                 addReject(new Error(ack.err));
@@ -297,7 +297,7 @@ class FriendsService {
 
           // Also add to the inviter's local friends index for faster lookup
           this.gun.get('~' + inviteData.from).get('friendsIndex').get(user.pub).put(true);
-        } catch (error) {
+        } catch {
           // console.error('Error adding bidirectional friendship:', error);
           // Continue even if reverse add fails - at least one direction worked
         }
@@ -323,7 +323,7 @@ class FriendsService {
     return new Promise((resolve) => {
       const invites = [];
       
-      this.user.get('invites').map().once((data, key) => {
+      this.user.get('invites').map().once((data, _key) => {
         if (data) {
           invites.push({
             ...data,
@@ -394,7 +394,7 @@ class FriendsService {
 
     // Store friend relationship for current user (this works - own space)
     await new Promise((resolve) => {
-      gunAuthService.user.get('friends').get(publicKey).put(friendData, (ack) => {
+      gunAuthService.user.get('friends').get(publicKey).put(friendData, () => {
         // console.log('📝 Friend stored for current user:', ack);
         if (ack.err) {
           // console.error('Error storing friend:', ack.err);
@@ -425,7 +425,7 @@ class FriendsService {
     const friendshipKey = this.generateConversationId(user.pub, publicKey);
     
     await new Promise((resolve) => {
-      gunAuthService.gun.get('friendships').get(friendshipKey).put(myData, (ack) => {
+      gunAuthService.gun.get('friendships').get(friendshipKey).put(myData, () => {
         // console.log('📝 Friendship stored in public space:', ack);
         if (ack.err) {
           // console.error('Error storing friendship:', ack.err);
@@ -451,7 +451,7 @@ class FriendsService {
         gunAuthService.user.get('blocked').get(publicKey).put({
           blockedAt: Date.now(),
           publicKey: publicKey
-        }, (ack) => {
+        }, () => {
           // console.log('✅ Added to blocked list:', ack);
           resolve();
         });
@@ -467,9 +467,9 @@ class FriendsService {
 
       // console.log('✅ User blocked successfully');
       return { success: true };
-    } catch (error) {
+    } catch {
       // console.error('❌ Error blocking user:', error);
-      throw error;
+      throw _error;
     }
   }
 
@@ -481,7 +481,7 @@ class FriendsService {
     // console.log('✅ Unblocking user:', publicKey);
 
     await new Promise((resolve) => {
-      gunAuthService.user.get('blocked').get(publicKey).put(null, (ack) => {
+      gunAuthService.user.get('blocked').get(publicKey).put(null, () => {
         // console.log('✅ Removed from blocked list:', ack);
         resolve();
       });
@@ -510,7 +510,7 @@ class FriendsService {
     return new Promise((resolve) => {
       const blocked = [];
       
-      gunAuthService.user.get('blocked').map().once((data, key) => {
+      gunAuthService.user.get('blocked').map().once((data, _key) => {
         if (data) {
           blocked.push({
             publicKey: key,
@@ -540,7 +540,7 @@ class FriendsService {
 
       // 1. Remove from current user's friends list
       await new Promise((resolve) => {
-        gunAuthService.user.get('friends').get(publicKey).put(null, (ack) => {
+        gunAuthService.user.get('friends').get(publicKey).put(null, () => {
           // console.log('✅ Removed from current user friends:', ack);
           resolve();
         });
@@ -548,7 +548,7 @@ class FriendsService {
 
       // 2. Remove from friend's friends list (bidirectional removal)
       await new Promise((resolve) => {
-        this.gun.get('~' + publicKey).get('friends').get(user.pub).put(null, (ack) => {
+        this.gun.get('~' + publicKey).get('friends').get(user.pub).put(null, () => {
           // console.log('✅ Removed from friend\'s friends list:', ack);
           resolve();
         });
@@ -561,7 +561,7 @@ class FriendsService {
       // 4. Remove from public friendships space
       const friendshipKey = this.generateConversationId(user.pub, publicKey);
       await new Promise((resolve) => {
-        gunAuthService.gun.get('friendships').get(friendshipKey).put(null, (ack) => {
+        gunAuthService.gun.get('friendships').get(friendshipKey).put(null, () => {
           // console.log('✅ Removed from public friendships:', ack);
           resolve();
         });
@@ -584,9 +584,9 @@ class FriendsService {
 
       // console.log('✅ Friend removed successfully');
       return { success: true, blocked: blockUser };
-    } catch (error) {
+    } catch {
       // console.error('❌ Error removing friend:', error);
-      throw error;
+      throw _error;
     }
   }
 
@@ -606,18 +606,18 @@ class FriendsService {
       
       // Load existing friends from user's own space
       // console.log('📂 Loading friends from user space...');
-      gunAuthService.user.get('friends').map().once((data, key) => {
+      gunAuthService.user.get('friends').map().once((data, _key) => {
         // console.log('📝 Friend data found:', key, data);
         if (data && data.publicKey) {
-          friends.set(key, data);
-          this.friends.set(key, data);
+          friends.set(_, data);
+          this.friends.set(_, data);
           this.notifyFriendListeners('added', data);
         }
       });
 
       // Also check public friendships space for connections
       // console.log('📂 Checking public friendships...');
-      gunAuthService.gun.get('friendships').map().once((data, key) => {
+      gunAuthService.gun.get('friendships').map().once((data, _key) => {
         if (data) {
           // console.log('🔗 Friendship found:', key, data);
           
@@ -683,9 +683,9 @@ class FriendsService {
     this.friendListeners.add(callback);
 
     // Subscribe to Gun updates
-    const sub = gunAuthService.user.get('friends').map().on((data, key) => {
+    const sub = gunAuthService.user.get('friends').map().on((data, _key) => {
       if (data) {
-        this.friends.set(key, data);
+        this.friends.set(_, data);
         callback('updated', data);
       } else if (this.friends.has(key)) {
         this.friends.delete(key);
@@ -722,7 +722,7 @@ class FriendsService {
       const shortKey = user.pub ? user.pub.substring(0, 8) : 'Unknown';
       // console.log('👤 User nickname fallback:', shortKey);
       return `User-${shortKey}`;
-    } catch (error) {
+    } catch {
       // console.error('Error getting user nickname:', error);
       return 'Anonymous';
     }
@@ -750,7 +750,7 @@ class FriendsService {
     this.friendListeners.forEach(listener => {
       try {
         listener(event, data);
-      } catch (error) {
+      } catch {
         // console.error('Friend listener error:', error);
       }
     });

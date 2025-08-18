@@ -52,7 +52,7 @@ function LoginView({ onLogin, inviteCode }) {
       } else {
         setError('Login failed. Please check your credentials.');
       }
-    } catch (err) {
+    } catch {
       // console.error('Login error:', err);
       setError(err.message || 'Login failed. Please try again.');
     } finally {

@@ -16,7 +16,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
       await navigator.clipboard.writeText(inviteLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       // console.error('Failed to copy:', err);
     }
   };
@@ -29,7 +29,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
           text: 'Join my secure chat on Whisperz!',
           url: inviteLink
         });
-      } catch (err) {
+      } catch {
         if (err.name !== 'AbortError') {
           // console.error('Share failed:', err);
         }
@@ -58,7 +58,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
   };
 
   // Check if on mobile for compact layout
-  const isMobile = window.innerWidth <= 480;
+  // const isMobile = window.innerWidth <= 480;
 
   return (
     <div 

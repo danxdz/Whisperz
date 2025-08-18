@@ -10,7 +10,7 @@ function CollapsibleSidebar({
   friends, 
   selectedFriend, 
   onSelectFriend, 
-  currentUser, 
+  
   onFriendsUpdate, 
   onGenerateInvite,
   userNickname,
@@ -32,7 +32,7 @@ function CollapsibleSidebar({
         try {
           const presence = await hybridGunService.getPresence(friend.pub || friend.publicKey);
           status[friend.pub || friend.publicKey] = presence;
-        } catch (error) {
+        } catch {
           status[friend.pub || friend.publicKey] = { online: false };
         }
       }
@@ -62,7 +62,7 @@ function CollapsibleSidebar({
       await friendsService.removeFriend(friend.pub || friend.publicKey, false);
       alert(`${friend.nickname} has been removed from your friends.`);
       if (onFriendsUpdate) onFriendsUpdate();
-    } catch (error) {
+    } catch {
       // console.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
@@ -84,7 +84,7 @@ function CollapsibleSidebar({
       await friendsService.removeFriend(friend.pub || friend.publicKey, true);
       alert(`${friend.nickname} has been blocked.`);
       if (onFriendsUpdate) onFriendsUpdate();
-    } catch (error) {
+    } catch {
       // console.error('Failed to block friend:', error);
       alert('Failed to block friend: ' + error.message);
     }

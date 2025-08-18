@@ -38,7 +38,7 @@ class BackupService {
       try {
         const value = localStorage.getItem(key);
         data.data[key] = value;
-      } catch (error) {
+      } catch {
         // console.error(`Failed to backup key ${key}:`, error);
       }
     }
@@ -93,7 +93,7 @@ class BackupService {
         data: backupData,
         warning: 'This backup contains unencrypted sensitive data!'
       };
-    } catch (error) {
+    } catch {
       // console.error('Backup creation failed:', error);
       throw new Error('Failed to create backup: ' + error.message);
     }
@@ -127,7 +127,7 @@ class BackupService {
         encrypted: backup.encrypted,
         size: blob.size
       };
-    } catch (error) {
+    } catch {
       // console.error('Export failed:', error);
       throw new Error('Failed to export backup: ' + error.message);
     }
@@ -145,7 +145,7 @@ class BackupService {
           const backup = JSON.parse(e.target.result);
           const result = await this.restoreBackup(backup, password);
           resolve(result);
-        } catch (error) {
+        } catch {
           reject(new Error('Invalid backup file: ' + error.message));
         }
       };
@@ -173,13 +173,13 @@ class BackupService {
 
         const key = this.generateBackupKey(password);
         try {
-          const decrypted = CryptoJS.AES.decrypt(backup.data, key);
+          const decrypted = CryptoJS.AES.decrypt(backup.data, _key);
           const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
           if (!decryptedText) {
             throw new Error('Invalid password');
           }
           backupData = JSON.parse(decryptedText);
-        } catch (error) {
+        } catch {
           throw new Error('Failed to decrypt backup. Invalid password or corrupted data.');
         }
       } else {
@@ -192,7 +192,7 @@ class BackupService {
       }
 
       // Create a restore point before clearing
-      const restorePoint = this.collectAllData();
+      // const restorePoint = this.collectAllData();
 
       // Ask for confirmation before restoring
       const totalKeys = Object.keys(backupData.data).length;
@@ -215,9 +215,9 @@ class BackupService {
 
       for (const [key, value] of Object.entries(backupData.data)) {
         try {
-          localStorage.setItem(key, value);
+          localStorage.setItem(_, value);
           restoredCount++;
-        } catch (error) {
+        } catch {
           failedCount++;
           failures.push({ key, error: error.message });
           // console.error(`Failed to restore ${key}:`, error);
@@ -241,9 +241,9 @@ class BackupService {
         timestamp: backupData.timestamp,
         version: backupData.version
       };
-    } catch (error) {
+    } catch {
       // console.error('Restore failed:', error);
-      throw error;
+      throw _error;
     }
   }
 
@@ -285,7 +285,7 @@ class BackupService {
     keysToDelete.forEach(key => {
       try {
         localStorage.removeItem(key);
-      } catch (error) {
+      } catch {
         // console.error(`Failed to delete ${key}:`, error);
       }
     });

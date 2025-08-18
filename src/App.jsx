@@ -81,9 +81,9 @@ function LoginView({ onLogin, inviteCode }) {
       } else {
         setError('Login failed. Please check your credentials.');
       }
-    } catch (err) {
+    } catch {
       // console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      setError(_err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -191,8 +191,8 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
       const result = await gunAuthService.register(username, password, nickname || username);
       // Pass both user and invite code to parent
       onRegister(result.user, inviteCode);
-    } catch (err) {
-      setError(err.message || 'Registration failed');
+    } catch {
+      setError(_err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -283,7 +283,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [onlineStatus, setOnlineStatus] = useState(new Map());
+  // const [onlineStatus, // setOnlineStatus] = useState(new Map()); // TODO: Use for friend online indicators
   const [typingStatus, setTypingStatus] = useState(new Map());
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
@@ -309,7 +309,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         } else {
           setUserNickname('User');
         }
-      } catch (error) {
+      } catch {
         // console.error('Error loading user nickname:', error);
         setUserNickname(user?.alias || 'User');
       }
@@ -322,7 +322,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     try {
       // setFriendsLoading(true);
       // console.log('📋 Loading friends...');
-      const currentUser = gunAuthService.getCurrentUser();
+      // const currentUser = gunAuthService.getCurrentUser();
       // console.log('👤 Current user:', currentUser);
       
       const friendList = await friendsService.getFriends();
@@ -345,16 +345,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       // Update presence for each friend
       for (const friend of friendList) {
         const presence = await friendsService.getFriendPresence(friend.publicKey);
-        setOnlineStatus(prev => new Map(prev).set(friend.publicKey, presence.isOnline));
+        // setOnlineStatus(prev => new Map(prev).set(friend.publicKey, presence.isOnline));
         
         // Subscribe to presence updates
         hybridGunService.subscribeToPresence(friend.publicKey, (presenceData) => {
           const isOnline = presenceData?.status === 'online' && 
                           presenceData?.lastSeen > Date.now() - 60000;
-          setOnlineStatus(prev => new Map(prev).set(friend.publicKey, isOnline));
+          // setOnlineStatus(prev => new Map(prev).set(friend.publicKey, isOnline));
         });
       }
-    } catch (error) {
+    } catch {
       // console.error('❌ Failed to load friends:', error);
     } finally {
       // setFriendsLoading(false);
@@ -485,9 +485,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       
       await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
       setNewMessage('');
-    } catch (error) {
+    } catch {
       // console.error('Failed to send message:', error);
-      alert('Failed to send message: ' + error.message);
+      alert(`Logout error: ${_error.message);
     }
   };
 
@@ -515,9 +515,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       const result = await friendsService.generateInvite();
       setInviteLink(result.inviteLink);
       setShowInvite(true);
-    } catch (error) {
+    } catch {
       // console.error('Failed to generate invite:', error);
-      alert('Failed to generate invite link: ' + error.message);
+      alert(`Logout error: ${_error.message);
     }
   };
 
@@ -856,7 +856,7 @@ function App() {
             return;
           }
           for (const friend of friends) {
-            const messages = await messageService.getMessages(friend.conversationId);
+            // const messages = await messageService.getMessages(friend.conversationId);
             // console.log(`📜 Messages with ${friend.nickname}:`, messages);
           }
         };
@@ -875,7 +875,7 @@ function App() {
             if (presence.isOnline && presence.peerId) {
               // console.log(`🔄 Testing WebRTC connection to ${friend.nickname}...`);
               try {
-                const conn = await webrtcService.connectToPeer(presence.peerId);
+                // const conn = await webrtcService.connectToPeer(presence.peerId);
                 // console.log(`✅ Connected to ${friend.nickname}!`, conn);
                 
                 // Test sending a ping
@@ -884,7 +884,7 @@ function App() {
                   timestamp: Date.now()
                 });
                 // console.log(`📡 Ping sent to ${friend.nickname}`);
-              } catch (error) {
+              } catch {
                 // console.error(`❌ Failed to connect to ${friend.nickname}:`, error);
               }
             } else {
@@ -898,7 +898,7 @@ function App() {
         // console.log('   - window.testMessage("Hello!") - Send test message');
         // console.log('   - window.getMessageHistory() - View all messages');
         // console.log('   - window.testWebRTC() - Test WebRTC connections');
-      } catch (error) {
+      } catch {
         // console.error('Failed to initialize services:', error);
       }
     };
@@ -952,14 +952,14 @@ function App() {
         hybridGunService.initialize();
 
         // Check for existing session
-        const currentUser = gunAuthService.getCurrentUser();
+        // const currentUser = gunAuthService.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
           
           // Initialize WebRTC
           try {
             await webrtcService.initialize(currentUser.pub);
-          } catch (error) {
+          } catch {
             // console.error('Failed to initialize WebRTC:', error);
           }
 
@@ -973,12 +973,12 @@ function App() {
               alert('Friend added successfully!');
               // Clear the invite from URL
               window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (error) {
+            } catch {
               // console.error('Failed to accept invite:', error);
             }
           }
         }
-      } catch (error) {
+      } catch {
         // console.error('Initialization error:', error);
         setInitError(error.message);
       } finally {
@@ -998,7 +998,7 @@ function App() {
     try {
       await webrtcService.initialize(authUser.pub);
       // console.log('✅ WebRTC initialized');
-    } catch (error) {
+    } catch {
       // console.error('Failed to initialize WebRTC:', error);
     }
 
@@ -1029,11 +1029,11 @@ function App() {
           if (typeof loadFriendsRef.current === 'function') {
             loadFriendsRef.current();
           }
-        } catch (error) {
+        } catch {
           // console.error('❌ Failed to accept invite:', error);
           // Don't show error for "already used" if it was just used by this user
           if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
-            alert('Note: ' + error.message);
+            alert(`Logout error: ${_error.message);
           }
         }
         setInviteCode(null);
