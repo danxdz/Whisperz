@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import gunAuthService from '../../services/gunAuthService';
-import { useTheme } from '../../hooks/useTheme';
 
 /**
  * SettingsModule - IRC-style settings interface

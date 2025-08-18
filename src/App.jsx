@@ -24,6 +24,7 @@ function App() {
   const [inviteCode, setInviteCode] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [initError, setInitError] = useState(null);
+  const [isAdminSetup, setIsAdminSetup] = useState(false);
 
   // Initialize services on mount
   useEffect(() => {
@@ -46,6 +47,18 @@ function App() {
         if (code) {
           setInviteCode(code);
           setAuthMode('register');
+        }
+        
+        // Check for admin setup parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const setupMode = urlParams.get('setup');
+        
+        // Enable registration for first user with ?setup=admin
+        if (setupMode === 'admin' || setupMode === 'first') {
+          setAuthMode('register');
+          setIsAdminSetup(true);
+          // Clear the setup parameter from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
 
         // Initialize Gun
@@ -214,8 +227,10 @@ function App() {
         onRegister={handleAuth}
         onSwitchToLogin={() => {
           setAuthMode('login');
+          setIsAdminSetup(false);
         }}
         inviteCode={inviteCode}
+        isAdminSetup={isAdminSetup}
       />
     ) : (
       <LoginView
