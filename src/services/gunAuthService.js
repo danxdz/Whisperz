@@ -1,6 +1,7 @@
 import Gun from 'gun/gun';
 import 'gun/sea';
 import 'gun/axe';
+import logger from '../utils/logger';
 
 // Gun.js authentication service
 class GunAuthService {
@@ -9,16 +10,10 @@ class GunAuthService {
     this.user = null;
     this.currentUser = null;
     this.listeners = new Map();
-    
-    // Hardcoded admin public keys (add your admin keys here)
-    this.HARDCODED_ADMINS = [
-      // Add admin public keys here as strings
-      // Example: 'SEA_PUBLIC_KEY_HERE'
-    ];
   }
 
   // Initialize Gun instance with peers
-  initialize(peers = [], instanceName = null) {
+  initialize(peers = []) {
     // More reliable Gun.js relay servers
     const defaultPeers = [
       'https://relay.peer.ooo/gun',
@@ -32,12 +27,7 @@ class GunAuthService {
       ? import.meta.env.VITE_GUN_PEERS.split(',') 
       : [];
 
-    // Get or set instance name
-    const currentInstance = instanceName || localStorage.getItem('whisperz_instance') || 'main';
-    localStorage.setItem('whisperz_instance', currentInstance);
-
-    console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
-    console.log('📦 Using instance:', currentInstance);
+    logger.info('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
 
     this.gun = Gun({
       peers: [...customPeers, ...peers, ...defaultPeers],
@@ -48,17 +38,15 @@ class GunAuthService {
       ws: {
         reconnect: true,
         reconnectDelay: 1000
-      },
-      // Use instance name as file/storage prefix
-      file: `whisperz_${currentInstance}`
+      }
     });
 
     // Test connection to peers
     setTimeout(() => {
       const connectedPeers = this.gun._.opt.peers;
-      console.log('🔫 Gun.js connected peers:', connectedPeers);
+      logger.info('🔫 Gun.js connected peers:', connectedPeers);
       if (!connectedPeers || Object.keys(connectedPeers).length === 0) {
-        console.error('❌ Gun.js failed to connect to any peers!');
+        logger.error('❌ Gun.js failed to connect to any peers!');
       }
     }, 2000);
 
@@ -74,43 +62,12 @@ class GunAuthService {
   }
 
   // Register a new user
-  async register(username, password, nickname, isAdmin = false) {
-    return new Promise(async (resolve, reject) => {
+  async register(username, password, nickname) {
+    return new Promise((resolve, reject) => {
       if (!this.user) {
         reject(new Error('Gun not initialized'));
         return;
       }
-      
-      // Check if this is the first user (should be admin)
-      let shouldBeAdmin = isAdmin;
-      
-      // Only auto-admin if explicitly requested OR no users exist
-      if (!shouldBeAdmin && isAdmin === false) {
-        // Check if any users exist - more thorough check
-        const existingUsers = await new Promise((checkResolve) => {
-          let userCount = 0;
-          this.gun.get('~@').once((data) => {
-            if (data) {
-              // Count actual user entries
-              Object.keys(data).forEach(key => {
-                if (key && key !== '_' && data[key]) {
-                  userCount++;
-                }
-              });
-            }
-            setTimeout(() => checkResolve(userCount > 0), 1000);
-          });
-        });
-        
-        console.log('🔍 Existing users found:', existingUsers);
-        
-        if (!existingUsers) {
-          console.log('🎯 First user detected - setting as admin');
-          shouldBeAdmin = true;
-        }
-      }
-      
-      console.log('📊 Final admin decision:', shouldBeAdmin, 'isAdmin param:', isAdmin);
 
       this.user.create(username, password, (ack) => {
         if (ack.err) {
@@ -126,43 +83,27 @@ class GunAuthService {
               nickname: nickname || username,
               username: username,
               createdAt: Date.now(),
-              publicKey: this.user.is.pub,
-              isAdmin: shouldBeAdmin || false
+              publicKey: this.user.is.pub
             };
             
-            console.log('📝 Setting user profile:', profileData);
-            console.log('🔑 Admin flag during registration:', shouldBeAdmin);
+            logger.debug('📝 Setting user profile:', profileData);
             
             // Store profile with callback to ensure it's saved
             await new Promise((profileResolve) => {
               this.user.get('profile').put(profileData, (ack) => {
                 if (ack.err) {
-                  console.error('Error saving profile:', ack.err);
+                  logger.error('Error saving profile:', ack.err);
                 } else {
-                  console.log('✅ Profile saved successfully');
+                  logger.debug('✅ Profile saved successfully');
                 }
                 profileResolve();
               });
             });
             
-            // If admin, add to global admin registry
-            if (shouldBeAdmin) {
-              await this.setAdmin(this.user.is.pub);
-              console.log('👑 User registered as admin in Gun registry');
-            }
-            
             // Also store nickname in a simpler location for quick access
             this.user.get('nickname').put(nickname || username);
             
-            // Return user data with admin flag
-            const userData = {
-              ...this.user.is,
-              isAdmin: shouldBeAdmin || false,
-              nickname: nickname || username
-            };
-            
-            console.log('🎯 Returning user data with admin:', userData.isAdmin);
-            resolve({ success: true, user: userData });
+            resolve({ success: true, user: this.user.is });
           })
           .catch(reject);
       });
@@ -177,32 +118,14 @@ class GunAuthService {
         return;
       }
 
-      this.user.auth(username, password, async (ack) => {
+      this.user.auth(username, password, (ack) => {
         if (ack.err) {
           reject(new Error(ack.err));
           return;
         }
 
-        // Fetch user profile
-        const profile = await new Promise((profileResolve) => {
-          this.user.get('profile').once((data) => {
-            profileResolve(data || {});
-          });
-        });
-        
-        // Check admin status from Gun registry
-        const isAdmin = await this.isAdmin(ack.sea.pub);
-
-        // Merge profile data with auth data
-        const userData = {
-          ...ack.sea,
-          isAdmin: isAdmin,
-          nickname: profile.nickname || username
-        };
-
-        console.log('🔐 Login complete - Admin status:', isAdmin);
-        this.currentUser = userData;
-        resolve({ success: true, user: userData });
+        this.currentUser = ack.sea;
+        resolve({ success: true, user: ack.sea });
       });
     });
   }
@@ -219,105 +142,6 @@ class GunAuthService {
   // Get current user
   getCurrentUser() {
     return this.currentUser || this.user?.is;
-  }
-
-  // Get Gun instance (for admin operations)
-  getGun() {
-    return this.gun;
-  }
-
-  // Set user as admin (stores in Gun)
-  async setAdmin(publicKey) {
-    if (!this.gun) return false;
-    
-    return new Promise((resolve) => {
-      // Store in global admin registry
-      this.gun.get('whisperz_admins').get(publicKey).put(true, (ack) => {
-        if (ack.err) {
-          console.error('Failed to set admin:', ack.err);
-          resolve(false);
-        } else {
-          console.log('✅ Admin set:', publicKey);
-          resolve(true);
-        }
-      });
-    });
-  }
-
-  // Check if user is admin
-  async isAdmin(publicKey) {
-    if (!publicKey) return false;
-    
-    // Check hardcoded admins first
-    if (this.HARDCODED_ADMINS.includes(publicKey)) {
-      console.log('✅ Hardcoded admin detected:', publicKey);
-      return true;
-    }
-    
-    // Check Gun registry
-    return new Promise((resolve) => {
-      this.gun.get('whisperz_admins').get(publicKey).once((data) => {
-        console.log('🔍 Admin check for', publicKey, ':', data);
-        resolve(data === true);
-      });
-      
-      // Timeout fallback
-      setTimeout(() => resolve(false), 2000);
-    });
-  }
-
-  // Get all admins
-  async getAllAdmins() {
-    const admins = [...this.HARDCODED_ADMINS];
-    
-    return new Promise((resolve) => {
-      this.gun.get('whisperz_admins').once().map().once((data, key) => {
-        if (data === true && key) {
-          admins.push(key);
-        }
-      });
-      
-      setTimeout(() => {
-        console.log('📋 All admins:', admins);
-        resolve([...new Set(admins)]); // Remove duplicates
-      }, 1000);
-    });
-  }
-
-  // Get current instance name
-  getCurrentInstance() {
-    return localStorage.getItem('whisperz_instance') || 'main';
-  }
-
-  // Get all available instances
-  getAvailableInstances() {
-    const instances = localStorage.getItem('whisperz_instances');
-    return instances ? JSON.parse(instances) : ['main'];
-  }
-
-  // Switch to a different instance
-  switchInstance(instanceName) {
-    // Save current instance to list
-    const instances = this.getAvailableInstances();
-    if (!instances.includes(this.getCurrentInstance())) {
-      instances.push(this.getCurrentInstance());
-    }
-    if (!instances.includes(instanceName)) {
-      instances.push(instanceName);
-    }
-    localStorage.setItem('whisperz_instances', JSON.stringify(instances));
-    
-    // Set new instance and reload
-    localStorage.setItem('whisperz_instance', instanceName);
-    window.location.reload();
-  }
-
-  // Create new instance
-  createNewInstance(instanceName) {
-    if (!instanceName || instanceName.trim() === '') {
-      instanceName = 'instance_' + Date.now();
-    }
-    this.switchInstance(instanceName);
   }
 
   // Check if user is authenticated
@@ -337,7 +161,7 @@ class GunAuthService {
       this.gun.user(key).get('profile').once((data) => {
         if (data && !profileFound) {
           profileFound = true;
-          console.log('📋 Profile found:', data);
+          logger.debug('📋 Profile found:', data);
           resolve(data);
         }
       });
@@ -348,7 +172,7 @@ class GunAuthService {
           setTimeout(() => {
             if (!profileFound) {
               profileFound = true;
-              console.log('📋 Nickname found:', nickname);
+              logger.debug('📋 Nickname found:', nickname);
               resolve({ nickname: nickname });
             }
           }, 500);
@@ -359,7 +183,7 @@ class GunAuthService {
       setTimeout(() => {
         if (!profileFound) {
           profileFound = true;
-          console.log('📋 No profile found for:', key);
+          logger.debug('📋 No profile found for:', key);
           resolve(null);
         }
       }, 1000);

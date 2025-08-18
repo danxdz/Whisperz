@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js';
+import logger from '../utils/logger';
 
 /**
  * Secure Backup Service
@@ -39,7 +40,7 @@ class BackupService {
         const value = localStorage.getItem(key);
         data.data[key] = value;
       } catch (error) {
-        console.error(`Failed to backup key ${key}:`, error);
+        logger.error(`Failed to backup key ${key}:`, error);
       }
     }
 
@@ -94,7 +95,7 @@ class BackupService {
         warning: 'This backup contains unencrypted sensitive data!'
       };
     } catch (error) {
-      console.error('Backup creation failed:', error);
+      logger.error('Backup creation failed:', error);
       throw new Error('Failed to create backup: ' + error.message);
     }
   }
@@ -128,7 +129,7 @@ class BackupService {
         size: blob.size
       };
     } catch (error) {
-      console.error('Export failed:', error);
+      logger.error('Export failed:', error);
       throw new Error('Failed to export backup: ' + error.message);
     }
   }
@@ -220,7 +221,7 @@ class BackupService {
         } catch (error) {
           failedCount++;
           failures.push({ key, error: error.message });
-          console.error(`Failed to restore ${key}:`, error);
+          logger.error(`Failed to restore ${key}:`, error);
         }
       }
 
@@ -242,7 +243,7 @@ class BackupService {
         version: backupData.version
       };
     } catch (error) {
-      console.error('Restore failed:', error);
+      logger.error('Restore failed:', error);
       throw error;
     }
   }
@@ -286,7 +287,7 @@ class BackupService {
       try {
         localStorage.removeItem(key);
       } catch (error) {
-        console.error(`Failed to delete ${key}:`, error);
+        logger.error(`Failed to delete ${key}:`, error);
       }
     });
 

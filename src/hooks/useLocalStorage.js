@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logger from '../utils/logger';
 
 /**
  * Custom hook for managing localStorage with React state
@@ -15,7 +16,7 @@ export function useLocalStorage(key, initialValue) {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error(`Error loading localStorage key "${key}":`, error);
+      logger.error(`Error loading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -34,7 +35,7 @@ export function useLocalStorage(key, initialValue) {
         detail: { key, value: valueToStore }
       }));
     } catch (error) {
-      console.error(`Error saving to localStorage key "${key}":`, error);
+      logger.error(`Error saving to localStorage key "${key}":`, error);
     }
   };
 
@@ -45,7 +46,7 @@ export function useLocalStorage(key, initialValue) {
         try {
           setStoredValue(JSON.parse(e.newValue));
         } catch (error) {
-          console.error(`Error parsing localStorage change for key "${key}":`, error);
+          logger.error(`Error parsing localStorage change for key "${key}":`, error);
         }
       }
     };

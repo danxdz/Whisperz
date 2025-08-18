@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import hybridGunService from '../services/hybridGunService';
 import friendsService from '../services/friendsService';
+import logger from '../utils/logger';
 
 /**
  * ExpandableFriends Component
@@ -52,7 +53,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
         onFriendsUpdate();
       }
     } catch (error) {
-      console.error('Failed to remove friend:', error);
+      logger.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
     
@@ -80,7 +81,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
         onFriendsUpdate();
       }
     } catch (error) {
-      console.error('Failed to block friend:', error);
+      logger.error('Failed to block friend:', error);
       alert('Failed to block friend: ' + error.message);
     }
     

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import webrtcService from '../services/webrtcService';
 import hybridGunService from '../services/hybridGunService';
 import gunAuthService from '../services/gunAuthService';
+import logger from '../utils/logger';
 
 /**
  * Custom hook for managing WebRTC connection and presence
@@ -19,20 +20,20 @@ export function useWebRTC() {
     const initializeWebRTC = async () => {
       const user = gunAuthService.getCurrentUser();
       if (!user) {
-        console.log('⚠️ No user found, skipping WebRTC initialization');
+        logger.debug('⚠️ No user found, skipping WebRTC initialization');
         return;
       }
 
       try {
         setWebrtcStatus('connecting');
-        console.log('🚀 Initializing WebRTC for user:', user.pub);
+        logger.debug('🚀 Initializing WebRTC for user:', user.pub);
         
         // Initialize WebRTC
         const id = await webrtcService.initialize(user.pub);
         
         if (!mounted) return;
         
-        console.log('✅ WebRTC initialized with peer ID:', id);
+        logger.debug('✅ WebRTC initialized with peer ID:', id);
         setPeerId(id);
         setWebrtcStatus('connected');
         setError(null);
@@ -58,7 +59,7 @@ export function useWebRTC() {
       } catch (err) {
         if (!mounted) return;
         
-        console.error('❌ WebRTC initialization failed:', err);
+        logger.error('❌ WebRTC initialization failed:', err);
         setWebrtcStatus('error');
         setError(err.message);
         
@@ -133,7 +134,7 @@ export function useWebRTC() {
       await webrtcService.connectToPeer(targetPeerId, metadata);
       return true;
     } catch (err) {
-      console.error('Failed to connect to peer:', err);
+      logger.error('Failed to connect to peer:', err);
       return false;
     }
   };
@@ -144,7 +145,7 @@ export function useWebRTC() {
       await webrtcService.sendMessage(targetPeerId, data);
       return true;
     } catch (err) {
-      console.error('Failed to send to peer:', err);
+      logger.error('Failed to send to peer:', err);
       return false;
     }
   };

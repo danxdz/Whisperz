@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import webrtcService from '../services/webrtcService';
 import friendsService from '../services/friendsService';
+import logger from '../utils/logger';
 
 export function useConnectionState(friendPublicKey) {
   const [connectionState, setConnectionState] = useState({
@@ -17,7 +18,7 @@ export function useConnectionState(friendPublicKey) {
     
     // Ensure services are available
     if (!webrtcService || !friendsService) {
-      console.warn('Services not initialized for connection state');
+      logger.warn('Services not initialized for connection state');
       return;
     }
 
@@ -66,7 +67,7 @@ export function useConnectionState(friendPublicKey) {
           });
         }
       } catch (error) {
-        console.error('Error checking connection state:', error);
+        logger.error('Error checking connection state:', error);
         setConnectionState(prev => ({
           ...prev,
           status: 'disconnected',
@@ -95,13 +96,13 @@ export function useConnectionState(friendPublicKey) {
           setConnectionState(prev => ({ ...prev, status: 'webrtc', method: 'webrtc' }));
           return true;
         } catch (error) {
-          console.error('Failed to establish WebRTC connection:', error);
+          logger.error('Failed to establish WebRTC connection:', error);
           setConnectionState(prev => ({ ...prev, status: 'gun', method: 'gun' }));
           return false;
         }
       }
     } catch (error) {
-      console.error('Error in attemptWebRTCConnection:', error);
+      logger.error('Error in attemptWebRTCConnection:', error);
     }
     return false;
   };

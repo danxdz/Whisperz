@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ResizableSidebar from './ResizableSidebar';
 import EnhancedDevTools from './EnhancedDevTools';
 import { useTheme } from '../contexts/ThemeContext';
+import logger from '../utils/logger';
 
 /**
  * SwipeableChat Component
@@ -46,7 +47,7 @@ function SwipeableChat({
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      console.log('Mobile mode:', mobile, 'Width:', window.innerWidth);
+      logger.debug('Mobile mode:', mobile, 'Width:', window.innerWidth);
     };
     
     handleResize(); // Check on mount
@@ -63,7 +64,7 @@ function SwipeableChat({
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
     setIsSwiping(true);
-    console.log('Touch start:', e.targetTouches[0].clientX);
+    logger.debug('Touch start:', e.targetTouches[0].clientX);
   };
 
   const onTouchMove = (e) => {
@@ -91,18 +92,18 @@ function SwipeableChat({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    console.log('Swipe distance:', distance, 'Left:', isLeftSwipe, 'Right:', isRightSwipe);
+    logger.debug('Swipe distance:', distance, 'Left:', isLeftSwipe, 'Right:', isRightSwipe);
 
     // Check if user is admin for DevTools access
     const maxPanel = isUserAdmin ? 2 : 1;
     
     if (isLeftSwipe && currentPanel < maxPanel) {
       // Swipe left - move to next panel
-      console.log('Moving to panel:', currentPanel + 1);
+      logger.debug('Moving to panel:', currentPanel + 1);
       setCurrentPanel(currentPanel + 1);
     } else if (isRightSwipe && currentPanel > 0) {
       // Swipe right - move to previous panel
-      console.log('Moving to panel:', currentPanel - 1);
+      logger.debug('Moving to panel:', currentPanel - 1);
       setCurrentPanel(currentPanel - 1);
     }
     

@@ -1,4 +1,5 @@
 import gunAuthService from './gunAuthService';
+import logger from '../utils/logger';
 
 // Hybrid Gun.js service for data persistence
 class HybridGunService {
@@ -103,7 +104,7 @@ class HybridGunService {
         storedAt: Date.now()
       });
 
-    console.log('💾 Message stored in conversation:', conversationId, messageId);
+    logger.debug('💾 Message stored in conversation:', conversationId, messageId);
 
     return messageId;
   }
@@ -122,7 +123,7 @@ class HybridGunService {
           const sorted = Array.from(messages.values())
             .sort((a, b) => a.timestamp - b.timestamp)
             .slice(-limit);
-          console.log(`📜 Loaded ${sorted.length} messages for conversation:`, conversationId);
+          logger.debug(`📜 Loaded ${sorted.length} messages for conversation:`, conversationId);
           resolve(sorted);
         }
       };
@@ -174,7 +175,7 @@ class HybridGunService {
       .map()
       .on((data, key) => {
         if (data && data.content) {
-          console.log('📨 New private message:', data);
+          logger.debug('📨 New private message:', data);
           callback({ ...data, key });
         }
       });
@@ -188,7 +189,7 @@ class HybridGunService {
       .map()
       .on((data, key) => {
         if (data && data.content) {
-          console.log('📨 New public message:', data);
+          logger.debug('📨 New public message:', data);
           callback({ ...data, key });
         }
       });

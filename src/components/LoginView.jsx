@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import { loginRateLimiter } from '../utils/rateLimiter';
 import ThemeToggle from './ThemeToggle';
+import logger from '../utils/logger';
 
 /**
  * LoginView Component
@@ -53,7 +54,7 @@ function LoginView({ onLogin, inviteCode }) {
         setError('Login failed. Please check your credentials.');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      logger.error('Login error:', err);
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);

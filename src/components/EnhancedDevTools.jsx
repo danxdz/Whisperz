@@ -6,6 +6,7 @@ import webrtcService from '../services/webrtcService';
 import backupService from '../services/backupService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useResponsive } from '../hooks/useResponsive';
+import logger from '../utils/logger';
 
 /**
  * EnhancedDevTools Component
@@ -104,7 +105,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
       }));
       setUsers(userList);
     } catch (error) {
-      console.error('Failed to load users:', error);
+      logger.error('Failed to load users:', error);
     }
   };
 
@@ -113,7 +114,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
       const myInvites = await friendsService.getMyInvites();
       setInvites(myInvites);
     } catch (error) {
-      console.error('Failed to load invites:', error);
+      logger.error('Failed to load invites:', error);
     }
   };
 
@@ -145,7 +146,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
         webrtcStatus: webrtcService.peer?.open ? 'Connected' : 'Disconnected'
       });
     } catch (error) {
-      console.error('Failed to load stats:', error);
+      logger.error('Failed to load stats:', error);
     }
   };
 
@@ -155,7 +156,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
       const stats = backupService.getStorageStats();
       setStorageStats(stats);
     } catch (error) {
-      console.error('Failed to load storage stats:', error);
+      logger.error('Failed to load storage stats:', error);
     }
   };
 
@@ -415,7 +416,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false, isAdmin =
       }, 1500);
       
     } catch (error) {
-      console.error('Database reset error:', error);
+      logger.error('Database reset error:', error);
       setBackupStatus(`❌ Reset failed: ${error.message}`);
       alert('Failed to reset database: ' + error.message);
     }
