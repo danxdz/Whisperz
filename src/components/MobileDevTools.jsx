@@ -61,6 +61,7 @@ function MobileDevTools({ onOpenDevTools }) {
       window.removeEventListener('click', handleCornerTap);
       clearTimeout(touchTimeoutRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Removed long press detection - only using corner double-tap

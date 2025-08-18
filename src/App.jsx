@@ -7,7 +7,7 @@ import messageService from './services/messageService';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
-import { useTheme } from './contexts/ThemeContext';
+import { useTheme } from './hooks/useTheme';
 import { useResponsive } from './hooks/useResponsive';
 import { useConnectionState } from './hooks/useConnectionState';
 
@@ -283,7 +283,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  // const [onlineStatus, setOnlineStatus] = useState(new Map()); // Not used currently
+  const [onlineStatus, setOnlineStatus] = useState(new Map());
   const [typingStatus, setTypingStatus] = useState(new Map());
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLink, setInviteLink] = useState('');

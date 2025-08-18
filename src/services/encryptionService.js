@@ -250,8 +250,8 @@ class EncryptionService {
   clearSensitiveData() {
     this.derivedKeys.clear();
     // Force garbage collection hint
-    if (global.gc) {
-      global.gc();
+    if (typeof globalThis !== 'undefined' && globalThis.gc) {
+      globalThis.gc();
     }
   }
 

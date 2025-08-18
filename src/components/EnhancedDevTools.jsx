@@ -4,7 +4,7 @@ import friendsService from '../services/friendsService';
 import hybridGunService from '../services/hybridGunService';
 import webrtcService from '../services/webrtcService';
 import backupService from '../services/backupService';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../hooks/useTheme';
 import { useResponsive } from '../hooks/useResponsive';
 
 /**
@@ -38,6 +38,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadUsers();
     loadInvites();
     loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
   const loadUsers = async () => {

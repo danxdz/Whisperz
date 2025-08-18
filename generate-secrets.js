@@ -39,6 +39,7 @@ function main() {
   if (fs.existsSync(envPath)) {
     console.log('⚠️  Warning: .env file already exists!');
     console.log('   To prevent accidental overwrite, please rename or backup your existing .env file.\n');
+    // eslint-disable-next-line no-undef
     process.exit(1);
   }
 

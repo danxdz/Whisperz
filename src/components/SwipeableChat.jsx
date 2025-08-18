@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ResizableSidebar from './ResizableSidebar';
 import EnhancedDevTools from './EnhancedDevTools';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../hooks/useTheme';
 
 /**
  * SwipeableChat Component

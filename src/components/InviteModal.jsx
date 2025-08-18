@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../hooks/useTheme';
 import { useResponsive } from '../hooks/useResponsive';
 
 function InviteModal({ isOpen, onClose, inviteLink }) {

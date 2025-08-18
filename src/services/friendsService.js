@@ -73,9 +73,9 @@ class FriendsService {
       
       if (!isValid) {
         // console.error('Signature valid but data mismatch:', {
-          expected: dataToVerify,
-          got: verified
-        });
+        //   expected: dataToVerify,
+        //   got: verified
+        // });
       }
       
       return isValid;
@@ -126,10 +126,10 @@ class FriendsService {
     // console.log('🔗 Generated invite link:', inviteLink);
     
     // console.log('🎫 Invite generated:', {
-      code: inviteCode,
-      link: inviteLink,
-      expiresAt: new Date(inviteData.expiresAt).toLocaleString()
-    });
+    //   code: inviteCode,
+    //   link: inviteLink,
+    //   expiresAt: new Date(inviteData.expiresAt).toLocaleString()
+    // });
 
     return { inviteCode, inviteLink, inviteData };
   }
@@ -207,10 +207,8 @@ class FriendsService {
           return;
         }
 
-        // Verify signature (make it optional for now to debug)
-        const SKIP_SIGNATURE_CHECK = true; // Temporary flag for debugging
-        
-        if (!SKIP_SIGNATURE_CHECK && inviteData.signature) {
+                // Verify signature
+        if (inviteData.signature) {
           const isValid = await this.verifyInvite({
             from: inviteData.from,
             nickname: inviteData.nickname,
