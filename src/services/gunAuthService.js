@@ -13,8 +13,11 @@ class GunAuthService {
 
   // Initialize Gun instance with peers
   initialize(peers = []) {
-    // More reliable Gun.js relay servers
-    const defaultPeers = [
+    // Check if user wants 100% private mode
+    const privateMode = localStorage.getItem('P2P_PRIVATE_MODE') === 'true';
+    
+    // More reliable Gun.js relay servers (only if not in private mode)
+    const defaultPeers = privateMode ? [] : [
       'https://relay.peer.ooo/gun',
       'https://gun-relay.herokuapp.com/gun',
       'https://gunjs.herokuapp.com/gun',
@@ -24,11 +27,11 @@ class GunAuthService {
 
     // Check localStorage first, then environment variable
     const localStoragePeers = localStorage.getItem('GUN_CUSTOM_PEERS');
-    const customPeers = localStoragePeers 
+    const customPeers = privateMode ? [] : (localStoragePeers 
       ? localStoragePeers.split(',').filter(p => p.trim())
       : (import.meta.env.VITE_GUN_PEERS 
         ? import.meta.env.VITE_GUN_PEERS.split(',') 
-        : []);
+        : []));
 
     // console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
 

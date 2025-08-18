@@ -36,6 +36,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const [customRelay, setCustomRelay] = useState('');
   const [currentRelays, setCurrentRelays] = useState([]);
   const [savedRelays, setSavedRelays] = useState([]);
+  const [privateMode, setPrivateMode] = useState(localStorage.getItem('P2P_PRIVATE_MODE') === 'true');
 
   // Load users (friends)
   useEffect(() => {
@@ -875,6 +876,18 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     </div>
   );
 
+  const togglePrivateMode = () => {
+    const newMode = !privateMode;
+    setPrivateMode(newMode);
+    localStorage.setItem('P2P_PRIVATE_MODE', newMode.toString());
+    if (newMode) {
+      localStorage.setItem('GUN_CUSTOM_PEERS', '');
+      alert('Private mode enabled! Reload the app to use 100% P2P (no external servers).');
+    } else {
+      alert('Private mode disabled. Reload the app to use public relays.');
+    }
+  };
+
   const renderGunDBTab = () => (
     <div style={{ padding: '12px', height: '100%', overflowY: 'auto' }}>
       <h3 style={{ 
@@ -887,108 +900,106 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         🔫 Gun DB Configuration
       </h3>
 
-      {/* Current Implementation Info */}
+      {/* Private Mode Toggle */}
       <div style={{
-        background: 'rgba(0, 0, 0, 0.3)',
+        background: privateMode ? 'rgba(67, 231, 123, 0.1)' : 'rgba(0, 0, 0, 0.3)',
         borderRadius: '8px',
         padding: '12px',
         marginBottom: '12px',
-        fontSize: '11px',
-        color: 'rgba(255, 255, 255, 0.8)'
+        border: privateMode ? '1px solid #43e97b' : 'none'
       }}>
-        <h4 style={{ color: '#43e97b', marginBottom: '8px' }}>📚 How We Use Gun DB:</h4>
-        <div style={{ marginBottom: '12px' }}>
-          <strong>🔹 Core Gun.js:</strong>
-          <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
-            <li>Decentralized graph database</li>
-            <li>Real-time P2P data sync</li>
-            <li>Automatic conflict resolution (CRDT)</li>
-            <li>Each user IS a relay (mesh network)</li>
-          </ul>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <h4 style={{ fontSize: '14px', margin: 0, color: colors.textPrimary }}>
+            🔒 100% Private Mode
+          </h4>
+          <button
+            onClick={togglePrivateMode}
+            style={{
+              padding: '6px 12px',
+              background: privateMode ? '#43e97b' : 'rgba(255, 255, 255, 0.1)',
+              border: 'none',
+              borderRadius: '6px',
+              color: privateMode ? '#000' : '#fff',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: privateMode ? '600' : '400'
+            }}
+          >
+            {privateMode ? '✓ Enabled' : 'Disabled'}
+          </button>
         </div>
-        
-        <div style={{ marginBottom: '12px' }}>
-          <strong>🔹 SEA (Security, Encryption, Auth):</strong>
-          <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
-            <li>User authentication (username/password)</li>
-            <li>Public/private key pairs for each user</li>
-            <li>Digital signatures for invites</li>
-            <li>End-to-end message encryption</li>
-          </ul>
-        </div>
-
-        <div style={{ marginBottom: '12px' }}>
-          <strong>🔹 Storage Layers:</strong>
-          <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
-            <li>localStorage: User data persistence</li>
-            <li>RAD (Radix): Efficient storage</li>
-            <li>Public space: Friendships, invites</li>
-            <li>Private space: User profiles, friends</li>
-          </ul>
-        </div>
-
-        <div style={{ marginBottom: '12px' }}>
-          <strong>🔹 Current Features:</strong>
-          <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
-            <li>✅ Real-time friend updates</li>
-            <li>✅ Signed invite system</li>
-            <li>✅ P2P messaging via WebRTC</li>
-            <li>✅ Hybrid Gun+WebRTC for reliability</li>
-            <li>✅ Multi-relay support</li>
-          </ul>
-        </div>
-
-        <div>
-          <strong>🔹 Potential Improvements:</strong>
-          <ul style={{ margin: '4px 0', paddingLeft: '20px', color: '#ffd700' }}>
-            <li>🚀 Group encryption with SEA</li>
-            <li>🚀 File sharing via Gun's blob storage</li>
-            <li>🚀 Voice/video via WebRTC</li>
-            <li>🚀 Custom relay with your own server</li>
-            <li>🚀 Offline-first with better caching</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Current Relays */}
-      <div style={{
-        background: 'rgba(0, 0, 0, 0.3)',
-        borderRadius: '8px',
-        padding: '12px',
-        marginBottom: '12px'
-      }}>
-        <h4 style={{ fontSize: '14px', marginBottom: '8px', color: colors.textPrimary }}>
-          🌐 Active Relays
-        </h4>
-        <div style={{ fontSize: '11px', marginBottom: '8px' }}>
-          {currentRelays.length > 0 ? (
-            currentRelays.map((relay, i) => (
-              <div key={i} style={{ 
-                padding: '4px 8px',
-                background: 'rgba(67, 231, 123, 0.1)',
-                borderRadius: '4px',
-                marginBottom: '4px',
-                wordBreak: 'break-all'
-              }}>
-                {relay}
+        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)' }}>
+          {privateMode ? (
+            <>
+              <div style={{ color: '#43e97b', marginBottom: '4px' }}>
+                ✅ <strong>You are 100% private!</strong>
               </div>
-            ))
+              <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                <li>No external servers</li>
+                <li>Direct P2P connections only</li>
+                <li>Data shared only between friends</li>
+                <li>Complete privacy & control</li>
+              </ul>
+            </>
           ) : (
-            <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>No relays connected</span>
+            <>
+              <div style={{ marginBottom: '4px' }}>
+                Using public relays for convenience:
+              </div>
+              <ul style={{ margin: '4px 0', paddingLeft: '20px', color: '#ffd700' }}>
+                <li>Easier friend discovery</li>
+                <li>Better availability</li>
+                <li>Works behind firewalls</li>
+                <li>But less private</li>
+              </ul>
+            </>
           )}
         </div>
       </div>
 
-      {/* Custom Relay Configuration */}
-      <div style={{
-        background: 'rgba(0, 0, 0, 0.3)',
-        borderRadius: '8px',
-        padding: '12px',
-        marginBottom: '12px'
-      }}>
-        <h4 style={{ fontSize: '14px', marginBottom: '8px', color: colors.textPrimary }}>
-          ⚙️ Custom Relay Configuration
-        </h4>
+
+
+      {/* Current Status */}
+      {!privateMode && (
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px'
+        }}>
+          <h4 style={{ fontSize: '14px', marginBottom: '8px', color: colors.textPrimary }}>
+            🌐 Active Relays ({currentRelays.length})
+          </h4>
+          <div style={{ fontSize: '11px' }}>
+            {currentRelays.length > 0 ? (
+              currentRelays.slice(0, 3).map((relay, i) => (
+                <div key={i} style={{ 
+                  padding: '2px 0',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  • {relay.replace('https://', '').replace('/gun', '')}
+                </div>
+              ))
+            ) : (
+              <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>No relays connected</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Relay - Only show if not in private mode */}
+      {!privateMode && (
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: '8px',
+          padding: '12px'
+        }}>
+          <h4 style={{ fontSize: '14px', marginBottom: '8px', color: colors.textPrimary }}>
+            ⚙️ Add Custom Relay
+          </h4>
         
         <div style={{ marginBottom: '12px' }}>
           <input
@@ -1092,23 +1103,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           </div>
         )}
 
-        <div style={{
-          marginTop: '12px',
-          padding: '8px',
-          background: 'rgba(255, 215, 0, 0.1)',
-          borderRadius: '6px',
-          fontSize: '10px',
-          color: '#ffd700'
-        }}>
-          <strong>💡 Tips:</strong>
-          <ul style={{ margin: '4px 0', paddingLeft: '16px' }}>
-            <li>Use "test01.local" for testing environments</li>
-            <li>Use "prod01.secure" for production</li>
-            <li>Run your own: <code>npm install -g gun && gun --port 8765</code></li>
-            <li>Each user automatically acts as a relay!</li>
-          </ul>
         </div>
-      </div>
+      )}
 
       {/* P2P Network Info */}
       <div style={{
