@@ -216,6 +216,79 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     }
   };
 
+  // Gun DB Relay Configuration Functions
+  const loadRelayConfig = () => {
+    // Load saved relay configurations
+    const saved = localStorage.getItem('customGunRelays');
+    if (saved) {
+      try {
+        const relays = JSON.parse(saved);
+        setSavedRelays(relays);
+      } catch (e) {
+        console.error('Failed to load saved relays:', e);
+      }
+    }
+
+    // Get current Gun peers
+    if (gunAuthService.gun && gunAuthService.gun._) {
+      const peers = gunAuthService.gun._.opt.peers;
+      if (peers) {
+        setCurrentRelays(Object.keys(peers));
+      }
+    }
+  };
+
+  const addCustomRelay = () => {
+    if (!customRelay.trim()) return;
+    
+    // Validate URL format
+    try {
+      new URL(customRelay);
+    } catch (e) {
+      alert('Invalid URL format. Please enter a valid relay URL (e.g., https://your-relay.com/gun)');
+      return;
+    }
+
+    // Add to saved relays
+    const newRelays = [...savedRelays, customRelay];
+    setSavedRelays(newRelays);
+    localStorage.setItem('customGunRelays', JSON.stringify(newRelays));
+    
+    // Store for next app reload
+    const existingPeers = localStorage.getItem('GUN_CUSTOM_PEERS') || '';
+    const peersArray = existingPeers ? existingPeers.split(',') : [];
+    if (!peersArray.includes(customRelay)) {
+      peersArray.push(customRelay);
+      localStorage.setItem('GUN_CUSTOM_PEERS', peersArray.join(','));
+    }
+    
+    setCustomRelay('');
+    alert('Relay added! Reload the app to connect to the new relay.');
+  };
+
+  const removeRelay = (relay) => {
+    const newRelays = savedRelays.filter(r => r !== relay);
+    setSavedRelays(newRelays);
+    localStorage.setItem('customGunRelays', JSON.stringify(newRelays));
+    
+    // Update localStorage peers
+    const existingPeers = localStorage.getItem('GUN_CUSTOM_PEERS') || '';
+    const peersArray = existingPeers.split(',').filter(p => p !== relay);
+    localStorage.setItem('GUN_CUSTOM_PEERS', peersArray.join(','));
+  };
+
+  const switchToRelay = (relay) => {
+    // Set this as the only active relay
+    localStorage.setItem('GUN_CUSTOM_PEERS', relay);
+    alert(`Switched to ${relay}. Reload the app to connect.`);
+  };
+
+  const useAllRelays = () => {
+    // Use all saved relays
+    localStorage.setItem('GUN_CUSTOM_PEERS', savedRelays.join(','));
+    alert('Using all saved relays. Reload the app to connect.');
+  };
+
   const renderCompactTabs = () => (
     <div style={{
       display: 'flex',
