@@ -393,9 +393,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     window.addEventListener('beforeunload', handleUnload);
 
     // Refresh friends list periodically to catch any missed updates
-    const refreshInterval = setInterval(() => {
-      loadFriends();
-    }, 10000); // Refresh every 10 seconds
+//     const refreshInterval = setInterval(() => {
+//       loadFriends();
+//     }, 10000); // Refresh every 10 seconds
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);

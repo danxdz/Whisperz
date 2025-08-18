@@ -656,7 +656,7 @@ class FriendsService {
 
       // Also check public friendships space for connections
       // console.log('📂 Checking public friendships...');
-      gunAuthService.gun.get('friendships').map().once((data, key) => {
+      gunAuthService.gun.get('friendships').map().on((data, key) => {
         if (data) {
           // console.log('🔗 Friendship found:', key, data);
           
@@ -717,12 +717,14 @@ class FriendsService {
     });
   }
 
-  // Subscribe to friend updates
+  // Subscribe to friend updates - now with real-time public friendships
   subscribeToFriends(callback) {
     this.friendListeners.add(callback);
+    const currentUser = gunAuthService.getCurrentUser();
+    const subscriptions = [];
 
-    // Subscribe to Gun updates
-    const sub = gunAuthService.user.get('friends').map().on((data, key) => {
+    // Subscribe to user's own friends space
+    const userSub = gunAuthService.user.get('friends').map().on((data, key) => {
       if (data) {
         this.friends.set(key, data);
         callback('updated', data);
@@ -731,10 +733,41 @@ class FriendsService {
         callback('removed', { publicKey: key });
       }
     });
+    subscriptions.push(userSub);
+
+    // Subscribe to public friendships space for real-time updates
+    const publicSub = gunAuthService.gun.get('friendships').map().on((data, key) => {
+      if (data && currentUser) {
+        // Check if this friendship involves the current user
+        if (data.fromPublicKey === currentUser.pub || data.toPublicKey === currentUser.pub) {
+          const isSender = data.fromPublicKey === currentUser.pub;
+          const friendKey = isSender ? data.toPublicKey : data.fromPublicKey;
+          const friendNickname = isSender ? data.toNickname : data.fromNickname;
+          
+          // Add friend if not already in list
+          if (!this.friends.has(friendKey)) {
+            const friendData = {
+              publicKey: friendKey,
+              nickname: friendNickname,
+              addedAt: data.addedAt,
+              conversationId: data.conversationId
+            };
+            
+            this.friends.set(friendKey, friendData);
+            // Also store in user's local friends list for faster access
+            gunAuthService.user.get('friends').get(friendKey).put(friendData);
+            callback('added', friendData);
+          }
+        }
+      }
+    });
+    subscriptions.push(publicSub);
 
     return () => {
       this.friendListeners.delete(callback);
-      if (sub && sub.off) sub.off();
+      subscriptions.forEach(sub => {
+        if (sub && sub.off) sub.off();
+      });
     };
   }
 
