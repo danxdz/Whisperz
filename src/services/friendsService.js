@@ -254,7 +254,8 @@ class FriendsService {
         // This creates the bidirectional relationship in PUBLIC space
         try {
           // Store bidirectional friendship in PUBLIC friendships space
-          const friendshipKey = [inviteData.from, user.pub].sort().join('_');
+          // Use the same key generation as addFriend for consistency
+          const friendshipKey = this.generateConversationId(inviteData.from, user.pub);
           const friendshipData = {
             fromPublicKey: inviteData.from,
             toPublicKey: user.pub,
@@ -424,6 +425,37 @@ class FriendsService {
 
     this.notifyFriendListeners('added', friendData);
     return friendData;
+
+  // Add friend directly (for friend requests - creates bidirectional relationship)
+  async addFriendDirectly(publicKey, nickname, conversationId = null) {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) throw new Error("Not authenticated");
+
+    // Add friend for current user
+    await this.addFriend(publicKey, nickname, conversationId);
+
+    // Also create the reverse friendship in public space so the other user sees us as a friend
+    const currentUserNickname = await this.getUserNickname() || user.alias || "Anonymous";
+    const friendshipKey = this.generateConversationId(user.pub, publicKey);
+    const friendshipData = {
+      fromPublicKey: publicKey,
+      toPublicKey: user.pub,
+      fromNickname: nickname,
+      toNickname: currentUserNickname,
+      addedAt: Date.now(),
+      conversationId: conversationId || friendshipKey,
+      status: "connected"
+    };
+
+    // Store in public friendships space
+    await new Promise((resolve) => {
+      this.gun.get("friendships").get(friendshipKey).put(friendshipData, () => {
+        resolve();
+      });
+    });
+
+    return { publicKey, nickname, conversationId: conversationId || friendshipKey };
+  }
   }
 
   // Block/Ignore a user - prevents them from adding you again
