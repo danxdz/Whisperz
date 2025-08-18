@@ -299,7 +299,7 @@ class MessageService {
         // console.warn(`Offline message queue full for ${recipientPub} (${messageCount} messages)`);
         // Remove oldest messages if queue is full
         const messages = [];
-        offlineRef.map().once((data, _key) => {
+        offlineRef.map().once((data, key) => {
           if (data) messages.push({ key, timestamp: data.timestamp });
         });
         

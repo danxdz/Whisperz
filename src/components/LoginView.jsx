@@ -54,7 +54,7 @@ function LoginView({ onLogin, inviteCode }) {
       }
     } catch {
       // console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      setError(_err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

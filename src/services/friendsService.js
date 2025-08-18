@@ -323,7 +323,7 @@ class FriendsService {
     return new Promise((resolve) => {
       const invites = [];
       
-      this.user.get('invites').map().once((data, _key) => {
+      this.user.get('invites').map().once((data, key) => {
         if (data) {
           invites.push({
             ...data,
@@ -510,7 +510,7 @@ class FriendsService {
     return new Promise((resolve) => {
       const blocked = [];
       
-      gunAuthService.user.get('blocked').map().once((data, _key) => {
+      gunAuthService.user.get('blocked').map().once((data, key) => {
         if (data) {
           blocked.push({
             publicKey: key,
@@ -606,7 +606,7 @@ class FriendsService {
       
       // Load existing friends from user's own space
       // console.log('📂 Loading friends from user space...');
-      gunAuthService.user.get('friends').map().once((data, _key) => {
+      gunAuthService.user.get('friends').map().once((data, key) => {
         // console.log('📝 Friend data found:', key, data);
         if (data && data.publicKey) {
           friends.set(_, data);
@@ -617,7 +617,7 @@ class FriendsService {
 
       // Also check public friendships space for connections
       // console.log('📂 Checking public friendships...');
-      gunAuthService.gun.get('friendships').map().once((data, _key) => {
+      gunAuthService.gun.get('friendships').map().once((data, key) => {
         if (data) {
           // console.log('🔗 Friendship found:', key, data);
           
@@ -683,7 +683,7 @@ class FriendsService {
     this.friendListeners.add(callback);
 
     // Subscribe to Gun updates
-    const sub = gunAuthService.user.get('friends').map().on((data, _key) => {
+    const sub = gunAuthService.user.get('friends').map().on((data, key) => {
       if (data) {
         this.friends.set(_, data);
         callback('updated', data);

@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
  * Mobile-optimized dev tools access with touch gestures
  */
 function MobileDevTools({ onOpenDevTools }) {
-  // const [touchCount, setTouchCount] = useState(0);
+  // const [touchCount, // setTouchCount] = useState(0);
   const touchTimeoutRef = useRef(null);
   const lastTapRef = useRef(0);
 
@@ -16,17 +16,10 @@ function MobileDevTools({ onOpenDevTools }) {
       const tapLength = currentTime - lastTapRef.current;
       
       if (tapLength < 500 && tapLength > 0) {
-        setTouchCount(prev => {
-          const newCount = prev + 1;
-          if (newCount === 2) {
-            // Double tap detected - directly open DevTools
-            onOpenDevTools();
-            return 0;
-          }
-          return newCount;
-        });
+        // Double tap detection removed - directly open DevTools
+        onOpenDevTools();
       } else {
-        setTouchCount(1);
+        // setTouchCount(1);
       }
       
       lastTapRef.current = currentTime;
@@ -34,7 +27,7 @@ function MobileDevTools({ onOpenDevTools }) {
       // Reset count after timeout
       clearTimeout(touchTimeoutRef.current);
       touchTimeoutRef.current = setTimeout(() => {
-        setTouchCount(0);
+        // setTouchCount(0);
       }, 500);
     };
 

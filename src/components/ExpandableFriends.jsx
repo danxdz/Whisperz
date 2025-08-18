@@ -53,7 +53,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, onFriendsU
       }
     } catch {
       // console.error('Failed to remove friend:', error);
-      alert('Failed to remove friend: ' + error.message);
+      alert('Failed to remove friend: ' + _error.message);
     }
     
     setShowActions(null);
@@ -81,7 +81,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, onFriendsU
       }
     } catch {
       // console.error('Failed to block friend:', error);
-      alert('Failed to block friend: ' + error.message);
+      alert('Failed to block friend: ' + _error.message);
     }
     
     setShowActions(null);
@@ -93,8 +93,6 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, onFriendsU
   );
   
   // const offlineFriends = friends.filter(friend => 
-    !onlineStatus[friend.pub || friend.publicKey]?.online
-  );
 
   const filteredFriends = friends.filter(friend =>
     friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())

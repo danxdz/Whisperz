@@ -182,7 +182,7 @@ class GunAuthService {
       setTimeout(() => {
         if (!profileFound) {
           profileFound = true;
-          // console.log('📋 No profile found for:', _key);
+          // console.log('📋 No profile found for:', key);
           resolve(null);
         }
       }, 1000);

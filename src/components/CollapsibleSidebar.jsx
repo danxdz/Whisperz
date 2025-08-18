@@ -64,7 +64,7 @@ function CollapsibleSidebar({
       if (onFriendsUpdate) onFriendsUpdate();
     } catch {
       // console.error('Failed to remove friend:', error);
-      alert('Failed to remove friend: ' + error.message);
+      alert('Failed to remove friend: ' + _error.message);
     }
     setShowActions(null);
   };
@@ -86,7 +86,7 @@ function CollapsibleSidebar({
       if (onFriendsUpdate) onFriendsUpdate();
     } catch {
       // console.error('Failed to block friend:', error);
-      alert('Failed to block friend: ' + error.message);
+      alert('Failed to block friend: ' + _error.message);
     }
     setShowActions(null);
   };

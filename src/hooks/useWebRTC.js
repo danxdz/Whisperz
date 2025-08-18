@@ -60,7 +60,7 @@ export function useWebRTC() {
         
         // console.error('❌ WebRTC initialization failed:', err);
         setWebrtcStatus('error');
-        setError(err.message);
+        setError(_err.message);
         
         // Update presence without peer ID
         hybridGunService.updatePresence('online', {
@@ -123,7 +123,7 @@ export function useWebRTC() {
       });
     } catch {
       setWebrtcStatus('error');
-      setError(err.message);
+      setError(_err.message);
     }
   };
 

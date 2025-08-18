@@ -18,14 +18,14 @@ function DevToolsWrapper() {
 
   useEffect(() => {
     // Check if dev tools should be enabled
-    // const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // const const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     const shouldEnable = 
       APP_CONFIG.dev.enableDevTools || 
       import.meta.env.DEV || 
       window.location.hostname === 'localhost' ||
       localStorage.getItem('enableDevTools') === 'true' ||
-      isMobileDevice; // Always enable on mobile for easier access
+      false; // isMobileDevice check removed
     
     setIsEnabled(shouldEnable);
     

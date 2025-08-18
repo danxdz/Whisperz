@@ -11,7 +11,7 @@ class EncryptionService {
       this.validateConfiguration();
     } catch {
       if (import.meta.env.DEV) {
-        // console.warn('Encryption service warning:', error.message);
+        // console.warn('Encryption service warning:', _error.message);
         // console.warn('Running in development mode. Please configure environment variables for production.');
       } else {
         // In production, use a fallback but warn
@@ -98,7 +98,7 @@ class EncryptionService {
       // Generate HMAC for authentication (simulating GCM)
       const ciphertext = encrypted.toString();
       const authData = salt + iv.toString() + ciphertext;
-      const hmac = CryptoJS.HmacSHA256(authData, _key).toString();
+      const hmac = CryptoJS.HmacSHA256(authData, key).toString();
 
       // Combine all components
       const combined = {
@@ -138,7 +138,7 @@ class EncryptionService {
       
       // Verify HMAC first (authentication)
       const authData = combined.salt + combined.iv + combined.data;
-      const calculatedHmac = CryptoJS.HmacSHA256(authData, _key).toString();
+      const calculatedHmac = CryptoJS.HmacSHA256(authData, key).toString();
       
       if (calculatedHmac !== combined.hmac) {
         throw new Error('Authentication failed: Message may have been tampered with');
@@ -160,7 +160,7 @@ class EncryptionService {
       return plaintext;
     } catch {
       // console.error('Decryption error:', error);
-      throw new Error('Failed to decrypt message: ' + error.message);
+      throw new Error('Failed to decrypt message: ' + _error.message);
     }
   }
 
@@ -242,7 +242,7 @@ class EncryptionService {
       return decodeURIComponent(escape(decoded));
     } catch {
       // console.error('Base64 decode error:', error);
-      throw new Error('Invalid base64 encoding: ' + error.message);
+      throw new Error('Invalid base64 encoding: ' + _error.message);
     }
   }
 
@@ -268,7 +268,7 @@ class EncryptionService {
           ['encrypt', 'decrypt']
         );
         
-        const exported = await window.crypto.subtle.exportKey('raw', _key);
+        const exported = await window.crypto.subtle.exportKey('raw', key);
         return btoa(String.fromCharCode(...new Uint8Array(exported)));
       } catch {
         // console.error('WebCrypto API error:', error);

@@ -83,7 +83,7 @@ function LoginView({ onLogin, inviteCode }) {
       }
     } catch {
       // console.error('Login error:', err);
-      setError(_err.message || 'Login failed. Please try again.');
+      setError(__err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -192,7 +192,7 @@ const RegisterView = ({ onRegister, onSwitchToLogin, inviteCode, isAdminSetup })
       // Pass both user and invite code to parent
       onRegister(result.user, inviteCode);
     } catch {
-      setError(_err.message || 'Registration failed');
+      setError(__err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -487,7 +487,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       setNewMessage('');
     } catch {
       // console.error('Failed to send message:', error);
-      alert(`Logout error: ${_error.message);
+      alert('Failed to send message');
     }
   };
 
@@ -517,7 +517,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       setShowInvite(true);
     } catch {
       // console.error('Failed to generate invite:', error);
-      alert(`Logout error: ${_error.message);
+        alert('Failed to generate invite');
     }
   };
 
@@ -980,7 +980,7 @@ function App() {
         }
       } catch {
         // console.error('Initialization error:', error);
-        setInitError(error.message);
+        setInitError(_error.message);
       } finally {
         setLoading(false);
       }
@@ -1032,8 +1032,8 @@ function App() {
         } catch {
           // console.error('❌ Failed to accept invite:', error);
           // Don't show error for "already used" if it was just used by this user
-          if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
-            alert(`Logout error: ${_error.message);
+          if (!_error.message.includes('already used') || !_error.message.includes(authUser.pub)) {
+              alert('Invite acceptance error');
           }
         }
         setInviteCode(null);

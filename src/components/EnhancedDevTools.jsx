@@ -116,7 +116,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       setBackupStatus(`✅ Backup exported: ${result.filename} (${result.encrypted ? 'Encrypted' : 'Not encrypted'})`);
       setTimeout(() => setBackupStatus(''), 5000);
     } catch {
-      setBackupStatus(`❌ Export failed: ${error.message}`);
+      setBackupStatus(`❌ Export failed: ${_error.message}`);
     }
   };
 
@@ -137,7 +137,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         setBackupStatus('Import cancelled');
       }
     } catch {
-      setBackupStatus(`❌ Import failed: ${error.message}`);
+      setBackupStatus(`❌ Import failed: ${_error.message}`);
     }
     
     // Clear file input
@@ -170,7 +170,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       loadUsers();
       alert('Friend removed successfully');
     } catch {
-      alert('Failed to remove friend: ' + error.message);
+      alert('Failed to remove friend: ' + _error.message);
     }
   };
 
@@ -182,7 +182,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       loadInvites();
       alert('Invite revoked successfully');
     } catch {
-      alert('Failed to revoke invite: ' + error.message);
+      alert('Failed to revoke invite: ' + _error.message);
     }
   };
 
@@ -193,23 +193,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       alert('New invite generated and copied to clipboard!');
       loadInvites();
     } catch {
-      alert('Failed to generate invite: ' + error.message);
+      alert('Failed to generate invite: ' + _error.message);
     }
   };
 
-  // const handleClearAllData = async () => {
-    if (!confirm('This will delete ALL data including messages, friends, and settings. Are you sure?')) return;
-    if (!confirm('This action cannot be undone. Continue?')) return;
-    
-    try {
-      await hybridGunService.clearAllData();
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.reload();
-    } catch {
-      alert('Failed to clear data: ' + error.message);
-    }
-  };
 
   const renderCompactTabs = () => (
     <div style={{

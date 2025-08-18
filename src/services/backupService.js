@@ -95,7 +95,7 @@ class BackupService {
       };
     } catch {
       // console.error('Backup creation failed:', error);
-      throw new Error('Failed to create backup: ' + error.message);
+      throw new Error('Failed to create backup: ' + _error.message);
     }
   }
 
@@ -129,7 +129,7 @@ class BackupService {
       };
     } catch {
       // console.error('Export failed:', error);
-      throw new Error('Failed to export backup: ' + error.message);
+      throw new Error('Failed to export backup: ' + _error.message);
     }
   }
 
@@ -146,7 +146,7 @@ class BackupService {
           const result = await this.restoreBackup(backup, password);
           resolve(result);
         } catch {
-          reject(new Error('Invalid backup file: ' + error.message));
+          reject(new Error('Invalid backup file: ' + _error.message));
         }
       };
       
@@ -173,7 +173,7 @@ class BackupService {
 
         const key = this.generateBackupKey(password);
         try {
-          const decrypted = CryptoJS.AES.decrypt(backup.data, _key);
+          const decrypted = CryptoJS.AES.decrypt(backup.data, key);
           const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
           if (!decryptedText) {
             throw new Error('Invalid password');
@@ -219,7 +219,7 @@ class BackupService {
           restoredCount++;
         } catch {
           failedCount++;
-          failures.push({ key, error: error.message });
+          failures.push({ key, error: _error.message });
           // console.error(`Failed to restore ${key}:`, error);
         }
       }

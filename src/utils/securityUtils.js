@@ -7,7 +7,7 @@ class SecurityUtils {
     try {
       this.initializeSecrets();
     } catch {
-      // console.error('Security initialization warning:', error.message);
+      // console.error('Security initialization warning:', _error.message);
       // Allow app to start but log the security issue
       if (import.meta.env.DEV) {
         // console.warn('Running in development mode with security warnings. Please configure environment variables properly.');
