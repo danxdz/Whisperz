@@ -114,4 +114,5 @@ export const useTheme = () => {
   return context;
 };
 
+export { ThemeContext };
 export default ThemeContext;

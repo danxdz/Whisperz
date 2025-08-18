@@ -12,6 +12,8 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
   const [friendRequests, setFriendRequests] = useState([]);
   const [activeSection, setActiveSection] = useState('friends'); // friends, pending, requests
   const [loading, setLoading] = useState(true);
+  const [inviteLink, setInviteLink] = useState('');
+  const [generatingInvite, setGeneratingInvite] = useState(false);
 
   useEffect(() => {
     loadFriendsData();
@@ -92,6 +94,24 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
     }
   };
 
+  const generateInvite = async () => {
+    setGeneratingInvite(true);
+    try {
+      const { inviteLink } = await friendsService.generateInvite();
+      setInviteLink(inviteLink);
+      
+      // Copy to clipboard
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(inviteLink);
+        alert('Invite link copied to clipboard!');
+      }
+    } catch (error) {
+      alert(`Failed to generate invite: ${error.message}`);
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
   const getStatusColor = (friend) => {
     // Check if online (you can implement proper online status checking)
     return '#606060'; // Default offline color
@@ -154,9 +174,48 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
             {/* Friends List */}
             {activeSection === 'friends' && (
               <div>
+                {/* Invite Generation */}
+                <div style={{
+                  padding: '15px',
+                  background: '#252525',
+                  borderRadius: '4px',
+                  marginBottom: '20px'
+                }}>
+                  <h4 style={{ color: '#00ff00', marginBottom: '10px' }}>Generate Invite Link</h4>
+                  <button
+                    onClick={generateInvite}
+                    disabled={generatingInvite}
+                    style={{
+                      padding: '8px 16px',
+                      background: '#1a1a1a',
+                      border: '1px solid #00ff00',
+                      color: '#00ff00',
+                      cursor: generatingInvite ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: '14px',
+                      opacity: generatingInvite ? 0.5 : 1
+                    }}
+                  >
+                    {generatingInvite ? 'GENERATING...' : '[GENERATE INVITE]'}
+                  </button>
+                  {inviteLink && (
+                    <div style={{
+                      marginTop: '10px',
+                      padding: '10px',
+                      background: '#1a1a1a',
+                      border: '1px solid #444',
+                      wordBreak: 'break-all',
+                      fontSize: '12px',
+                      color: '#808080'
+                    }}>
+                      {inviteLink}
+                    </div>
+                  )}
+                </div>
+
                 {friends.length === 0 ? (
                   <div style={{ color: '#808080', padding: '20px', textAlign: 'center' }}>
-                    No friends yet. Use the Discover tab to find users!
+                    No friends yet. Generate an invite or use Discover tab!
                   </div>
                 ) : (
                   friends.map(friend => (
