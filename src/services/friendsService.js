@@ -203,10 +203,8 @@ class FriendsService {
           return;
         }
 
-        // Verify signature (make it optional for now to debug)
-        const SKIP_SIGNATURE_CHECK = true; // Temporary flag for debugging
-        
-        if (!SKIP_SIGNATURE_CHECK && inviteData.signature) {
+        // Verify signature
+        if (inviteData.signature) {
           const isValid = await this.verifyInvite({
             from: inviteData.from,
             nickname: inviteData.nickname,
@@ -253,27 +251,26 @@ class FriendsService {
         // console.log('✅ Step 1: Added inviter as friend for current user');
 
         // Add current user as friend for the inviter
-        // This creates the bidirectional relationship
+        // This creates the bidirectional relationship in PUBLIC space
         try {
-          // Store friendship in inviter's friends list
-          await new Promise((addResolve, addReject) => {
-            const friendData = {
-              publicKey: user.pub,
-              nickname: currentUserNickname,
-              addedAt: Date.now(),
-              conversationId: conversationId
-            };
-            
-            // console.log('📝 Writing friend data to inviter:', friendData);
-            
-            this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put(friendData, (ack) => {
-              if (ack.err) {
-                // console.error('Failed to add friend to inviter:', ack.err);
-                addReject(new Error(ack.err));
-              } else {
-                // console.log('✅ Step 2: Added current user to inviter\'s friends list');
-                addResolve();
-              }
+          // Store bidirectional friendship in PUBLIC friendships space
+          const friendshipKey = [inviteData.from, user.pub].sort().join('_');
+          const friendshipData = {
+            fromPublicKey: inviteData.from,
+            toPublicKey: user.pub,
+            fromNickname: inviteData.nickname,
+            toNickname: currentUserNickname,
+            addedAt: Date.now(),
+            conversationId: conversationId,
+            status: 'connected'
+          };
+          
+          // console.log('📝 Writing friendship to public space:', friendshipData);
+          
+          await new Promise((addResolve) => {
+            this.gun.get('friendships').get(friendshipKey).put(friendshipData, () => {
+              // console.log('✅ Step 2: Created bidirectional friendship in public space');
+              addResolve();
             });
           });
           
@@ -286,15 +283,8 @@ class FriendsService {
             usedAt: Date.now()
           });
 
-          // Also update in the inviter's space
-          this.gun.get('~' + inviteData.from).get('invites').get(inviteCode).put({
-            used: true,
-            usedBy: user.pub,
-            usedAt: Date.now()
-          });
-
-          // Also add to the inviter's local friends index for faster lookup
-          this.gun.get('~' + inviteData.from).get('friendsIndex').get(user.pub).put(true);
+          // Note: We cannot write to another user's private space in Gun.js
+          // The friendship is established through the public 'friendships' space
         } catch (error) {
           // console.error('Error adding bidirectional friendship:', error);
           // Continue even if reverse add fails - at least one direction worked
