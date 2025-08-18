@@ -32,16 +32,24 @@ class GunAuthService {
 
     // console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
 
+    // Detect if mobile for optimizations
+    const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
+    
     this.gun = Gun({
       peers: [...customPeers, ...peers, ...defaultPeers],
       localStorage: true,
       radisk: true,
-      multicast: false,
-      axe: false,
+      multicast: false,  // Disabled for battery saving
+      axe: false,        // Disabled to reduce memory usage
       ws: {
         reconnect: true,
-        reconnectDelay: 1000
-      }
+        reconnectDelay: isMobile ? 3000 : 1000,  // Longer delay on mobile to save battery
+        pingInterval: isMobile ? 30000 : 10000   // Less frequent pings on mobile
+      },
+      // Mobile optimizations
+      file: isMobile ? 'radata-mobile' : 'radata',
+      batch: isMobile ? 100 : 10,  // Batch more updates on mobile
+      throttle: isMobile ? 100 : 10  // Throttle updates on mobile
     });
 
     // Test connection to peers
