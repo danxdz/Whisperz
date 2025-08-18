@@ -23,7 +23,7 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     // Log error to console in development
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // console.error('ErrorBoundary caught an error:', error, errorInfo);
     
     // Update state with error details
     this.setState(prevState => ({
@@ -61,7 +61,7 @@ class ErrorBoundary extends React.Component {
           <p>The application encountered an unexpected error.</p>
           
           {/* Show error details in development */}
-          {process.env.NODE_ENV === 'development' && this.state.error && (
+          {import.meta.env.DEV && this.state.error && (
             <details style={{ marginTop: '20px' }}>
               <summary style={{ cursor: 'pointer', color: '#ffff00' }}>
                 Error Details (Development Only)

@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import gunAuthService from './services/gunAuthService';
 import webrtcService from './services/webrtcService';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import './index.css';
-import encryptionService from './services/encryptionService';
+// import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
@@ -82,7 +82,7 @@ function LoginView({ onLogin, inviteCode }) {
         setError('Login failed. Please check your credentials.');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      // console.error('Login error:', err);
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -283,12 +283,12 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [onlineStatus, setOnlineStatus] = useState(new Map());
+  // const [onlineStatus, setOnlineStatus] = useState(new Map()); // Not used currently
   const [typingStatus, setTypingStatus] = useState(new Map());
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [userNickname, setUserNickname] = useState('');
-  const [friendsLoading, setFriendsLoading] = useState(true);
+  // const [friendsLoading, setFriendsLoading] = useState(true); // Not used currently
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   
@@ -310,7 +310,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           setUserNickname('User');
         }
       } catch (error) {
-        console.error('Error loading user nickname:', error);
+        // console.error('Error loading user nickname:', error);
         setUserNickname(user?.alias || 'User');
       }
     };
@@ -320,18 +320,18 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Load friends function (moved outside useEffect so it can be called manually)
   const loadFriends = async () => {
     try {
-      setFriendsLoading(true);
-      console.log('📋 Loading friends...');
+      // setFriendsLoading(true);
+      // console.log('📋 Loading friends...');
       const currentUser = gunAuthService.getCurrentUser();
-      console.log('👤 Current user:', currentUser);
+      // console.log('👤 Current user:', currentUser);
       
       const friendList = await friendsService.getFriends();
-      console.log('👥 Friends loaded:', friendList);
+      // console.log('👥 Friends loaded:', friendList);
       setFriends(friendList);
 
       // Subscribe to friend updates
       friendsService.subscribeToFriends((event, data) => {
-        console.log('🔔 Friend event:', event, data);
+        // console.log('🔔 Friend event:', event, data);
         if (event === 'added' || event === 'updated') {
           setFriends(prev => {
             const updated = prev.filter(f => f.publicKey !== data.publicKey);
@@ -355,9 +355,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         });
       }
     } catch (error) {
-      console.error('❌ Failed to load friends:', error);
+      // console.error('❌ Failed to load friends:', error);
     } finally {
-      setFriendsLoading(false);
+      // setFriendsLoading(false);
     }
   };
 
@@ -409,9 +409,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     if (!selectedFriend) return;
 
     const loadMessages = async () => {
-      console.log('📋 Loading messages for:', selectedFriend.nickname);
+      // console.log('📋 Loading messages for:', selectedFriend.nickname);
       const history = await messageService.getConversationHistory(selectedFriend.conversationId);
-      console.log(`📜 Loaded ${history.length} messages`);
+      // console.log(`📜 Loaded ${history.length} messages`);
       setMessages(history);
       messageService.markAsRead(selectedFriend.conversationId);
     };
@@ -425,7 +425,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     const unsubscribe = messageService.subscribeToConversation(
       selectedFriend.conversationId,
       (message) => {
-        console.log('📨 New message received:', message);
+        // console.log('📨 New message received:', message);
         setMessages(prev => {
           // Check if message already exists to avoid duplicates
           const exists = prev.some(m => m.id === message.id || 
@@ -486,7 +486,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
       setNewMessage('');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      // console.error('Failed to send message:', error);
       alert('Failed to send message: ' + error.message);
     }
   };
@@ -516,16 +516,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       setInviteLink(result.inviteLink);
       setShowInvite(true);
     } catch (error) {
-      console.error('Failed to generate invite:', error);
+      // console.error('Failed to generate invite:', error);
       alert('Failed to generate invite link: ' + error.message);
     }
   };
 
   // Copy invite link
-  const handleCopyInvite = () => {
-    navigator.clipboard.writeText(inviteLink);
-    alert('Invite link copied to clipboard!');
-  };
+  // const handleCopyInvite = () => {
+  //   navigator.clipboard.writeText(inviteLink);
+  //   alert('Invite link copied to clipboard!');
+  // };
 
   // Keyboard shortcuts are now handled by DevToolsWrapper
 
@@ -820,8 +820,8 @@ function App() {
 
   // Version indicator for deployment verification
   useEffect(() => {
-    console.log('🚀 Whisperz v2.1.0 - Theme Update');
-    console.log('📅 Deployed:', new Date().toISOString());
+    // console.log('🚀 Whisperz v2.1.0 - Theme Update');
+    // console.log('📅 Deployed:', new Date().toISOString());
   }, []);
 
   // Callback to receive loadFriends function from ChatView
@@ -840,66 +840,66 @@ function App() {
         window.testMessage = async (message = 'Test message from console!') => {
           const friends = await friendsService.getFriends();
           if (friends.length === 0) {
-            console.log('❌ No friends to send message to');
+            // console.log('❌ No friends to send message to');
             return;
           }
           const friend = friends[0];
-          console.log(`📤 Sending test message to ${friend.nickname}...`);
+          // console.log(`📤 Sending test message to ${friend.nickname}...`);
           await messageService.sendMessage(friend.publicKey, message);
-          console.log('✅ Message sent!');
+          // console.log('✅ Message sent!');
         };
         
         window.getMessageHistory = async () => {
           const friends = await friendsService.getFriends();
           if (friends.length === 0) {
-            console.log('❌ No friends found');
+            // console.log('❌ No friends found');
             return;
           }
           for (const friend of friends) {
             const messages = await messageService.getMessages(friend.conversationId);
-            console.log(`📜 Messages with ${friend.nickname}:`, messages);
+            // console.log(`📜 Messages with ${friend.nickname}:`, messages);
           }
         };
         
         window.testWebRTC = async () => {
           const friends = await friendsService.getFriends();
           if (friends.length === 0) {
-            console.log('❌ No friends to test with');
+            // console.log('❌ No friends to test with');
             return;
           }
           
           for (const friend of friends) {
             const presence = await friendsService.getFriendPresence(friend.publicKey);
-            console.log(`👤 ${friend.nickname} presence:`, presence);
+            // console.log(`👤 ${friend.nickname} presence:`, presence);
             
             if (presence.isOnline && presence.peerId) {
-              console.log(`🔄 Testing WebRTC connection to ${friend.nickname}...`);
+              // console.log(`🔄 Testing WebRTC connection to ${friend.nickname}...`);
               try {
                 const conn = await webrtcService.connectToPeer(presence.peerId);
-                console.log(`✅ Connected to ${friend.nickname}!`, conn);
+                // console.log(`✅ Connected to ${friend.nickname}!`, conn);
                 
                 // Test sending a ping
                 await webrtcService.sendMessage(presence.peerId, {
                   type: 'ping',
                   timestamp: Date.now()
                 });
-                console.log(`📡 Ping sent to ${friend.nickname}`);
+                // console.log(`📡 Ping sent to ${friend.nickname}`);
               } catch (error) {
-                console.error(`❌ Failed to connect to ${friend.nickname}:`, error);
+                // console.error(`❌ Failed to connect to ${friend.nickname}:`, error);
               }
             } else {
-              console.log(`⚫ ${friend.nickname} is offline`);
+              // console.log(`⚫ ${friend.nickname} is offline`);
             }
           }
         };
         
-        console.log('✅ Services initialized');
-        console.log('💡 Test helpers available:');
-        console.log('   - window.testMessage("Hello!") - Send test message');
-        console.log('   - window.getMessageHistory() - View all messages');
-        console.log('   - window.testWebRTC() - Test WebRTC connections');
+        // console.log('✅ Services initialized');
+        // console.log('💡 Test helpers available:');
+        // console.log('   - window.testMessage("Hello!") - Send test message');
+        // console.log('   - window.getMessageHistory() - View all messages');
+        // console.log('   - window.testWebRTC() - Test WebRTC connections');
       } catch (error) {
-        console.error('Failed to initialize services:', error);
+        // console.error('Failed to initialize services:', error);
       }
     };
 
@@ -944,7 +944,7 @@ function App() {
           // If there's an invite, show register page by default
           // But user can switch to login if they already have an account
           setAuthMode('register');
-          console.log('📧 Invite code detected:', code);
+          // console.log('📧 Invite code detected:', code);
         }
 
         // Initialize Gun
@@ -960,7 +960,7 @@ function App() {
           try {
             await webrtcService.initialize(currentUser.pub);
           } catch (error) {
-            console.error('Failed to initialize WebRTC:', error);
+            // console.error('Failed to initialize WebRTC:', error);
           }
 
           // Initialize message service
@@ -974,12 +974,12 @@ function App() {
               // Clear the invite from URL
               window.history.replaceState({}, document.title, window.location.pathname);
             } catch (error) {
-              console.error('Failed to accept invite:', error);
+              // console.error('Failed to accept invite:', error);
             }
           }
         }
       } catch (error) {
-        console.error('Initialization error:', error);
+        // console.error('Initialization error:', error);
         setInitError(error.message);
       } finally {
         setLoading(false);
@@ -991,35 +991,35 @@ function App() {
 
   // Handle login/register
   const handleAuth = async (authUser, inviteCodeFromReg = null) => {
-    console.log('🔐 Authentication successful:', authUser);
+    // console.log('🔐 Authentication successful:', authUser);
     setUser(authUser);
     
     // Initialize WebRTC
     try {
       await webrtcService.initialize(authUser.pub);
-      console.log('✅ WebRTC initialized');
+      // console.log('✅ WebRTC initialized');
     } catch (error) {
-      console.error('Failed to initialize WebRTC:', error);
+      // console.error('Failed to initialize WebRTC:', error);
     }
 
     // Initialize message service
     messageService.initialize();
-    console.log('✅ Message service initialized');
+    // console.log('✅ Message service initialized');
 
     // Handle invite if present (from registration or from URL)
     const codeToUse = inviteCodeFromReg || inviteCode;
     if (codeToUse) {
-      console.log('🎫 Processing invite after auth...');
-      console.log('📦 Invite code:', codeToUse);
+      // console.log('🎫 Processing invite after auth...');
+      // console.log('📦 Invite code:', codeToUse);
       
       // Small delay to ensure services are ready
       setTimeout(async () => {
         try {
           const result = await friendsService.acceptInvite(codeToUse);
-          console.log('✅ Invite acceptance result:', result);
+          // console.log('✅ Invite acceptance result:', result);
           
           if (result.alreadyFriends) {
-            console.log('Already friends with this user');
+            // console.log('Already friends with this user');
             // Don't show alert if already friends, just continue
           } else {
             alert('Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
@@ -1030,7 +1030,7 @@ function App() {
             loadFriendsRef.current();
           }
         } catch (error) {
-          console.error('❌ Failed to accept invite:', error);
+          // console.error('❌ Failed to accept invite:', error);
           // Don't show error for "already used" if it was just used by this user
           if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
             alert('Note: ' + error.message);

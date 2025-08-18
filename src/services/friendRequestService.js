@@ -58,7 +58,7 @@ class FriendRequestService {
       .get(requestId)
       .put(request);
 
-    console.log('📤 Friend request sent:', request);
+    // console.log('📤 Friend request sent:', request);
     return request;
   }
 
@@ -109,7 +109,7 @@ class FriendRequestService {
         conversationId: conversationId
       });
 
-    console.log('✅ Friend request accepted:', requestId);
+    // console.log('✅ Friend request accepted:', requestId);
     
     // Notify handlers
     this.notifyHandlers('accepted', request);
@@ -145,7 +145,7 @@ class FriendRequestService {
       .get(requestId)
       .put(request);
 
-    console.log('❌ Friend request rejected:', requestId);
+    // console.log('❌ Friend request rejected:', requestId);
     
     // Notify handlers
     this.notifyHandlers('rejected', request);
@@ -291,7 +291,7 @@ class FriendRequestService {
       .get(requestId)
       .put(request);
 
-    console.log('🚫 Friend request cancelled:', requestId);
+    // console.log('🚫 Friend request cancelled:', requestId);
     return request;
   }
 
@@ -306,7 +306,7 @@ class FriendRequestService {
       .map()
       .on((data, key) => {
         if (data && data.status === 'pending') {
-          console.log('📨 New friend request:', data);
+          // console.log('📨 New friend request:', data);
           this.notifyHandlers('new', data);
         }
       });
@@ -324,7 +324,7 @@ class FriendRequestService {
       try {
         handler(type, request);
       } catch (error) {
-        console.error('Error in request handler:', error);
+        // console.error('Error in request handler:', error);
       }
     });
   }

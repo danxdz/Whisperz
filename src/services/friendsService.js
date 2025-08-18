@@ -48,7 +48,7 @@ class FriendsService {
   async verifyInvite(inviteData, signature) {
     // If no signature, it's invalid
     if (!signature) {
-      console.error('No signature provided for invite');
+      // console.error('No signature provided for invite');
       return false;
     }
 
@@ -64,7 +64,7 @@ class FriendsService {
       const verified = await Gun.SEA.verify(signature, inviteData.from);
       
       if (verified === false) {
-        console.error('Signature verification failed - invalid signature');
+        // console.error('Signature verification failed - invalid signature');
         return false;
       }
       
@@ -72,7 +72,7 @@ class FriendsService {
       const isValid = verified === dataToVerify;
       
       if (!isValid) {
-        console.error('Signature valid but data mismatch:', {
+        // console.error('Signature valid but data mismatch:', {
           expected: dataToVerify,
           got: verified
         });
@@ -80,7 +80,7 @@ class FriendsService {
       
       return isValid;
     } catch (error) {
-      console.error('Error verifying invite signature:', error);
+      // console.error('Error verifying invite signature:', error);
       return false;
     }
   }
@@ -123,9 +123,9 @@ class FriendsService {
 
     // Use hash-based routing for better compatibility
     const inviteLink = `${window.location.origin}/#/invite/${inviteCode}`;
-    console.log('🔗 Generated invite link:', inviteLink);
+    // console.log('🔗 Generated invite link:', inviteLink);
     
-    console.log('🎫 Invite generated:', {
+    // console.log('🎫 Invite generated:', {
       code: inviteCode,
       link: inviteLink,
       expiresAt: new Date(inviteData.expiresAt).toLocaleString()
@@ -139,23 +139,23 @@ class FriendsService {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('🎫 Attempting to accept invite:', inviteCode);
+    // console.log('🎫 Attempting to accept invite:', inviteCode);
 
     // Get invite data from global registry
     return new Promise((resolve, reject) => {
       this.gun.get('invites').get(inviteCode).once(async (inviteData) => {
         if (!inviteData) {
-          console.error('❌ Invite not found:', inviteCode);
+          // console.error('❌ Invite not found:', inviteCode);
           reject(new Error('Invalid invite code'));
           return;
         }
 
-        console.log('📋 Invite data found:', inviteData);
+        // console.log('📋 Invite data found:', inviteData);
 
         // Check if the inviter is blocked
         const isBlockedUser = await this.isBlocked(inviteData.from);
         if (isBlockedUser) {
-          console.error('❌ Cannot accept invite from blocked user');
+          // console.error('❌ Cannot accept invite from blocked user');
           reject(new Error('Cannot accept invite from blocked user'));
           return;
         }
@@ -168,22 +168,22 @@ class FriendsService {
         });
 
         if (areWeBlocked) {
-          console.error('❌ You have been blocked by this user');
+          // console.error('❌ You have been blocked by this user');
           reject(new Error('You cannot connect with this user'));
           return;
         }
 
         // Check if invite has already been used
         if (inviteData.used) {
-          console.error('❌ Invite already used by:', inviteData.usedBy);
+          // console.error('❌ Invite already used by:', inviteData.usedBy);
           // If it was used by the current user, that's OK (might be re-login)
           if (inviteData.usedBy === user.pub) {
-            console.log('✅ Invite was already used by current user, checking if friends exist');
+            // console.log('✅ Invite was already used by current user, checking if friends exist');
             
             // Check if already friends
             const existingFriend = await this.getFriend(inviteData.from);
             if (existingFriend) {
-              console.log('✅ Already friends, no action needed');
+              // console.log('✅ Already friends, no action needed');
               resolve({
                 success: true,
                 alreadyFriends: true,
@@ -191,7 +191,7 @@ class FriendsService {
               });
               return;
             } else {
-              console.log('⚠️ Invite used but friendship not found, will re-establish');
+              // console.log('⚠️ Invite used but friendship not found, will re-establish');
               // Continue to re-establish the friendship
             }
           } else {
@@ -202,7 +202,7 @@ class FriendsService {
 
         // Check expiration
         if (Date.now() > inviteData.expiresAt) {
-          console.error('❌ Invite expired');
+          // console.error('❌ Invite expired');
           reject(new Error('Invite has expired'));
           return;
         }
@@ -219,21 +219,21 @@ class FriendsService {
           }, inviteData.signature);
 
           if (!isValid) {
-            console.error('❌ Invalid invite signature');
-            console.log('Invite data:', inviteData);
+            // console.error('❌ Invalid invite signature');
+            // console.log('Invite data:', inviteData);
             // For now, just warn but don't reject
-            console.warn('⚠️ Signature verification failed, but continuing anyway');
+            // console.warn('⚠️ Signature verification failed, but continuing anyway');
             // reject(new Error('Invalid invite signature'));
             // return;
           }
         } else {
-          console.log('⚠️ Skipping signature verification');
+          // console.log('⚠️ Skipping signature verification');
         }
 
         // Check if already friends
         const existingFriend = await this.getFriend(inviteData.from);
         if (existingFriend) {
-          console.log('⚠️ Already friends with this user');
+          // console.log('⚠️ Already friends with this user');
           resolve({
             success: true,
             alreadyFriends: true,
@@ -248,13 +248,13 @@ class FriendsService {
         // Get current user's nickname
         const currentUserNickname = await this.getUserNickname() || user.alias || 'Anonymous';
         
-        console.log('🤝 Creating bidirectional friendship...');
-        console.log('Current user:', user.pub, currentUserNickname);
-        console.log('Inviter:', inviteData.from, inviteData.nickname);
+        // console.log('🤝 Creating bidirectional friendship...');
+        // console.log('Current user:', user.pub, currentUserNickname);
+        // console.log('Inviter:', inviteData.from, inviteData.nickname);
         
         // Add friend for current user (the one accepting the invite)
         await this.addFriend(inviteData.from, inviteData.nickname, conversationId);
-        console.log('✅ Step 1: Added inviter as friend for current user');
+        // console.log('✅ Step 1: Added inviter as friend for current user');
 
         // Add current user as friend for the inviter
         // This creates the bidirectional relationship
@@ -268,21 +268,21 @@ class FriendsService {
               conversationId: conversationId
             };
             
-            console.log('📝 Writing friend data to inviter:', friendData);
+            // console.log('📝 Writing friend data to inviter:', friendData);
             
             this.gun.get('~' + inviteData.from).get('friends').get(user.pub).put(friendData, (ack) => {
               if (ack.err) {
-                console.error('Failed to add friend to inviter:', ack.err);
+                // console.error('Failed to add friend to inviter:', ack.err);
                 addReject(new Error(ack.err));
               } else {
-                console.log('✅ Step 2: Added current user to inviter\'s friends list');
+                // console.log('✅ Step 2: Added current user to inviter\'s friends list');
                 addResolve();
               }
             });
           });
           
           // Mark invite as used ONLY AFTER successful friend addition
-          console.log('📌 Marking invite as used...');
+          // console.log('📌 Marking invite as used...');
           this.gun.get('invites').get(inviteCode).put({
             ...inviteData,
             used: true,
@@ -300,11 +300,11 @@ class FriendsService {
           // Also add to the inviter's local friends index for faster lookup
           this.gun.get('~' + inviteData.from).get('friendsIndex').get(user.pub).put(true);
         } catch (error) {
-          console.error('Error adding bidirectional friendship:', error);
+          // console.error('Error adding bidirectional friendship:', error);
           // Continue even if reverse add fails - at least one direction worked
         }
 
-        console.log('✅ Invite accepted successfully');
+        // console.log('✅ Invite accepted successfully');
         resolve({
           success: true,
           friend: {
@@ -359,7 +359,7 @@ class FriendsService {
       revokedAt: Date.now()
     });
 
-    console.log('🚫 Invite revoked:', inviteCode);
+    // console.log('🚫 Invite revoked:', inviteCode);
     return true;
   }
 
@@ -374,7 +374,7 @@ class FriendsService {
       }
     }
     
-    console.log('🧹 Cleaned up expired invites');
+    // console.log('🧹 Cleaned up expired invites');
   }
   
   // Add friend - Fixed to use public space for friend connections
@@ -382,8 +382,8 @@ class FriendsService {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('🔧 Adding friend - Current user:', user.pub);
-    console.log('🔧 Adding friend - Friend key:', publicKey);
+    // console.log('🔧 Adding friend - Current user:', user.pub);
+    // console.log('🔧 Adding friend - Friend key:', publicKey);
 
     const friendData = {
       publicKey,
@@ -392,14 +392,14 @@ class FriendsService {
       conversationId: this.generateConversationId(user.pub, publicKey)
     };
 
-    console.log('💾 Storing friend data:', friendData);
+    // console.log('💾 Storing friend data:', friendData);
 
     // Store friend relationship for current user (this works - own space)
     await new Promise((resolve) => {
       gunAuthService.user.get('friends').get(publicKey).put(friendData, (ack) => {
-        console.log('📝 Friend stored for current user:', ack);
+        // console.log('📝 Friend stored for current user:', ack);
         if (ack.err) {
-          console.error('Error storing friend:', ack.err);
+          // console.error('Error storing friend:', ack.err);
         }
         resolve();
       });
@@ -420,7 +420,7 @@ class FriendsService {
       status: 'connected'
     };
 
-    console.log('💾 Storing friend connection in public space:', myData);
+    // console.log('💾 Storing friend connection in public space:', myData);
 
     // Use a public "friendships" space that both users can read
     // Create a deterministic key for the friendship
@@ -428,9 +428,9 @@ class FriendsService {
     
     await new Promise((resolve) => {
       gunAuthService.gun.get('friendships').get(friendshipKey).put(myData, (ack) => {
-        console.log('📝 Friendship stored in public space:', ack);
+        // console.log('📝 Friendship stored in public space:', ack);
         if (ack.err) {
-          console.error('Error storing friendship:', ack.err);
+          // console.error('Error storing friendship:', ack.err);
         }
         resolve();
       });
@@ -445,7 +445,7 @@ class FriendsService {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('🚫 Blocking user:', publicKey);
+    // console.log('🚫 Blocking user:', publicKey);
 
     try {
       // 1. Add to blocked list
@@ -454,7 +454,7 @@ class FriendsService {
           blockedAt: Date.now(),
           publicKey: publicKey
         }, (ack) => {
-          console.log('✅ Added to blocked list:', ack);
+          // console.log('✅ Added to blocked list:', ack);
           resolve();
         });
       });
@@ -467,10 +467,10 @@ class FriendsService {
         }
       }
 
-      console.log('✅ User blocked successfully');
+      // console.log('✅ User blocked successfully');
       return { success: true };
     } catch (error) {
-      console.error('❌ Error blocking user:', error);
+      // console.error('❌ Error blocking user:', error);
       throw error;
     }
   }
@@ -480,11 +480,11 @@ class FriendsService {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('✅ Unblocking user:', publicKey);
+    // console.log('✅ Unblocking user:', publicKey);
 
     await new Promise((resolve) => {
       gunAuthService.user.get('blocked').get(publicKey).put(null, (ack) => {
-        console.log('✅ Removed from blocked list:', ack);
+        // console.log('✅ Removed from blocked list:', ack);
         resolve();
       });
     });
@@ -532,7 +532,7 @@ class FriendsService {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('🗑️ Removing friend:', publicKey, blockUser ? '(with blocking)' : '');
+    // console.log('🗑️ Removing friend:', publicKey, blockUser ? '(with blocking)' : '');
 
     try {
       // If blocking, add to block list first
@@ -543,7 +543,7 @@ class FriendsService {
       // 1. Remove from current user's friends list
       await new Promise((resolve) => {
         gunAuthService.user.get('friends').get(publicKey).put(null, (ack) => {
-          console.log('✅ Removed from current user friends:', ack);
+          // console.log('✅ Removed from current user friends:', ack);
           resolve();
         });
       });
@@ -551,7 +551,7 @@ class FriendsService {
       // 2. Remove from friend's friends list (bidirectional removal)
       await new Promise((resolve) => {
         this.gun.get('~' + publicKey).get('friends').get(user.pub).put(null, (ack) => {
-          console.log('✅ Removed from friend\'s friends list:', ack);
+          // console.log('✅ Removed from friend\'s friends list:', ack);
           resolve();
         });
       });
@@ -564,7 +564,7 @@ class FriendsService {
       const friendshipKey = this.generateConversationId(user.pub, publicKey);
       await new Promise((resolve) => {
         gunAuthService.gun.get('friendships').get(friendshipKey).put(null, (ack) => {
-          console.log('✅ Removed from public friendships:', ack);
+          // console.log('✅ Removed from public friendships:', ack);
           resolve();
         });
       });
@@ -584,10 +584,10 @@ class FriendsService {
       // 7. Notify listeners
       this.notifyFriendListeners('removed', { publicKey });
 
-      console.log('✅ Friend removed successfully');
+      // console.log('✅ Friend removed successfully');
       return { success: true, blocked: blockUser };
     } catch (error) {
-      console.error('❌ Error removing friend:', error);
+      // console.error('❌ Error removing friend:', error);
       throw error;
     }
   }
@@ -595,21 +595,21 @@ class FriendsService {
   // Get all friends - Fixed to check public friendships
   async getFriends() {
     if (!gunAuthService.isAuthenticated()) {
-      console.log('❌ Not authenticated, cannot load friends');
+      // console.log('❌ Not authenticated, cannot load friends');
       return [];
     }
 
     const currentUser = gunAuthService.getCurrentUser();
-    console.log('🔍 Getting friends for user:', currentUser?.pub);
+    // console.log('🔍 Getting friends for user:', currentUser?.pub);
 
     return new Promise((resolve) => {
       const friends = new Map();
       let loadingComplete = false;
       
       // Load existing friends from user's own space
-      console.log('📂 Loading friends from user space...');
+      // console.log('📂 Loading friends from user space...');
       gunAuthService.user.get('friends').map().once((data, key) => {
-        console.log('📝 Friend data found:', key, data);
+        // console.log('📝 Friend data found:', key, data);
         if (data && data.publicKey) {
           friends.set(key, data);
           this.friends.set(key, data);
@@ -618,10 +618,10 @@ class FriendsService {
       });
 
       // Also check public friendships space for connections
-      console.log('📂 Checking public friendships...');
+      // console.log('📂 Checking public friendships...');
       gunAuthService.gun.get('friendships').map().once((data, key) => {
         if (data) {
-          console.log('🔗 Friendship found:', key, data);
+          // console.log('🔗 Friendship found:', key, data);
           
           // Check if this friendship involves the current user
           if (data.fromPublicKey === currentUser.pub || data.toPublicKey === currentUser.pub) {
@@ -639,7 +639,7 @@ class FriendsService {
                 conversationId: data.conversationId
               };
               
-              console.log('➕ Adding friend from public space:', friendData);
+              // console.log('➕ Adding friend from public space:', friendData);
               friends.set(friendKey, friendData);
               this.friends.set(friendKey, friendData);
               
@@ -657,7 +657,7 @@ class FriendsService {
         if (!loadingComplete) {
           loadingComplete = true;
           const friendArray = Array.from(friends.values());
-          console.log('✅ Friends loaded:', friendArray.length, 'friends');
+          // console.log('✅ Friends loaded:', friendArray.length, 'friends');
           resolve(friendArray);
         }
       }, 2000); // Increased timeout for public space loading
@@ -710,22 +710,22 @@ class FriendsService {
       // Try to get from profile first
       const profile = await gunAuthService.getUserProfile();
       if (profile?.nickname) {
-        console.log('👤 User nickname from profile:', profile.nickname);
+        // console.log('👤 User nickname from profile:', profile.nickname);
         return profile.nickname;
       }
       
       // Fallback to username from user object
       if (user.alias) {
-        console.log('👤 User nickname from alias:', user.alias);
+        // console.log('👤 User nickname from alias:', user.alias);
         return user.alias;
       }
       
       // Last resort - use part of public key
       const shortKey = user.pub ? user.pub.substring(0, 8) : 'Unknown';
-      console.log('👤 User nickname fallback:', shortKey);
+      // console.log('👤 User nickname fallback:', shortKey);
       return `User-${shortKey}`;
     } catch (error) {
-      console.error('Error getting user nickname:', error);
+      // console.error('Error getting user nickname:', error);
       return 'Anonymous';
     }
   }
@@ -753,7 +753,7 @@ class FriendsService {
       try {
         listener(event, data);
       } catch (error) {
-        console.error('Friend listener error:', error);
+        // console.error('Friend listener error:', error);
       }
     });
   }

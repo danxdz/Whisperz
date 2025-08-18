@@ -41,14 +41,14 @@ class MessageService {
       ...metadata
     };
 
-    console.log('📤 Sending message:', message);
+    // console.log('📤 Sending message:', message);
 
     // Try to encrypt message
     let encryptedMessage;
     try {
       encryptedMessage = await gunAuthService.encryptFor(message, recipientPublicKey);
     } catch (error) {
-      console.error('Failed to encrypt message:', error);
+      // console.error('Failed to encrypt message:', error);
       encryptedMessage = message; // Fallback to unencrypted
     }
 
@@ -56,16 +56,16 @@ class MessageService {
     let sentViaWebRTC = false;
     const presence = await friendsService.getFriendPresence(recipientPublicKey);
     
-    console.log('👤 Friend presence:', presence);
+    // console.log('👤 Friend presence:', presence);
     
     if (presence.isOnline && presence.peerId) {
       try {
         // Try to connect if not already connected
         const connectionStatus = webrtcService.getConnectionStatus(presence.peerId);
-        console.log('🔌 Connection status:', connectionStatus);
+        // console.log('🔌 Connection status:', connectionStatus);
         
         if (!connectionStatus.connected) {
-          console.log('🔄 Attempting to connect to peer:', presence.peerId);
+          // console.log('🔄 Attempting to connect to peer:', presence.peerId);
           await webrtcService.connectToPeer(presence.peerId, {
             publicKey: user.pub,
             nickname: await friendsService.getUserNickname()
@@ -73,7 +73,7 @@ class MessageService {
         }
 
         // Send via WebRTC
-        console.log('📡 Sending via WebRTC to:', presence.peerId);
+        // console.log('📡 Sending via WebRTC to:', presence.peerId);
         await webrtcService.sendMessage(presence.peerId, {
           type: 'message',
           data: encryptedMessage
@@ -82,26 +82,26 @@ class MessageService {
         sentViaWebRTC = true;
         message.deliveryMethod = 'webrtc';
         message.delivered = true;
-        console.log('✅ Message sent via WebRTC');
+        // console.log('✅ Message sent via WebRTC');
       } catch (error) {
-        console.warn('❌ WebRTC send failed, will use Gun:', error);
+        // console.warn('❌ WebRTC send failed, will use Gun:', error);
       }
     }
 
     // ALWAYS store in Gun for persistence and fallback
     // This ensures messages are delivered even if WebRTC fails
-    console.log('💾 Storing message in Gun.js');
+    // console.log('💾 Storing message in Gun.js');
     await hybridGunService.storeOfflineMessage(recipientPublicKey, encryptedMessage);
     
     if (!sentViaWebRTC) {
       message.deliveryMethod = 'gun';
       message.delivered = false;
-      console.log('📦 Message stored in Gun for offline delivery');
+      // console.log('📦 Message stored in Gun for offline delivery');
     }
 
     // Store in conversation history
     await hybridGunService.storeMessageHistory(friend.conversationId, message);
-    console.log('📜 Message added to history');
+    // console.log('📜 Message added to history');
 
     // Notify handlers
     this.notifyHandlers('sent', message);
@@ -120,20 +120,20 @@ class MessageService {
         try {
           message = await gunAuthService.decryptFrom(data.data, message.from);
         } catch (error) {
-          console.error('Failed to decrypt message:', error);
+          // console.error('Failed to decrypt message:', error);
         }
       }
 
       // Validate message
       if (!message.content || !message.from) {
-        console.warn('Invalid message received:', message);
+        // console.warn('Invalid message received:', message);
         return;
       }
 
       // Get friend info
       const friend = await friendsService.getFriend(message.from);
       if (!friend) {
-        console.warn('Message from non-friend:', message.from);
+        // console.warn('Message from non-friend:', message.from);
         return;
       }
 
@@ -148,7 +148,7 @@ class MessageService {
       this.notifyHandlers('received', message);
 
     } catch (error) {
-      console.error('Error handling incoming message:', error);
+      // console.error('Error handling incoming message:', error);
     }
   }
 
@@ -165,7 +165,7 @@ class MessageService {
         try {
           decrypted = await gunAuthService.decryptFrom(msg, msg.from);
         } catch (error) {
-          console.error('Failed to decrypt offline message:', error);
+          // console.error('Failed to decrypt offline message:', error);
           decrypted = msg;
         }
 
@@ -188,7 +188,7 @@ class MessageService {
         hybridGunService.markMessageDelivered(msg.key);
       }
     } catch (error) {
-      console.error('Error checking offline messages:', error);
+      // console.error('Error checking offline messages:', error);
     }
   }
 
@@ -239,7 +239,7 @@ class MessageService {
       try {
         handler(event, data);
       } catch (error) {
-        console.error('Message handler error:', error);
+        // console.error('Message handler error:', error);
       }
     });
   }
@@ -276,7 +276,7 @@ class MessageService {
       // Check message size
       const messageSize = JSON.stringify(message).length;
       if (messageSize > MAX_MESSAGE_SIZE) {
-        console.warn('Message too large for offline storage:', messageSize);
+        // console.warn('Message too large for offline storage:', messageSize);
         throw new Error('Message exceeds maximum size limit');
       }
       
@@ -296,7 +296,7 @@ class MessageService {
       
       // Check queue limit
       if (messageCount >= MAX_OFFLINE_MESSAGES) {
-        console.warn(`Offline message queue full for ${recipientPub} (${messageCount} messages)`);
+        // console.warn(`Offline message queue full for ${recipientPub} (${messageCount} messages)`);
         // Remove oldest messages if queue is full
         const messages = [];
         offlineRef.map().once((data, key) => {
@@ -317,9 +317,9 @@ class MessageService {
       const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       offlineRef.get(messageId).put(message);
       
-      console.log(`📥 Stored offline message for ${recipientPub} (queue: ${messageCount + 1}/${MAX_OFFLINE_MESSAGES})`);
+      // console.log(`📥 Stored offline message for ${recipientPub} (queue: ${messageCount + 1}/${MAX_OFFLINE_MESSAGES})`);
     } catch (error) {
-      console.error('Failed to store offline message:', error);
+      // console.error('Failed to store offline message:', error);
       throw error;
     }
   }

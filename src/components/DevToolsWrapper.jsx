@@ -50,7 +50,7 @@ function DevToolsWrapper() {
       secretKeys.splice(-secretCode.length - 1, secretKeys.length - secretCode.length);
       
       if (JSON.stringify(secretKeys) === JSON.stringify(secretCode)) {
-        console.log('🎮 Konami Code activated! Dev tools enabled.');
+        // console.log('🎮 Konami Code activated! Dev tools enabled.');
         localStorage.setItem('enableDevTools', 'true');
         setIsEnabled(true);
       }

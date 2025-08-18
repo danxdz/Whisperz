@@ -52,7 +52,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
         onFriendsUpdate();
       }
     } catch (error) {
-      console.error('Failed to remove friend:', error);
+      // console.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
     
@@ -80,7 +80,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
         onFriendsUpdate();
       }
     } catch (error) {
-      console.error('Failed to block friend:', error);
+      // console.error('Failed to block friend:', error);
       alert('Failed to block friend: ' + error.message);
     }
     

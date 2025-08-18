@@ -19,20 +19,20 @@ export function useWebRTC() {
     const initializeWebRTC = async () => {
       const user = gunAuthService.getCurrentUser();
       if (!user) {
-        console.log('⚠️ No user found, skipping WebRTC initialization');
+        // console.log('⚠️ No user found, skipping WebRTC initialization');
         return;
       }
 
       try {
         setWebrtcStatus('connecting');
-        console.log('🚀 Initializing WebRTC for user:', user.pub);
+        // console.log('🚀 Initializing WebRTC for user:', user.pub);
         
         // Initialize WebRTC
         const id = await webrtcService.initialize(user.pub);
         
         if (!mounted) return;
         
-        console.log('✅ WebRTC initialized with peer ID:', id);
+        // console.log('✅ WebRTC initialized with peer ID:', id);
         setPeerId(id);
         setWebrtcStatus('connected');
         setError(null);
@@ -58,7 +58,7 @@ export function useWebRTC() {
       } catch (err) {
         if (!mounted) return;
         
-        console.error('❌ WebRTC initialization failed:', err);
+        // console.error('❌ WebRTC initialization failed:', err);
         setWebrtcStatus('error');
         setError(err.message);
         
@@ -133,7 +133,7 @@ export function useWebRTC() {
       await webrtcService.connectToPeer(targetPeerId, metadata);
       return true;
     } catch (err) {
-      console.error('Failed to connect to peer:', err);
+      // console.error('Failed to connect to peer:', err);
       return false;
     }
   };
@@ -144,7 +144,7 @@ export function useWebRTC() {
       await webrtcService.sendMessage(targetPeerId, data);
       return true;
     } catch (err) {
-      console.error('Failed to send to peer:', err);
+      // console.error('Failed to send to peer:', err);
       return false;
     }
   };

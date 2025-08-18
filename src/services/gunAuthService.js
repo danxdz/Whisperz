@@ -26,7 +26,7 @@ class GunAuthService {
       ? import.meta.env.VITE_GUN_PEERS.split(',') 
       : [];
 
-    console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
+    // console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
 
     this.gun = Gun({
       peers: [...customPeers, ...peers, ...defaultPeers],
@@ -43,9 +43,9 @@ class GunAuthService {
     // Test connection to peers
     setTimeout(() => {
       const connectedPeers = this.gun._.opt.peers;
-      console.log('🔫 Gun.js connected peers:', connectedPeers);
+      // console.log('🔫 Gun.js connected peers:', connectedPeers);
       if (!connectedPeers || Object.keys(connectedPeers).length === 0) {
-        console.error('❌ Gun.js failed to connect to any peers!');
+        // console.error('❌ Gun.js failed to connect to any peers!');
       }
     }, 2000);
 
@@ -85,15 +85,15 @@ class GunAuthService {
               publicKey: this.user.is.pub
             };
             
-            console.log('📝 Setting user profile:', profileData);
+            // console.log('📝 Setting user profile:', profileData);
             
             // Store profile with callback to ensure it's saved
             await new Promise((profileResolve) => {
               this.user.get('profile').put(profileData, (ack) => {
                 if (ack.err) {
-                  console.error('Error saving profile:', ack.err);
+                  // console.error('Error saving profile:', ack.err);
                 } else {
-                  console.log('✅ Profile saved successfully');
+                  // console.log('✅ Profile saved successfully');
                 }
                 profileResolve();
               });
@@ -160,7 +160,7 @@ class GunAuthService {
       this.gun.user(key).get('profile').once((data) => {
         if (data && !profileFound) {
           profileFound = true;
-          console.log('📋 Profile found:', data);
+          // console.log('📋 Profile found:', data);
           resolve(data);
         }
       });
@@ -171,7 +171,7 @@ class GunAuthService {
           setTimeout(() => {
             if (!profileFound) {
               profileFound = true;
-              console.log('📋 Nickname found:', nickname);
+              // console.log('📋 Nickname found:', nickname);
               resolve({ nickname: nickname });
             }
           }, 500);
@@ -182,7 +182,7 @@ class GunAuthService {
       setTimeout(() => {
         if (!profileFound) {
           profileFound = true;
-          console.log('📋 No profile found for:', key);
+          // console.log('📋 No profile found for:', key);
           resolve(null);
         }
       }, 1000);

@@ -103,7 +103,7 @@ class HybridGunService {
         storedAt: Date.now()
       });
 
-    console.log('💾 Message stored in conversation:', conversationId, messageId);
+    // console.log('💾 Message stored in conversation:', conversationId, messageId);
 
     return messageId;
   }
@@ -122,7 +122,7 @@ class HybridGunService {
           const sorted = Array.from(messages.values())
             .sort((a, b) => a.timestamp - b.timestamp)
             .slice(-limit);
-          console.log(`📜 Loaded ${sorted.length} messages for conversation:`, conversationId);
+          // console.log(`📜 Loaded ${sorted.length} messages for conversation:`, conversationId);
           resolve(sorted);
         }
       };
@@ -174,7 +174,7 @@ class HybridGunService {
       .map()
       .on((data, key) => {
         if (data && data.content) {
-          console.log('📨 New private message:', data);
+          // console.log('📨 New private message:', data);
           callback({ ...data, key });
         }
       });
@@ -188,7 +188,7 @@ class HybridGunService {
       .map()
       .on((data, key) => {
         if (data && data.content) {
-          console.log('📨 New public message:', data);
+          // console.log('📨 New public message:', data);
           callback({ ...data, key });
         }
       });

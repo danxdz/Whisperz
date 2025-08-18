@@ -45,20 +45,20 @@ class WebRTCService {
           config.port = port || 443;
           config.secure = true;
           config.path = '/peerjs';
-          console.log('🌐 Using custom PeerJS server:', host);
+          // console.log('🌐 Using custom PeerJS server:', host);
         } else {
           // Use PeerJS cloud service (free tier)
-          console.log('🌐 Using PeerJS cloud service');
+          // console.log('🌐 Using PeerJS cloud service');
           // PeerJS cloud doesn't need host/port configuration
         }
 
-        console.log('🎯 Initializing PeerJS with ID:', this.peerId);
+        // console.log('🎯 Initializing PeerJS with ID:', this.peerId);
 
         this.peer = new Peer(this.peerId, config);
 
         // Handle peer events
         this.peer.on('open', (id) => {
-          console.log('WebRTC peer opened with ID:', id);
+          // console.log('WebRTC peer opened with ID:', id);
           this.peerId = id;
           this.reconnectAttempts = 0;
           resolve(id);
@@ -69,12 +69,12 @@ class WebRTCService {
         });
 
         this.peer.on('disconnected', () => {
-          console.log('Peer disconnected, attempting reconnect...');
+          // console.log('Peer disconnected, attempting reconnect...');
           this.attemptReconnect();
         });
 
         this.peer.on('error', (err) => {
-          console.error('Peer error:', err);
+          // console.error('Peer error:', err);
           if (err.type === 'unavailable-id') {
             // Generate new ID and retry
             this.peerId = `p2p-${userId}-${Date.now()}-${Math.random()}`;
@@ -133,7 +133,7 @@ class WebRTCService {
         });
 
         conn.on('error', (err) => {
-          console.error(`Connection error with ${remotePeerId}:`, err);
+          // console.error(`Connection error with ${remotePeerId}:`, err);
           this.connections.delete(remotePeerId);
           reject(err);
         });
@@ -174,7 +174,7 @@ class WebRTCService {
     });
 
     conn.on('error', (err) => {
-      console.error(`Connection error with ${conn.peer}:`, err);
+      // console.error(`Connection error with ${conn.peer}:`, err);
     });
   }
 
@@ -189,7 +189,7 @@ class WebRTCService {
       conn.send(message);
       return true;
     } catch (error) {
-      console.error(`Failed to send message to ${peerId}:`, error);
+      // console.error(`Failed to send message to ${peerId}:`, error);
       throw error;
     }
   }
@@ -216,7 +216,7 @@ class WebRTCService {
       try {
         handler(peerId, data);
       } catch (error) {
-        console.error('Message handler error:', error);
+        // console.error('Message handler error:', error);
       }
     });
   }
@@ -239,7 +239,7 @@ class WebRTCService {
       try {
         handler(event, peerId, metadata);
       } catch (error) {
-        console.error('Connection handler error:', error);
+        // console.error('Connection handler error:', error);
       }
     });
   }
@@ -247,7 +247,7 @@ class WebRTCService {
   // Attempt to reconnect
   attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
+      // console.error('Max reconnection attempts reached');
       return;
     }
 

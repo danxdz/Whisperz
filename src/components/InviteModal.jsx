@@ -17,7 +17,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      // console.error('Failed to copy:', err);
     }
   };
 
@@ -31,7 +31,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
         });
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('Share failed:', err);
+          // console.error('Share failed:', err);
         }
       }
     } else {

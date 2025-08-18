@@ -34,7 +34,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
           const presence = await hybridGunService.getPresence(friend.pub || friend.publicKey);
           status[friend.pub || friend.publicKey] = presence;
         } catch (error) {
-          console.error(`Failed to get presence for ${friend.nickname}:`, error);
+          // console.error(`Failed to get presence for ${friend.nickname}:`, error);
           status[friend.pub || friend.publicKey] = { online: false };
         }
       }

@@ -33,7 +33,7 @@ const ENV_SCHEMA = {
     description: 'HMAC secret for invite link signatures',
     validate: (value) => {
       if (value === 'default-invite-secret' && import.meta.env.PROD) {
-        console.warn('⚠️ Using default invite secret in production is not recommended');
+        // console.warn('⚠️ Using default invite secret in production is not recommended');
       }
       return value.length >= 16 || 'Invite secret should be at least 16 characters';
     },
@@ -104,13 +104,13 @@ class EnvValidator {
     // Log validation results in development
     if (import.meta.env.DEV) {
       if (this.errors.length > 0) {
-        console.error('❌ Environment validation errors:', this.errors);
+        // console.error('❌ Environment validation errors:', this.errors);
       }
       if (this.warnings.length > 0) {
-        console.warn('⚠️ Environment validation warnings:', this.warnings);
+        // console.warn('⚠️ Environment validation warnings:', this.warnings);
       }
       if (this.errors.length === 0 && this.warnings.length === 0) {
-        console.log('✅ Environment variables validated successfully');
+        // console.log('✅ Environment variables validated successfully');
       }
     }
 

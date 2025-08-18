@@ -17,7 +17,7 @@ export function useConnectionState(friendPublicKey) {
     
     // Ensure services are available
     if (!webrtcService || !friendsService) {
-      console.warn('Services not initialized for connection state');
+      // console.warn('Services not initialized for connection state');
       return;
     }
 
@@ -66,7 +66,7 @@ export function useConnectionState(friendPublicKey) {
           });
         }
       } catch (error) {
-        console.error('Error checking connection state:', error);
+        // console.error('Error checking connection state:', error);
         setConnectionState(prev => ({
           ...prev,
           status: 'disconnected',
@@ -95,13 +95,13 @@ export function useConnectionState(friendPublicKey) {
           setConnectionState(prev => ({ ...prev, status: 'webrtc', method: 'webrtc' }));
           return true;
         } catch (error) {
-          console.error('Failed to establish WebRTC connection:', error);
+          // console.error('Failed to establish WebRTC connection:', error);
           setConnectionState(prev => ({ ...prev, status: 'gun', method: 'gun' }));
           return false;
         }
       }
     } catch (error) {
-      console.error('Error in attemptWebRTCConnection:', error);
+      // console.error('Error in attemptWebRTCConnection:', error);
     }
     return false;
   };

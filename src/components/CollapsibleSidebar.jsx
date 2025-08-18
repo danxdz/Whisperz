@@ -63,7 +63,7 @@ function CollapsibleSidebar({
       alert(`${friend.nickname} has been removed from your friends.`);
       if (onFriendsUpdate) onFriendsUpdate();
     } catch (error) {
-      console.error('Failed to remove friend:', error);
+      // console.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
     setShowActions(null);
@@ -85,7 +85,7 @@ function CollapsibleSidebar({
       alert(`${friend.nickname} has been blocked.`);
       if (onFriendsUpdate) onFriendsUpdate();
     } catch (error) {
-      console.error('Failed to block friend:', error);
+      // console.error('Failed to block friend:', error);
       alert('Failed to block friend: ' + error.message);
     }
     setShowActions(null);

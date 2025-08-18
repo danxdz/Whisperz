@@ -52,7 +52,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       }));
       setUsers(userList);
     } catch (error) {
-      console.error('Failed to load users:', error);
+      // console.error('Failed to load users:', error);
     }
   };
 
@@ -61,7 +61,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       const myInvites = await friendsService.getMyInvites();
       setInvites(myInvites);
     } catch (error) {
-      console.error('Failed to load invites:', error);
+      // console.error('Failed to load invites:', error);
     }
   };
 
@@ -93,7 +93,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         webrtcStatus: webrtcService.peer?.open ? 'Connected' : 'Disconnected'
       });
     } catch (error) {
-      console.error('Failed to load stats:', error);
+      // console.error('Failed to load stats:', error);
     }
   };
 
@@ -103,7 +103,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       const stats = backupService.getStorageStats();
       setStorageStats(stats);
     } catch (error) {
-      console.error('Failed to load storage stats:', error);
+      // console.error('Failed to load storage stats:', error);
     }
   };
 
