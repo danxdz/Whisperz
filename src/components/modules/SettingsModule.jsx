@@ -6,11 +6,11 @@ import gunAuthService from '../../services/gunAuthService';
  * User profile, theme, and app settings
  */
 function SettingsModule({ currentUser, onLogout }) {
-  const { theme, toggleTheme } = useTheme();
   const [nickname, setNickname] = useState('');
   const [bio, setBio] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('profile');
+  const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
     loadProfile();
