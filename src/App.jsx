@@ -7,6 +7,7 @@ import messageService from './services/messageService';
 import hybridP2PService from './services/hybridP2PService';
 import p2pDebugger from './utils/p2pDebugger';
 import onlineStatusManager from './utils/onlineStatusFix';
+import presenceService from './services/presenceService';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
@@ -345,11 +346,15 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         }
       });
 
-      // Online status is now handled by onlineStatusManager
       // Subscribe to each friend's presence
       for (const friend of friendList) {
+        presenceService.subscribeFriendPresence(friend.publicKey);
         onlineStatusManager.subscribeFriendPresence(friend.publicKey);
       }
+      
+      // Update online status from presence service
+      const allStatuses = presenceService.getAllFriendsStatus();
+      setOnlineStatus(allStatuses);
     } catch (error) {
       // console.error('❌ Failed to load friends:', error);
     } finally {
@@ -1092,7 +1097,10 @@ function App() {
       console.error('❌ Failed to initialize WebRTC:', error);
     }
     
-    // Update online status immediately on login
+    // Initialize presence service and set online
+    presenceService.initialize();
+    
+    // Also update with old methods for compatibility
     const peerId = webrtcService.getPeerId();
     hybridGunService.updatePresence('online', { peerId });
     onlineStatusManager.updateOwnStatus();
