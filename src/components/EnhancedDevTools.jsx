@@ -1126,18 +1126,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   // P2P Tab Content
   const renderP2PTab = () => {
-    const [p2pLogs, setP2PLogs] = useState([]);
-    const [refreshKey, setRefreshKey] = useState(0);
-    
-    useEffect(() => {
-      // Update logs when tab is active
-      if (activeTab === 'p2p') {
-        setP2PLogs(p2pDebugger.logs);
-      }
-    }, [activeTab, refreshKey]);
-    
     const systemInfo = p2pDebugger.systemInfo;
-    const logs = p2pLogs; // Show all logs
+    const logs = p2pDebugger.logs; // Show all logs directly
     
     return (
       <div style={{ padding: '12px' }}>
