@@ -74,12 +74,14 @@ class WebRTCService {
         });
 
         this.peer.on('error', (err) => {
-          // console.error('Peer error:', err);
+          console.error('❌ Peer error:', err);
           if (err.type === 'unavailable-id') {
             // Generate new ID and retry
             this.peerId = `p2p-${userId}-${Date.now()}-${Math.random()}`;
+            console.log('🔄 Retrying with new ID:', this.peerId);
             this.initialize(userId).then(resolve).catch(reject);
           } else if (err.type === 'network' || err.type === 'server-error') {
+            console.log('🔄 Network error, attempting reconnect...');
             this.attemptReconnect();
           } else {
             reject(err);
@@ -295,7 +297,11 @@ class WebRTCService {
 
   // Check if service is ready
   isReady() {
-    return this.peer && this.peer.open;
+    const ready = this.peer && this.peer.open;
+    if (!ready) {
+      console.log('🔴 WebRTC not ready - peer:', !!this.peer, 'open:', this.peer?.open);
+    }
+    return ready;
   }
 
   // Destroy the peer and cleanup
