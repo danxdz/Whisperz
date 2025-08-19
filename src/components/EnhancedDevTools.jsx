@@ -51,8 +51,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadInvites();
     loadStats();
     loadRelayConfig();
-    // loadCurrentUserInfo(); // TODO: implement
-    // loadOnlineUsers(); // TODO: implement
+    loadCurrentUserInfo();
+    loadOnlineUsers();
   }, [isVisible]);
   
   // Update P2P logs when P2P tab is active
@@ -68,6 +68,54 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       return () => clearInterval(interval);
     }
   }, [activeTab, isVisible]);
+
+  const loadCurrentUserInfo = () => {
+    try {
+      const user = gunAuthService.getCurrentUser();
+      if (user) {
+        const peerId = webrtcService.getPeerId();
+        setCurrentUserInfo({
+          publicKey: user.pub,
+          alias: user.alias,
+          peerId: peerId || 'Not initialized',
+          webrtcReady: webrtcService.isReady()
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load current user info:', error);
+    }
+  };
+
+  const loadOnlineUsers = async () => {
+    try {
+      const onlineList = [];
+      
+      // Get all online users from Gun presence space
+      await new Promise((resolve) => {
+        gunAuthService.gun.get('presence').map().once((data, key) => {
+          if (data && key && key !== '_') {
+            // Check if user is online (seen in last 2 minutes)
+            if (data.status === 'online' && data.lastSeen && 
+                (Date.now() - data.lastSeen) < 120000) {
+              onlineList.push({
+                publicKey: key,
+                lastSeen: data.lastSeen,
+                peerId: data.peerId,
+                status: data.status
+              });
+            }
+          }
+        });
+        // Wait a bit for data to load
+        setTimeout(resolve, 1000);
+      });
+      
+      setAllOnlineUsers(onlineList);
+      console.log('📊 Online users found:', onlineList.length);
+    } catch (error) {
+      console.error('Failed to load online users:', error);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -321,7 +369,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch'
     }}>
-      {['friends', 'network', 'p2p', 'gundb', 'backup'].map(tab => (
+      {['me', 'friends', 'network', 'p2p', 'gundb', 'backup'].map(tab => (
         <button
           key={tab}
           onClick={() => {
@@ -1145,6 +1193,130 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     </div>
   );
 
+  // Me Tab Content - User Info and Online Users
+  const renderMeTab = () => {
+    return (
+      <div style={{ padding: '12px' }}>
+        {/* Current User Info */}
+        {currentUserInfo && (
+          <div style={{
+            background: 'rgba(0, 255, 0, 0.1)',
+            border: '1px solid #00ff00',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '12px'
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', color: '#00ff00', fontSize: '14px' }}>
+              👤 My Info
+            </h4>
+            <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)' }}>
+              <div>Alias: {currentUserInfo.alias}</div>
+              <div style={{ marginTop: '4px' }}>
+                Public Key: 
+                <div style={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: '9px',
+                  wordBreak: 'break-all',
+                  marginTop: '2px',
+                  padding: '4px',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  borderRadius: '4px'
+                }}>
+                  {currentUserInfo.publicKey}
+                </div>
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                WebRTC: {currentUserInfo.webrtcReady ? '🟢 Ready' : '🔴 Not Ready'}
+              </div>
+              {currentUserInfo.peerId && (
+                <div style={{ marginTop: '4px' }}>
+                  Peer ID: 
+                  <div style={{ 
+                    fontFamily: 'monospace', 
+                    fontSize: '9px',
+                    wordBreak: 'break-all',
+                    marginTop: '2px'
+                  }}>
+                    {currentUserInfo.peerId}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* All Online Users */}
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: '8px',
+          padding: '12px'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#00ff00', fontSize: '14px' }}>
+            🌐 Online Users ({allOnlineUsers.length})
+          </h4>
+          <button
+            onClick={loadOnlineUsers}
+            style={{
+              marginBottom: '8px',
+              padding: '4px 8px',
+              background: 'rgba(0, 255, 0, 0.2)',
+              border: '1px solid #00ff00',
+              color: '#00ff00',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '10px'
+            }}
+          >
+            Refresh
+          </button>
+          <div style={{
+            maxHeight: '200px',
+            overflowY: 'auto'
+          }}>
+            {allOnlineUsers.length > 0 ? (
+              allOnlineUsers.map((user, i) => (
+                <div key={i} style={{
+                  fontSize: '10px',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  marginBottom: '6px',
+                  padding: '6px',
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '4px',
+                  border: user.publicKey === currentUserInfo?.publicKey ? 
+                    '1px solid #00ff00' : '1px solid transparent'
+                }}>
+                  <div style={{ 
+                    color: user.publicKey === currentUserInfo?.publicKey ? 
+                      '#00ff00' : 'rgba(255, 255, 255, 0.8)'
+                  }}>
+                    {user.publicKey === currentUserInfo?.publicKey ? '👤 You' : `User ${i + 1}`}
+                  </div>
+                  <div style={{ 
+                    fontFamily: 'monospace', 
+                    fontSize: '9px',
+                    marginTop: '2px'
+                  }}>
+                    {user.publicKey.substring(0, 20)}...
+                  </div>
+                  <div style={{ 
+                    color: '#666',
+                    marginTop: '2px'
+                  }}>
+                    Last seen: {Math.floor((Date.now() - user.lastSeen) / 1000)}s ago
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                No online users detected. Click refresh to check.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // P2P Tab Content
   const renderP2PTab = () => {
     const systemInfo = p2pDebugger.systemInfo;
@@ -1331,6 +1503,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderContent = () => {
     switch(activeTab) {
+      case 'me':
+        return renderMeTab();
       case 'friends':
         return renderUsersTab();
       case 'network':
