@@ -16,6 +16,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const { colors } = useTheme();
   const screen = useResponsive();
   const [activeTab, setActiveTab] = useState('users');
+  const [currentUserInfo, setCurrentUserInfo] = useState(null);
+  const [allOnlineUsers, setAllOnlineUsers] = useState([]);
   const [users, setUsers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [stats, setStats] = useState({});
@@ -49,6 +51,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadInvites();
     loadStats();
     loadRelayConfig();
+    loadCurrentUserInfo();
+    loadOnlineUsers();
   }, [isVisible]);
   
   // Update P2P logs when P2P tab is active
