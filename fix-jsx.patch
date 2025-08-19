@@ -1,0 +1,33 @@
+The issue is in App.jsx around lines 822-832.
+
+The InviteModal component should be OUTSIDE the SwipeableChat component.
+
+Current (wrong):
+```jsx
+      </div>
+
+      {/* Modern Invite Modal */}
+      <InviteModal 
+        isOpen={showInvite}
+        onClose={() => setShowInvite(false)}
+        inviteLink={inviteLink}
+      />
+
+
+    </SwipeableChat>
+```
+
+Should be (correct):
+```jsx
+      </div>
+    </SwipeableChat>
+
+    {/* Modern Invite Modal */}
+    <InviteModal 
+      isOpen={showInvite}
+      onClose={() => setShowInvite(false)}
+      inviteLink={inviteLink}
+    />
+```
+
+The InviteModal needs to be moved outside of SwipeableChat's children.

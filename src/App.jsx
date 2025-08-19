@@ -820,16 +820,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           </div>
         )}
       </div>
-
-      {/* Modern Invite Modal */}
-      <InviteModal 
-        isOpen={showInvite}
-        onClose={() => setShowInvite(false)}
-        inviteLink={inviteLink}
-      />
-
-
     </SwipeableChat>
+
+    {/* Modern Invite Modal */}
+    <InviteModal
+      isOpen={showInvite}
+      onClose={() => setShowInvite(false)}
+      inviteLink={inviteLink}
+    />
     </>
   );
 }
