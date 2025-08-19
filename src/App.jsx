@@ -1091,6 +1091,11 @@ function App() {
     } catch (error) {
       console.error('❌ Failed to initialize WebRTC:', error);
     }
+    
+    // Update online status immediately on login
+    const peerId = webrtcService.getPeerId();
+    hybridGunService.updatePresence('online', { peerId });
+    onlineStatusManager.updateOwnStatus();
 
     // Initialize message service
     messageService.initialize();
