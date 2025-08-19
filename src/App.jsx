@@ -625,7 +625,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         height: '100%',
         position: 'relative'
       }}>
-        {selectedFriend && selectedFriend.nickname ? (
+        {selectedFriend ? (
           <>
             <div style={{ 
               padding: screen.isTiny ? '6px 8px' : screen.isMobile ? '8px 12px' : '16px 20px',
