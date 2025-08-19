@@ -447,10 +447,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
   // Load messages when friend is selected
   useEffect(() => {
-    if (!selectedFriend) return;
+    if (!selectedFriend || !selectedFriend.conversationId) {
+      console.log('⚠️ No friend selected or missing conversationId');
+      setMessages([]);
+      return;
+    }
 
     const loadMessages = async () => {
-      console.log('📋 Loading messages for:', selectedFriend);
+      console.log('📋 Loading messages for:', selectedFriend.nickname || 'Unknown', 'ID:', selectedFriend.conversationId);
       try {
         const history = await messageService.getConversationHistory(selectedFriend.conversationId);
         console.log(`📜 Loaded ${history.length} messages`);
@@ -468,7 +472,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     const refreshInterval = setInterval(loadMessages, 5000);
 
     // Subscribe to new messages
-    const unsubscribe = messageService.subscribeToConversation(
+    const unsubscribe = selectedFriend.conversationId ? messageService.subscribeToConversation(
       selectedFriend.conversationId,
       (message) => {
         // console.log('📨 New message received:', message);
@@ -609,14 +613,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       onlineStatus={onlineStatus}
     >
       {/* Chat Area */}
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
+            <div style={{
+        flex: 1,
+        display: 'flex',
         flexDirection: 'column',
         height: '100%',
         position: 'relative'
       }}>
-        {selectedFriend ? (
+        {selectedFriend && selectedFriend.nickname ? (
           <>
             <div style={{ 
               padding: screen.isTiny ? '6px 8px' : screen.isMobile ? '8px 12px' : '16px 20px',
@@ -639,7 +643,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
                 }}>
-                  {escapeHtml(selectedFriend.nickname)}
+                  {escapeHtml(selectedFriend.nickname || 'Unknown')}
                 </h3>
                 {/* Connection Status & P2P Button */}
                 <div style={{
@@ -791,7 +795,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                     fontSize: '14px',
                     fontStyle: 'italic'
                   }}>
-                    {escapeHtml(selectedFriend.nickname)} is typing...
+                    {escapeHtml(selectedFriend?.nickname || 'Friend')} is typing...
                   </div>
                 </div>
               )}
