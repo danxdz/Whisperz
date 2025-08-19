@@ -4,6 +4,7 @@ import webrtcService from './services/webrtcService';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
+import hybridP2PService from './services/hybridP2PService';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
