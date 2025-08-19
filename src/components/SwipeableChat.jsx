@@ -25,6 +25,7 @@ function SwipeableChat({
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showDevTools, setShowDevTools] = useState(false); // For desktop
   const containerRef = useRef(null);
 
   // Minimum swipe distance (in px)
@@ -42,6 +43,19 @@ function SwipeableChat({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Keyboard shortcut for DevTools (F12 or Ctrl+Shift+D)
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!isMobile && (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'D'))) {
+        e.preventDefault();
+        setShowDevTools(!showDevTools);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isMobile, showDevTools]);
 
   useEffect(() => {
     // Reset swipe offset when switching panels
@@ -121,6 +135,51 @@ function SwipeableChat({
           onLogout={onLogout}
         />
         {children}
+        
+        {/* DevTools Button for Desktop */}
+        <button
+          onClick={() => setShowDevTools(!showDevTools)}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            background: showDevTools ? colors.primary : colors.bgSecondary,
+            border: `2px solid ${colors.borderColor}`,
+            color: colors.textPrimary,
+            fontSize: '20px',
+            cursor: 'pointer',
+            zIndex: 1000,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            transition: 'all 0.2s'
+          }}
+          title="DevTools (F12)"
+        >
+          🔧
+        </button>
+        
+        {/* DevTools Panel for Desktop */}
+        {showDevTools && (
+          <div style={{
+            position: 'fixed',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: '400px',
+            background: colors.bgSecondary,
+            borderLeft: `1px solid ${colors.borderColor}`,
+            zIndex: 999,
+            overflowY: 'auto'
+          }}>
+            <EnhancedDevTools 
+              isVisible={true}
+              onClose={() => setShowDevTools(false)}
+              isMobilePanel={false}
+            />
+          </div>
+        )}
       </div>
     );
   }

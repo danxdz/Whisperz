@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import gunAuthService from '../services/gunAuthService';
-// TODO: Add rate limiting
-// import rateLimiter from '../utils/rateLimiter';
+import rateLimiter from '../utils/rateLimiter';
 import ThemeToggle from './ThemeToggle';
 
 /**

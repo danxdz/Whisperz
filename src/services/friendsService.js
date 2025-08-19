@@ -2,7 +2,7 @@ import Gun from 'gun/gun';
 import 'gun/sea';
 import gunAuthService from './gunAuthService';
 import encryptionService from './encryptionService';
-// import rateLimiter from '../utils/rateLimiter'; // TODO: Add rate limiting
+import rateLimiter from '../utils/rateLimiter';
 
 // Friends service for managing relationships
 class FriendsService {
@@ -87,7 +87,16 @@ class FriendsService {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Check rate limit
+    const rateCheck = rateLimiter.checkLimit('inviteGeneration');
+    if (!rateCheck.allowed) {
+      throw new Error(`Rate limit: ${rateCheck.message}`);
+    }
+
     const inviteCode = this.generateInviteCode();
+    
+    // Record the attempt
+    rateLimiter.recordAttempt('inviteGeneration');
     const nickname = await this.getUserNickname();
     
     const inviteData = {
