@@ -13,38 +13,17 @@ class GunAuthService {
 
   // Initialize Gun instance with peers
   initialize(peers = []) {
-    // Check if user wants 100% private mode
-    const privateMode = localStorage.getItem('P2P_PRIVATE_MODE') === 'true';
+    // Your private Gun relay server - FIXED, no switching needed
+    const gunRelay = 'https://gun-relay-nchb.onrender.com/gun';
     
-    // More reliable Gun.js relay servers (only if not in private mode)
-    // NO PUBLIC SERVERS - fully decentralized
-    const defaultPeers = []; // Empty - no default public servers
-    
-    // Your private Gun relay server
-    const defaultRelay = 'https://gun-relay-nchb.onrender.com/gun';
-    
-    // Also check for custom peers from localStorage or environment
-    const localStoragePeers = localStorage.getItem('GUN_CUSTOM_PEERS');
-    const customPeers = localStoragePeers 
-      ? localStoragePeers.split(',').filter(p => p.trim())
-      : (import.meta.env.VITE_GUN_PEERS 
-        ? import.meta.env.VITE_GUN_PEERS.split(',') 
-        : []);
-    
-    // Include your relay if not already in custom peers
-    if (!customPeers.includes(defaultRelay)) {
-      customPeers.push(defaultRelay);
-    }
-
-    console.log('🔫 Initializing Gun.js with private relay');
-    console.log('🌐 Relay server:', defaultRelay);
-    console.log('Custom peers:', customPeers);
+    console.log('🔫 Initializing Gun.js');
+    console.log('🌐 Private relay:', gunRelay);
 
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
     
     this.gun = Gun({
-      peers: [...customPeers, ...peers], // Only custom peers, no public servers
+      peers: [gunRelay], // Only use our private relay
       localStorage: true,
       radisk: true,
       multicast: false,  // Disabled for battery saving
