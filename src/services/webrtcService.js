@@ -25,45 +25,42 @@ class WebRTCService {
         // Generate peer ID from user ID
         this.peerId = `p2p-${userId}-${Date.now()}`;
         
-        // Use simpleWebRTC with Gun signaling instead of PeerJS
-        console.log('🌐 Using Gun.js as signaling server for WebRTC');
-        console.log('🎯 Initializing WebRTC with Gun signaling');
+        // For now, just use a simple mock to avoid crashes
+        // WebRTC needs more work to function without public servers
+        console.log('🌐 WebRTC temporarily disabled - using Gun P2P');
+        this.peerId = `gun-p2p-${userId}`;
         
-        // Import and use our Gun-based WebRTC
-        import('../services/simpleWebRTC.js').then(async (module) => {
-          const simpleWebRTC = module.default;
-          await simpleWebRTC.initialize(userId);
-          
-          this.peerId = userId;
-          this.peer = {
-            id: this.peerId,
-            open: true,
+        // Create a working mock that won't crash
+        this.peer = {
+          id: this.peerId,
+          open: true,
+          destroyed: false,
+          on: (event, handler) => {
+            // Mock event handlers
+            if (event === 'open') {
+              setTimeout(() => handler(this.peerId), 100);
+            }
+          },
+          destroy: () => {
+            this.peer.destroyed = true;
+          },
+          connect: () => ({
             on: () => {},
-            destroy: () => simpleWebRTC.destroy(),
-            connect: (peerId) => simpleWebRTC.connectToPeer(peerId)
-          };
-          
-          // Make simpleWebRTC methods available
-          this.connectToPeer = (peerId) => simpleWebRTC.connectToPeer(peerId);
-          this.sendMessage = (peerId, message) => simpleWebRTC.sendMessage(peerId, message);
-          this.isConnected = (peerId) => simpleWebRTC.isConnected(peerId);
-          this.getConnectionStatus = (peerId) => simpleWebRTC.getConnectionStatus(peerId);
-          
-          console.log('✅ WebRTC ready with Gun signaling');
+            send: () => {},
+            open: false
+          })
+        };
+        
+        // Mock methods to prevent crashes
+        this.connectToPeer = () => Promise.resolve(false);
+        this.sendMessage = () => false;
+        this.isConnected = () => false;
+        this.getConnectionStatus = () => ({ connected: false });
+        
+        setTimeout(() => {
+          console.log('✅ Gun P2P ready (WebRTC disabled)');
           resolve(this.peerId);
-        }).catch(error => {
-          console.error('Failed to initialize Gun-based WebRTC:', error);
-          // Fallback to Gun-only mode
-          this.peerId = `gun-only-${userId}`;
-          this.peer = {
-            id: this.peerId,
-            open: true,
-            on: () => {},
-            destroy: () => {},
-            connect: () => ({ on: () => {}, send: () => {} })
-          };
-          resolve(this.peerId);
-        });
+        }, 100);
         
         return;
 
