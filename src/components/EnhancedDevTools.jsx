@@ -30,8 +30,6 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   
   // P2P Tab state
   const [p2pLogs, setP2PLogs] = useState([]);
-  const [p2pMonitoring, setP2PMonitoring] = useState(false);
-  const [p2pMonitorCleanup, setP2PMonitorCleanup] = useState(null);
   
   // Backup state
   const [backupPassword, setBackupPassword] = useState('');
@@ -66,17 +64,6 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       return () => clearInterval(interval);
     }
   }, [activeTab, isVisible]);
-  
-  // Cleanup P2P monitoring when component unmounts or tab changes
-  useEffect(() => {
-    return () => {
-      if (p2pMonitorCleanup) {
-        p2pMonitorCleanup();
-        setP2PMonitorCleanup(null);
-        setP2PMonitoring(false);
-      }
-    };
-  }, []);
 
   const loadUsers = async () => {
     try {
@@ -1225,19 +1212,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </button>
             <button
               onClick={() => {
-                if (!p2pMonitoring) {
-                  const cleanup = p2pDebugger.startMonitoring();
-                  setP2PMonitorCleanup(() => cleanup);
-                  setP2PMonitoring(true);
-                  console.log('👁️ P2P Monitoring started');
-                } else {
-                  if (p2pMonitorCleanup) {
-                    p2pMonitorCleanup();
-                    setP2PMonitorCleanup(null);
-                  }
-                  setP2PMonitoring(false);
-                  console.log('⏹️ P2P Monitoring stopped');
-                }
+                p2pDebugger.startMonitoring();
+                console.log('👁️ P2P Monitoring active');
               }}
               style={{
                 padding: '6px 12px',
@@ -1249,7 +1225,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 fontSize: '11px'
               }}
             >
-              {p2pMonitoring ? 'Stop Monitor' : 'Start Monitor'}
+              Restart Monitor
             </button>
             <button
               onClick={() => {
