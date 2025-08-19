@@ -4,6 +4,7 @@ import friendsService from '../services/friendsService';
 import hybridGunService from '../services/hybridGunService';
 import webrtcService from '../services/webrtcService';
 import backupService from '../services/backupService';
+import p2pDebugger from '../utils/p2pDebugger';
 import { useTheme } from '../contexts/ThemeContext';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -299,7 +300,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch'
     }}>
-      {['friends', 'network', 'gundb', 'backup'].map(tab => (
+      {['friends', 'network', 'p2p', 'gundb', 'backup'].map(tab => (
         <button
           key={tab}
           onClick={() => {
@@ -1123,12 +1124,152 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     </div>
   );
 
+  // P2P Tab Content
+  const renderP2PTab = () => {
+    const systemInfo = p2pDebugger.systemInfo;
+    const p2pStatus = p2pDebugger.checkWebRTCStatus();
+    const logs = p2pDebugger.logs.slice(-10); // Last 10 logs
+    
+    return (
+      <div style={{ padding: '12px' }}>
+        {/* System Info */}
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#00ff00', fontSize: '14px' }}>
+            📱 System Info
+          </h4>
+          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)' }}>
+            <div>{systemInfo?.deviceType} | Screen: {systemInfo?.screenSize}</div>
+            <div>Browser: {systemInfo?.browser} | Platform: {systemInfo?.platform}</div>
+            <div>Language: {systemInfo?.language} | Online: {systemInfo?.onLine ? '✅' : '❌'}</div>
+          </div>
+        </div>
+
+        {/* WebRTC Status */}
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#00ff00', fontSize: '14px' }}>
+            🔗 WebRTC Status
+          </h4>
+          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)' }}>
+            <div>Peer ID: {webrtcService.getPeerId() || 'Not initialized'}</div>
+            <div>Status: {webrtcService.isReady() ? '🟢 Ready' : '🔴 Not Ready'}</div>
+            <div>Connected Peers: {webrtcService.getConnectedPeers().length}</div>
+          </div>
+        </div>
+
+        {/* P2P Actions */}
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#00ff00', fontSize: '14px' }}>
+            🛠️ P2P Diagnostics
+          </h4>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={async () => {
+                const result = await p2pDebugger.runFullDiagnostic();
+                console.log('📊 Diagnostic Result:', result);
+              }}
+              style={{
+                padding: '6px 12px',
+                background: 'rgba(0, 255, 0, 0.2)',
+                border: '1px solid #00ff00',
+                color: '#00ff00',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px'
+              }}
+            >
+              Run Diagnostic
+            </button>
+            <button
+              onClick={() => {
+                p2pDebugger.startMonitoring();
+                console.log('👁️ P2P Monitoring started');
+              }}
+              style={{
+                padding: '6px 12px',
+                background: 'rgba(0, 255, 0, 0.2)',
+                border: '1px solid #00ff00',
+                color: '#00ff00',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px'
+              }}
+            >
+              Start Monitor
+            </button>
+            <button
+              onClick={() => {
+                const stats = p2pDebugger.getStats();
+                console.log('📈 P2P Stats:', stats);
+              }}
+              style={{
+                padding: '6px 12px',
+                background: 'rgba(0, 255, 0, 0.2)',
+                border: '1px solid #00ff00',
+                color: '#00ff00',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px'
+              }}
+            >
+              View Stats
+            </button>
+          </div>
+        </div>
+
+        {/* Recent Logs */}
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          borderRadius: '8px',
+          padding: '12px'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#00ff00', fontSize: '14px' }}>
+            📜 Recent P2P Logs
+          </h4>
+          <div style={{
+            fontSize: '10px',
+            color: 'rgba(255, 255, 255, 0.7)',
+            maxHeight: '150px',
+            overflowY: 'auto',
+            fontFamily: 'monospace'
+          }}>
+            {logs.length > 0 ? logs.map((log, i) => (
+              <div key={i} style={{ marginBottom: '4px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
+                <span style={{ color: '#666' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                {' '}
+                <span style={{ color: '#00ff00' }}>{log.message}</span>
+              </div>
+            )) : (
+              <div>No P2P logs yet. Run diagnostic to generate logs.</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch(activeTab) {
       case 'friends':
         return renderUsersTab();
       case 'network':
         return renderStatsTab();
+      case 'p2p':
+        return renderP2PTab();
       case 'backup':
         return renderBackupTab();
       case 'gundb':
