@@ -152,14 +152,26 @@ class FriendsService {
 
     // console.log('🎫 Attempting to accept invite:', inviteCode);
 
-    // Get invite data from global registry
+    // Get invite data from global registry - try multiple times for sync
     return new Promise((resolve, reject) => {
-      this.gun.get('invites').get(inviteCode).once(async (inviteData) => {
-        if (!inviteData) {
-          // console.error('❌ Invite not found:', inviteCode);
-          reject(new Error('Invalid invite code'));
-          return;
-        }
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      const tryGetInvite = () => {
+        attempts++;
+        this.gun.get('invites').get(inviteCode).once(async (inviteData) => {
+          if (!inviteData && attempts < maxAttempts) {
+            // Data might not be synced yet, try again
+            console.log(`Attempt ${attempts}/${maxAttempts} - Invite not found yet, retrying...`);
+            setTimeout(tryGetInvite, 2000); // Wait 2 seconds and retry
+            return;
+          }
+          
+          if (!inviteData) {
+            // console.error('❌ Invite not found after multiple attempts:', inviteCode);
+            reject(new Error('Invalid invite code'));
+            return;
+          }
 
         // console.log('📋 Invite data found:', inviteData);
 
