@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import webrtcService from '../services/webrtcService';
+import gunOnlyP2P from '../services/gunOnlyP2P';
 import friendsService from '../services/friendsService';
+import gunAuthService from '../services/gunAuthService';
 
 export function useConnectionState(friendPublicKey) {
   const [connectionState, setConnectionState] = useState({

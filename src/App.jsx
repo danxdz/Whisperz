@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import gunAuthService from './services/gunAuthService';
 import webrtcService from './services/webrtcService';
+import gunOnlyP2P from './services/gunOnlyP2P';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
@@ -1044,15 +1045,13 @@ function App() {
         if (currentUser) {
           setUser(currentUser);
           
-          // Initialize WebRTC
+          // Initialize Gun-only P2P (no WebRTC, no public servers)
           try {
-            console.log('🚀 Initializing WebRTC for existing session...');
-            await webrtcService.initialize(currentUser.pub);
-            console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
-            // Initialize hybrid P2P service after WebRTC
-            await hybridP2PService.initialize();
+            console.log('🚀 Initializing Gun-only P2P for existing session...');
+            await gunOnlyP2P.initialize(currentUser.pub);
+            console.log('✅ Gun P2P initialized - fully decentralized!');
           } catch (error) {
-            console.error('❌ Failed to initialize WebRTC:', error);
+            console.error('❌ Failed to initialize Gun P2P:', error);
           }
 
           // Initialize message service
@@ -1086,15 +1085,13 @@ function App() {
     // console.log('🔐 Authentication successful:', authUser);
     setUser(authUser);
     
-    // Initialize WebRTC
+    // Initialize Gun-only P2P (no WebRTC, no public servers)
     try {
-      console.log('🚀 Initializing WebRTC after login...');
-      await webrtcService.initialize(authUser.pub);
-      console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
-      // Initialize hybrid P2P service after WebRTC
-      await hybridP2PService.initialize();
+      console.log('🚀 Initializing Gun-only P2P after login...');
+      await gunOnlyP2P.initialize(authUser.pub);
+      console.log('✅ Gun P2P initialized - fully decentralized!');
     } catch (error) {
-      console.error('❌ Failed to initialize WebRTC:', error);
+      console.error('❌ Failed to initialize Gun P2P:', error);
     }
     
     // Initialize presence service and set online

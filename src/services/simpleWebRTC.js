@@ -11,13 +11,11 @@ class SimpleWebRTC {
     this.isInitialized = false;
     this.userId = null;
     
-    // ICE servers for NAT traversal
+    // NO public STUN servers - fully decentralized
+    // WebRTC will try to connect directly or fail
+    // Gun will handle the relay if direct connection fails
     this.iceServers = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-      ]
+      iceServers: [] // Empty - no STUN/TURN servers
     };
   }
 
