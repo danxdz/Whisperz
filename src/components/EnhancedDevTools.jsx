@@ -1106,114 +1106,31 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         </div>
       )}
 
-      {/* P2P Network Info */}
-      <div style={{
-        background: 'rgba(0, 0, 0, 0.3)',
-        borderRadius: '8px',
-        padding: '12px',
-        marginBottom: '12px'
-      }}>
-        <h4 style={{ fontSize: '14px', marginBottom: '8px', color: colors.textPrimary }}>
-          🌍 P2P Network Status
-        </h4>
-        <div style={{ fontSize: '11px' }}>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Your Role:</strong> Peer + Relay (automatic)
-          </div>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Data Replication:</strong> Active
-          </div>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Mesh Network:</strong> Enabled
-          </div>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Device:</strong> {/Mobile|Android|iPhone/i.test(navigator.userAgent) ? '📱 Mobile' : '💻 Desktop'}
-          </div>
-          <div style={{ 
-            marginTop: '8px',
-            padding: '6px',
-            background: 'rgba(67, 231, 123, 0.1)',
-            borderRadius: '4px',
-            color: '#43e97b'
-          }}>
-            ✅ You're helping the network by relaying data!
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Peer Info */}
+      {/* Simple Status */}
       <div style={{
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '8px',
         padding: '12px'
       }}>
-        <h4 style={{ fontSize: '14px', marginBottom: '8px', color: colors.textPrimary }}>
-          📱 Mobile as a Peer
-        </h4>
-        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)' }}>
-          <div style={{ marginBottom: '8px' }}>
-            <strong style={{ color: '#43e97b' }}>✅ YES, Mobile Devices ARE Peers!</strong>
-          </div>
-          
-          <div style={{ marginBottom: '8px' }}>
-            <strong>How it works:</strong>
-            <ul style={{ margin: '4px 0', paddingLeft: '16px' }}>
-              <li>📡 WebSocket connections to relays</li>
-              <li>💾 localStorage for data persistence</li>
-              <li>🔄 Syncs when online</li>
-              <li>📴 Works offline (reads from cache)</li>
-              <li>🔋 Battery-optimized with reconnect delays</li>
-            </ul>
-          </div>
-
-          <div style={{ marginBottom: '8px' }}>
-            <strong>Mobile Limitations:</strong>
-            <ul style={{ margin: '4px 0', paddingLeft: '16px', color: '#ffd700' }}>
-              <li>⚡ Battery drain with constant connections</li>
-              <li>📶 Network changes (WiFi ↔ 4G/5G)</li>
-              <li>💤 Background restrictions (iOS/Android)</li>
-              <li>💽 Storage limits (~50MB localStorage)</li>
-              <li>🚫 Can't accept incoming connections (NAT)</li>
-            </ul>
-          </div>
-
-          <div style={{ marginBottom: '8px' }}>
-            <strong>Mobile Optimizations (Active):</strong>
-            <ul style={{ margin: '4px 0', paddingLeft: '16px', color: '#43e97b' }}>
-              <li>✅ Reconnect on network change</li>
-              <li>✅ Persist data in localStorage</li>
-              <li>✅ Relay through servers (not direct P2P)</li>
-              <li>✅ Batch updates to save battery</li>
-              <li>✅ Progressive Web App (PWA) ready</li>
-            </ul>
-          </div>
-
-          <div style={{
-            marginTop: '8px',
-            padding: '6px',
-            background: 'rgba(67, 231, 123, 0.1)',
-            borderRadius: '4px',
-            fontSize: '10px'
-          }}>
-            <strong>💡 Pro Tip:</strong> On mobile, you're a "light peer" - you sync data through relays rather than direct P2P connections, but you still contribute to the network by caching and sharing data!
-          </div>
+        <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>
+          <div>Device: {/Mobile|Android|iPhone/i.test(navigator.userAgent) ? '📱 Mobile' : '💻 Desktop'}</div>
+          <div>Status: {privateMode ? '🔒 100% Private' : '🌐 Connected'}</div>
+          <div>Network: P2P Active ✅</div>
         </div>
       </div>
+
+
     </div>
   );
 
   const renderContent = () => {
     switch(activeTab) {
-      case 'users':
+      case 'friends':
         return renderUsersTab();
-      case 'invites':
-        return renderInvitesTab();
-      case 'stats':
+      case 'network':
         return renderStatsTab();
       case 'backup':
         return renderBackupTab();
-      case 'logs':
-        return renderLogsTab();
       case 'gundb':
         return renderGunDBTab();
       default:

@@ -2,7 +2,7 @@ import Gun from 'gun/gun';
 import 'gun/sea';
 import gunAuthService from './gunAuthService';
 import encryptionService from './encryptionService';
-import rateLimiter from '../utils/rateLimiter';
+// import rateLimiter from '../utils/rateLimiter'; // TODO: Add rate limiting
 
 // Friends service for managing relationships
 class FriendsService {
