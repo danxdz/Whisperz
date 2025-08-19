@@ -658,8 +658,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   )}
                 </div>
               </div>
-              <ThemeToggle />
             </div>
+            <ThemeToggle />
+          </div>
 
             <div style={{ 
               flex: 1, 
