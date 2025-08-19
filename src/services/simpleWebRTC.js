@@ -11,11 +11,13 @@ class SimpleWebRTC {
     this.isInitialized = false;
     this.userId = null;
     
-    // NO public STUN servers - fully decentralized
-    // WebRTC will try to connect directly or fail
-    // Gun will handle the relay if direct connection fails
+    // Use minimal STUN for NAT traversal (optional)
+    // Can work without it on same network or with good NAT
     this.iceServers = {
-      iceServers: [] // Empty - no STUN/TURN servers
+      iceServers: [
+        // You could add your own STUN server here if needed
+        // For now, try without any - Gun relay handles everything
+      ]
     };
   }
 
