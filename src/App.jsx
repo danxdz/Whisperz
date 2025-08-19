@@ -861,8 +861,23 @@ function App() {
 
   // Version indicator for deployment verification
   useEffect(() => {
-    // console.log('🚀 Whisperz v2.1.0 - Theme Update');
-    // console.log('📅 Deployed:', new Date().toISOString());
+    const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
+    const deviceType = isMobile ? '📱 Mobile' : '💻 Desktop';
+    const screenSize = `${window.innerWidth}x${window.innerHeight}`;
+    
+    console.log('%c🚀 Whisperz v2.1.0 - P2P Chat', 'color: #43e97b; font-size: 16px; font-weight: bold');
+    console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #666');
+    console.log(`📅 Started: ${new Date().toLocaleString()}`);
+    console.log(`${deviceType} Device | Screen: ${screenSize}`);
+    console.log(`🌐 Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
+    console.log(`🔒 Encryption: E2E Enabled`);
+    console.log(`🔗 P2P: WebRTC Ready`);
+    console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #666');
+    
+    if (import.meta.env.DEV) {
+      console.log('🔧 Development Mode - Debug tools available');
+      console.log('💡 Type: p2pDebug.diagnose() for P2P diagnostics');
+    }
   }, []);
 
   // Callback to receive loadFriends function from ChatView
