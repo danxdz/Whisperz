@@ -1283,6 +1283,34 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               </div>
               <div style={{ marginTop: '4px' }}>
                 WebRTC: {currentUserInfo.webrtcReady ? '🟢 Ready' : '🔴 Not Ready'}
+                {!currentUserInfo.webrtcReady && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const user = gunAuthService.getCurrentUser();
+                        if (user) {
+                          console.log('🔧 Forcing WebRTC reconnect...');
+                          await webrtcService.forceReconnect(user.pub);
+                          loadCurrentUserInfo();
+                        }
+                      } catch (error) {
+                        console.error('Failed to reconnect WebRTC:', error);
+                      }
+                    }}
+                    style={{
+                      marginLeft: '8px',
+                      padding: '2px 6px',
+                      fontSize: '10px',
+                      background: 'rgba(255, 165, 0, 0.2)',
+                      border: '1px solid orange',
+                      color: 'orange',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Reconnect
+                  </button>
+                )}
               </div>
               {currentUserInfo.peerId && (
                 <div style={{ marginTop: '4px' }}>

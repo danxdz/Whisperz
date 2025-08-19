@@ -13,11 +13,12 @@ class WebRTCService {
   }
 
   // Initialize PeerJS
-  async initialize(userId) {
+  async initialize(userId, retryCount = 0) {
     return new Promise((resolve, reject) => {
       try {
         // Clean up existing peer if any
-        if (this.peer) {
+        if (this.peer && !this.peer.destroyed) {
+          console.log('🧹 Cleaning up existing peer before reinitializing...');
           this.destroy();
         }
 
@@ -26,7 +27,7 @@ class WebRTCService {
         
         // PeerJS configuration
         const config = {
-          debug: import.meta.env.DEV ? 2 : 0,
+          debug: 2, // Always use debug mode for now
           config: {
             iceServers: [
               { urls: 'stun:stun.l.google.com:19302' },
@@ -45,14 +46,14 @@ class WebRTCService {
           config.port = port || 443;
           config.secure = true;
           config.path = '/peerjs';
-          // console.log('🌐 Using custom PeerJS server:', host);
+          console.log('🌐 Using custom PeerJS server:', host);
         } else {
           // Use PeerJS cloud service (free tier)
-          // console.log('🌐 Using PeerJS cloud service');
+          console.log('🌐 Using PeerJS cloud service');
           // PeerJS cloud doesn't need host/port configuration
         }
 
-        // console.log('🎯 Initializing PeerJS with ID:', this.peerId);
+        console.log('🎯 Initializing PeerJS with ID:', this.peerId);
 
         this.peer = new Peer(this.peerId, config);
 
@@ -75,14 +76,24 @@ class WebRTCService {
 
         this.peer.on('error', (err) => {
           console.error('❌ Peer error:', err);
+          console.error('Error type:', err.type);
+          console.error('Error message:', err.message);
+          
           if (err.type === 'unavailable-id') {
             // Generate new ID and retry
             this.peerId = `p2p-${userId}-${Date.now()}-${Math.random()}`;
             console.log('🔄 Retrying with new ID:', this.peerId);
-            this.initialize(userId).then(resolve).catch(reject);
-          } else if (err.type === 'network' || err.type === 'server-error') {
-            console.log('🔄 Network error, attempting reconnect...');
-            this.attemptReconnect();
+            this.initialize(userId, retryCount + 1).then(resolve).catch(reject);
+          } else if (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed') {
+            if (retryCount < 3) {
+              console.log(`🔄 Network error, retrying... (attempt ${retryCount + 1}/3)`);
+              setTimeout(() => {
+                this.initialize(userId, retryCount + 1).then(resolve).catch(reject);
+              }, 2000 * (retryCount + 1));
+            } else {
+              console.error('❌ Max retries reached, giving up');
+              reject(err);
+            }
           } else {
             reject(err);
           }
@@ -91,9 +102,16 @@ class WebRTCService {
         // Timeout if connection takes too long
         setTimeout(() => {
           if (!this.peer?.open) {
-            reject(new Error('PeerJS connection timeout'));
+            console.error('⏱️ PeerJS connection timeout');
+            if (retryCount < 3) {
+              console.log(`🔄 Timeout, retrying... (attempt ${retryCount + 1}/3)`);
+              this.destroy();
+              this.initialize(userId, retryCount + 1).then(resolve).catch(reject);
+            } else {
+              reject(new Error('PeerJS connection timeout after 3 attempts'));
+            }
           }
-        }, 10000);
+        }, 15000);
 
       } catch (error) {
         reject(error);
@@ -300,8 +318,24 @@ class WebRTCService {
     const ready = this.peer && this.peer.open;
     if (!ready) {
       console.log('🔴 WebRTC not ready - peer:', !!this.peer, 'open:', this.peer?.open);
+      if (this.peer) {
+        console.log('Peer state:', {
+          id: this.peer.id,
+          disconnected: this.peer.disconnected,
+          destroyed: this.peer.destroyed,
+          connections: Object.keys(this.peer.connections || {}).length
+        });
+      }
     }
     return ready;
+  }
+
+  // Force reconnect
+  async forceReconnect(userId) {
+    console.log('🔧 Forcing WebRTC reconnect...');
+    this.destroy();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return this.initialize(userId);
   }
 
   // Destroy the peer and cleanup
