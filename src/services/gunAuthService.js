@@ -17,29 +17,25 @@ class GunAuthService {
     const privateMode = localStorage.getItem('P2P_PRIVATE_MODE') === 'true';
     
     // More reliable Gun.js relay servers (only if not in private mode)
-    const defaultPeers = privateMode ? [] : [
-      'https://relay.peer.ooo/gun',
-      'https://gun-relay.herokuapp.com/gun',
-      'https://gunjs.herokuapp.com/gun',
-      'https://gun-manhattan.herokuapp.com/gun',
-      'https://e2eec.herokuapp.com/gun'
-    ];
-
-    // Check localStorage first, then environment variable
+    // NO PUBLIC SERVERS - fully decentralized
+    const defaultPeers = []; // Empty - no default public servers
+    
+    // Only use peers from localStorage or environment (for your own servers)
     const localStoragePeers = localStorage.getItem('GUN_CUSTOM_PEERS');
-    const customPeers = privateMode ? [] : (localStoragePeers 
+    const customPeers = localStoragePeers 
       ? localStoragePeers.split(',').filter(p => p.trim())
       : (import.meta.env.VITE_GUN_PEERS 
         ? import.meta.env.VITE_GUN_PEERS.split(',') 
-        : []));
+        : []);
 
-    // console.log('🔫 Initializing Gun.js with peers:', [...customPeers, ...peers, ...defaultPeers]);
+    console.log('🔫 Initializing Gun.js - NO PUBLIC SERVERS');
+    console.log('Custom peers:', customPeers.length > 0 ? customPeers : 'None - pure P2P mode');
 
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
     
     this.gun = Gun({
-      peers: [...customPeers, ...peers, ...defaultPeers],
+      peers: [...customPeers, ...peers], // Only custom peers, no public servers
       localStorage: true,
       radisk: true,
       multicast: false,  // Disabled for battery saving

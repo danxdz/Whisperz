@@ -25,31 +25,16 @@ class WebRTCService {
         // Generate peer ID from user ID
         this.peerId = `p2p-${userId}-${Date.now()}`;
         
-        // PeerJS configuration
+        // NO PUBLIC SERVERS - fully decentralized
         const config = {
           debug: 2, // Always use debug mode for now
           config: {
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun2.l.google.com:19302' },
-              { urls: 'stun:stun3.l.google.com:19302' },
-              { urls: 'stun:stun4.l.google.com:19302' }
-            ]
+            iceServers: [] // NO STUN servers - only direct connections
           }
         };
 
-        // Try to use a public PeerJS server first
-        config.host = '0.peerjs.com';
-        config.port = 443;
-        config.secure = true;
-        config.path = '/';
-        config.key = 'peerjs';
-        
-        console.log('🌐 Using public PeerJS server for signaling only');
-        
-        // Note: PeerJS server is ONLY used for signaling (exchanging connection info)
-        // Actual data goes directly peer-to-peer via WebRTC
+        // NO PeerJS public server - use Gun for signaling instead
+        console.log('🌐 NO PUBLIC SERVERS - Using Gun.js for WebRTC signaling');
 
         console.log('🎯 Initializing PeerJS with ID:', this.peerId);
 
