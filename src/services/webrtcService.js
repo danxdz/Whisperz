@@ -23,6 +23,9 @@ class WebRTCService {
 
         // Generate peer ID from user ID
         this.peerId = `p2p-${userId}-${Date.now()}`;
+        
+        // Store peer ID in Gun for friends to find us
+        this.broadcastPeerIdToFriends();
 
         // PeerJS configuration
         const config = {
