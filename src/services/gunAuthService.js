@@ -20,16 +20,25 @@ class GunAuthService {
     // NO PUBLIC SERVERS - fully decentralized
     const defaultPeers = []; // Empty - no default public servers
     
-    // Only use peers from localStorage or environment (for your own servers)
+    // Your private Gun relay server
+    const defaultRelay = 'https://gun-relay-nchb.onrender.com/gun';
+    
+    // Also check for custom peers from localStorage or environment
     const localStoragePeers = localStorage.getItem('GUN_CUSTOM_PEERS');
     const customPeers = localStoragePeers 
       ? localStoragePeers.split(',').filter(p => p.trim())
       : (import.meta.env.VITE_GUN_PEERS 
         ? import.meta.env.VITE_GUN_PEERS.split(',') 
         : []);
+    
+    // Include your relay if not already in custom peers
+    if (!customPeers.includes(defaultRelay)) {
+      customPeers.push(defaultRelay);
+    }
 
-    console.log('🔫 Initializing Gun.js - NO PUBLIC SERVERS');
-    console.log('Custom peers:', customPeers.length > 0 ? customPeers : 'None - pure P2P mode');
+    console.log('🔫 Initializing Gun.js with private relay');
+    console.log('🌐 Relay server:', defaultRelay);
+    console.log('Custom peers:', customPeers);
 
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
