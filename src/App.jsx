@@ -402,10 +402,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     };
     window.addEventListener('beforeunload', handleUnload);
 
-    // Refresh friends list periodically to catch any missed updates
-//     const refreshInterval = setInterval(() => {
-//       loadFriends();
-//     }, 10000); // Refresh every 10 seconds
+    // Refresh friends list and presence periodically
+    const refreshInterval = setInterval(() => {
+      loadFriends();
+      // Also update presence with current peer ID
+      const peerId = webrtcService.getPeerId();
+      if (peerId) {
+        hybridGunService.updatePresence('online', { peerId });
+        console.log('🔄 Periodic presence update with peer ID:', peerId);
+      }
+    }, 10000); // Refresh every 10 seconds
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
