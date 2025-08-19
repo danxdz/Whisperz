@@ -331,6 +331,7 @@ class FriendsService {
             conversationId: conversationId
           }
         });
+        });  // Close the async callback
       };
       
       // Start trying to get the invite
