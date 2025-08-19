@@ -44,14 +44,36 @@ class P2PDebugger {
   }
 
   // Add debug log
-  log(message, data = {}) {
+  log(message, data = {}, level = 'info') {
+    // Skip repetitive status checks
+    const skipMessages = [
+      'Checking WebRTC status...',
+      'Checking presence broadcast...',
+      'WebRTC Status:',
+      'My presence data:'
+    ];
+    
+    if (skipMessages.some(skip => message.startsWith(skip))) {
+      return; // Don't log these
+    }
+    
     const entry = {
       timestamp: new Date().toISOString(),
       message,
-      data
+      data,
+      level
     };
     this.logs.push(entry);
-    console.log(`🔍 [P2P Debug] ${message}`, data);
+    
+    // Only log important messages to console
+    if (level === 'error') {
+      console.error(`❌ [P2P] ${message}`, data);
+    } else if (level === 'success') {
+      console.log(`✅ [P2P] ${message}`, data);
+    } else if (level === 'warning') {
+      console.warn(`⚠️ [P2P] ${message}`, data);
+    }
+    // Skip regular info logs to reduce spam
   }
 
   // Check WebRTC initialization
@@ -156,7 +178,7 @@ class P2PDebugger {
         timestamp: Date.now()
       });
       
-      this.log('Connection established!', connection);
+      this.log('Connection established!', connection, 'success');
       
       // Step 4: Test the connection
       await this.testConnection(friendPeerId);
@@ -164,7 +186,7 @@ class P2PDebugger {
       return { success: true, connection };
       
     } catch (error) {
-      this.log('Connection failed:', error);
+      this.log('Connection failed:', error, 'error');
       return { success: false, error: error.message };
     }
   }
@@ -182,11 +204,11 @@ class P2PDebugger {
       };
       
       await webrtcService.sendMessage(peerId, pingData);
-      this.log('Ping sent successfully', pingData);
+      this.log('Ping sent successfully', pingData, 'success');
       
       return true;
     } catch (error) {
-      this.log('Ping failed:', error);
+      this.log('Ping failed:', error, 'error');
       return false;
     }
   }
@@ -227,12 +249,13 @@ class P2PDebugger {
     
     // Monitor WebRTC events
     webrtcService.onConnection((event, peerId, metadata) => {
-      this.log(`WebRTC event: ${event}`, { peerId, metadata });
+      const level = event === 'connected' ? 'success' : event === 'disconnected' ? 'warning' : 'info';
+      this.log(`WebRTC ${event}: ${peerId}`, { metadata }, level);
     });
     
     // Monitor messages
     webrtcService.onMessage((peerId, data) => {
-      this.log('Message received via P2P', { from: peerId, data });
+      this.log('P2P message received', { from: peerId.substring(0, 8) + '...', type: data.type }, 'info');
       
       // Auto-respond to pings
       if (data.type === 'ping') {
@@ -241,7 +264,7 @@ class P2PDebugger {
           timestamp: Date.now(),
           respondingTo: data.random
         });
-        this.log('Pong sent', { to: peerId });
+        this.log('Pong sent', { to: peerId.substring(0, 8) + '...' }, 'success');
       }
     });
     

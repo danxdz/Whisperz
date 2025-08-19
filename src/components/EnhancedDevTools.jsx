@@ -1126,9 +1126,18 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   // P2P Tab Content
   const renderP2PTab = () => {
+    const [p2pLogs, setP2PLogs] = useState([]);
+    const [refreshKey, setRefreshKey] = useState(0);
+    
+    useEffect(() => {
+      // Update logs when tab is active
+      if (activeTab === 'p2p') {
+        setP2PLogs(p2pDebugger.logs);
+      }
+    }, [activeTab, refreshKey]);
+    
     const systemInfo = p2pDebugger.systemInfo;
-    const p2pStatus = p2pDebugger.checkWebRTCStatus();
-    const logs = p2pDebugger.logs.slice(-10); // Last 10 logs
+    const logs = p2pLogs; // Show all logs
     
     return (
       <div style={{ padding: '12px' }}>
@@ -1237,9 +1246,48 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           borderRadius: '8px',
           padding: '12px'
         }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#00ff00', fontSize: '14px' }}>
-            📜 Recent P2P Logs
-          </h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h4 style={{ margin: 0, color: '#00ff00', fontSize: '14px' }}>
+              📜 P2P Logs ({logs.length})
+            </h4>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  setP2PLogs(p2pDebugger.logs);
+                  setRefreshKey(prev => prev + 1);
+                }}
+                style={{
+                  padding: '4px 8px',
+                  background: 'rgba(0, 255, 0, 0.2)',
+                  border: '1px solid #00ff00',
+                  color: '#00ff00',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '10px'
+                }}
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => {
+                  p2pDebugger.clearLogs();
+                  setP2PLogs([]);
+                  console.log('🧹 P2P logs cleared');
+                }}
+                style={{
+                  padding: '4px 8px',
+                  background: 'rgba(255, 0, 0, 0.2)',
+                  border: '1px solid #ff4444',
+                  color: '#ff4444',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '10px'
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
           <div style={{
             fontSize: '10px',
             color: 'rgba(255, 255, 255, 0.7)',
@@ -1247,13 +1295,22 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             overflowY: 'auto',
             fontFamily: 'monospace'
           }}>
-            {logs.length > 0 ? logs.map((log, i) => (
-              <div key={i} style={{ marginBottom: '4px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
-                <span style={{ color: '#666' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
-                {' '}
-                <span style={{ color: '#00ff00' }}>{log.message}</span>
-              </div>
-            )) : (
+            {logs.length > 0 ? logs.map((log, i) => {
+              const logColor = log.level === 'error' ? '#ff4444' : 
+                              log.level === 'success' ? '#00ff00' :
+                              log.level === 'warning' ? '#ffaa00' : 
+                              'rgba(255, 255, 255, 0.8)';
+              return (
+                <div key={i} style={{ marginBottom: '4px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
+                  <span style={{ color: '#666', fontSize: '9px' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  {' '}
+                  <span style={{ color: logColor }}>{log.message}</span>
+                  {log.data && Object.keys(log.data).length > 0 && (
+                    <span style={{ color: '#666', fontSize: '9px' }}> {JSON.stringify(log.data)}</span>
+                  )}
+                </div>
+              );
+            }) : (
               <div>No P2P logs yet. Run diagnostic to generate logs.</div>
             )}
           </div>
