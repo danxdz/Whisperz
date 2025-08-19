@@ -6,6 +6,7 @@
 import webrtcService from '../services/webrtcService';
 import hybridGunService from '../services/hybridGunService';
 import friendsService from '../services/friendsService';
+import gunAuthService from '../services/gunAuthService';
 
 class P2PDebugger {
   constructor() {
@@ -101,11 +102,12 @@ class P2PDebugger {
   async checkPresenceBroadcast() {
     this.log('Checking presence broadcast...');
     
-    const user = await hybridGunService.gun.user().once();
-    const publicKey = user?.pub;
+    // Get current user from gunAuthService instead
+    const currentUser = gunAuthService.getCurrentUser();
+    const publicKey = currentUser?.pub;
     
     if (!publicKey) {
-      this.log('ERROR: No user public key found');
+      this.log('ERROR: No user public key found', {}, 'error');
       return null;
     }
     
