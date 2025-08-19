@@ -99,6 +99,10 @@ class FriendsService {
     rateLimiter.recordAttempt('inviteGeneration');
     const nickname = await this.getUserNickname();
     
+    // Get current Gun peer URLs for direct connection
+    const currentPeers = gunAuthService.gun._.opt.peers;
+    const peerUrls = Object.keys(currentPeers || {}).slice(0, 3); // Include top 3 peers
+    
     const inviteData = {
       from: user.pub,
       nickname: nickname || 'Anonymous',
@@ -106,7 +110,9 @@ class FriendsService {
       expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
       used: false,  // Track if invite has been used
       usedBy: null, // Track who used it
-      usedAt: null  // Track when it was used
+      usedAt: null,  // Track when it was used
+      peers: peerUrls, // Include Gun peer addresses for direct mesh connection
+      myPeerId: window.location.origin // Your app instance as a potential peer
     };
 
     // Sign the invite
@@ -273,6 +279,21 @@ class FriendsService {
           return;
         }
 
+        // Connect to the inviter's Gun peers for direct mesh connection
+        if (inviteData.peers && inviteData.peers.length > 0) {
+          console.log('🌐 Connecting to inviter\'s Gun peers:', inviteData.peers);
+          inviteData.peers.forEach(peerUrl => {
+            if (peerUrl && !gunAuthService.gun._.opt.peers[peerUrl]) {
+              try {
+                gunAuthService.gun.opt({peers: [peerUrl]});
+                console.log('✅ Added peer:', peerUrl);
+              } catch (error) {
+                console.error('Failed to add peer:', peerUrl, error);
+              }
+            }
+          });
+        }
+        
         // Create bidirectional friendship FIRST (before marking as used)
         const conversationId = `conv_${Date.now()}_${Math.random()}`;
         
