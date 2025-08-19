@@ -1043,7 +1043,7 @@ function App() {
           // If there's an invite, show register page by default
           // But user can switch to login if they already have an account
           setAuthMode('register');
-          // console.log('📧 Invite code detected:', code);
+          console.log('📧 Invite code detected:', code);
         }
 
         // Initialize Gun
