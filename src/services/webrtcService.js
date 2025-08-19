@@ -39,19 +39,17 @@ class WebRTCService {
           }
         };
 
-        // Use custom PeerJS server if provided, otherwise use PeerJS cloud
-        if (import.meta.env.VITE_PEERJS_HOST) {
-          const [host, port] = import.meta.env.VITE_PEERJS_HOST.split(':');
-          config.host = host;
-          config.port = port || 443;
-          config.secure = true;
-          config.path = '/peerjs';
-          console.log('🌐 Using custom PeerJS server:', host);
-        } else {
-          // Use PeerJS cloud service (free tier)
-          console.log('🌐 Using PeerJS cloud service');
-          // PeerJS cloud doesn't need host/port configuration
-        }
+        // Try to use a public PeerJS server first
+        config.host = '0.peerjs.com';
+        config.port = 443;
+        config.secure = true;
+        config.path = '/';
+        config.key = 'peerjs';
+        
+        console.log('🌐 Using public PeerJS server for signaling only');
+        
+        // Note: PeerJS server is ONLY used for signaling (exchanging connection info)
+        // Actual data goes directly peer-to-peer via WebRTC
 
         console.log('🎯 Initializing PeerJS with ID:', this.peerId);
 
