@@ -73,7 +73,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     try {
       const user = gunAuthService.getCurrentUser();
       if (user) {
-        // Check Gun P2P status instead of WebRTC
+        const peerId = webrtcService.getPeerId();
+        const webrtcReady = webrtcService.isReady();
+        
+        // Also check Gun P2P status
         const gunPeers = gunAuthService.gun?._.opt?.peers || {};
         const connectedPeers = Object.keys(gunPeers).filter(url => {
           const peer = gunPeers[url];
@@ -83,9 +86,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         setCurrentUserInfo({
           publicKey: user.pub,
           alias: user.alias,
+          peerId: peerId || 'Not initialized',
+          webrtcReady: webrtcReady,
           gunConnected: connectedPeers.length > 0,
-          peerCount: connectedPeers.length,
-          peers: connectedPeers
+          peerCount: connectedPeers.length
         });
       }
     } catch (error) {
@@ -1318,6 +1322,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                     Reconnect
                   </button>
                 )}
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                Gun Network: {currentUserInfo.gunConnected ? 
+                  `🟢 Connected (${currentUserInfo.peerCount} peers)` : 
+                  '🔴 Disconnected'}
               </div>
               {currentUserInfo.peerId && (
                 <div style={{ marginTop: '4px' }}>

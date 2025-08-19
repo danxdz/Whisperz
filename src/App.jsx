@@ -1045,13 +1045,17 @@ function App() {
         if (currentUser) {
           setUser(currentUser);
           
-          // Initialize Gun-only P2P (no WebRTC, no public servers)
+          // Initialize WebRTC for private chats
           try {
-            console.log('🚀 Initializing Gun-only P2P for existing session...');
+            console.log('🚀 Initializing WebRTC for existing session...');
+            await webrtcService.initialize(currentUser.pub);
+            console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
+            
+            // Also initialize Gun P2P as fallback
             await gunOnlyP2P.initialize(currentUser.pub);
-            console.log('✅ Gun P2P initialized - fully decentralized!');
+            console.log('✅ Gun P2P initialized as fallback');
           } catch (error) {
-            console.error('❌ Failed to initialize Gun P2P:', error);
+            console.error('❌ Failed to initialize P2P:', error);
           }
 
           // Initialize message service
@@ -1085,13 +1089,17 @@ function App() {
     // console.log('🔐 Authentication successful:', authUser);
     setUser(authUser);
     
-    // Initialize Gun-only P2P (no WebRTC, no public servers)
+    // Initialize WebRTC for private chats
     try {
-      console.log('🚀 Initializing Gun-only P2P after login...');
+      console.log('🚀 Initializing WebRTC after login...');
+      await webrtcService.initialize(authUser.pub);
+      console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
+      
+      // Also initialize Gun P2P as fallback
       await gunOnlyP2P.initialize(authUser.pub);
-      console.log('✅ Gun P2P initialized - fully decentralized!');
+      console.log('✅ Gun P2P initialized as fallback');
     } catch (error) {
-      console.error('❌ Failed to initialize Gun P2P:', error);
+      console.error('❌ Failed to initialize P2P:', error);
     }
     
     // Initialize presence service and set online
