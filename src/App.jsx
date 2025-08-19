@@ -450,16 +450,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     if (!selectedFriend) return;
 
     const loadMessages = async () => {
-      console.log('📋 Loading messages for:', selectedFriend);
-      try {
-        const history = await messageService.getConversationHistory(selectedFriend.conversationId);
-        console.log(`📜 Loaded ${history.length} messages`);
-        setMessages(history);
-        messageService.markAsRead(selectedFriend.conversationId);
-      } catch (error) {
-        console.error('Failed to load messages:', error);
-        setMessages([]); // Set empty array to prevent crash
-      }
+      // console.log('📋 Loading messages for:', selectedFriend.nickname);
+      const history = await messageService.getConversationHistory(selectedFriend.conversationId);
+      // console.log(`📜 Loaded ${history.length} messages`);
+      setMessages(history);
+      messageService.markAsRead(selectedFriend.conversationId);
     };
 
     loadMessages();
@@ -1036,7 +1031,7 @@ function App() {
           // If there's an invite, show register page by default
           // But user can switch to login if they already have an account
           setAuthMode('register');
-          console.log('📧 Invite code detected:', code);
+          // console.log('📧 Invite code detected:', code);
         }
 
         // Initialize Gun
