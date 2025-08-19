@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
-import SimpleDevToolsButton from './SimpleDevToolsButton';
-import MobileDevTools from './MobileDevTools';
-import MobileDevToolsCompact from './MobileDevToolsCompact';
-import EnhancedDevTools from './EnhancedDevTools';
+import SimplifiedDevTools from './SimplifiedDevTools';
 import { APP_CONFIG } from '../config/app.config';
 
 /**
