@@ -5,7 +5,6 @@ import gunOnlyP2P from './services/gunOnlyP2P';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
-import hybridP2PService from './services/hybridP2PService';
 import p2pDebugger from './utils/p2pDebugger';
 import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
