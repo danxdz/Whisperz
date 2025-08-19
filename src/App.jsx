@@ -796,6 +796,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 {screen.isTiny ? '➤' : 'Send'}
               </button>
             </form>
+          </div>
+          </div>
           </>
         ) : (
           <div style={{
