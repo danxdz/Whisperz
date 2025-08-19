@@ -28,6 +28,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   });
   const [selectedUser, setSelectedUser] = useState(null);
   
+  // P2P Tab state
+  const [p2pLogs, setP2PLogs] = useState([]);
+  const [p2pMonitoring, setP2PMonitoring] = useState(false);
+  const [p2pMonitorCleanup, setP2PMonitorCleanup] = useState(null);
+  
   // Backup state
   const [backupPassword, setBackupPassword] = useState('');
   const [storageStats, setStorageStats] = useState(null);
@@ -47,6 +52,31 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadStats();
     loadRelayConfig();
   }, [isVisible]);
+  
+  // Update P2P logs when P2P tab is active
+  useEffect(() => {
+    if (activeTab === 'p2p' && isVisible) {
+      setP2PLogs(p2pDebugger.logs);
+      
+      // Auto-refresh logs every second when on P2P tab
+      const interval = setInterval(() => {
+        setP2PLogs([...p2pDebugger.logs]);
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, isVisible]);
+  
+  // Cleanup P2P monitoring when component unmounts or tab changes
+  useEffect(() => {
+    return () => {
+      if (p2pMonitorCleanup) {
+        p2pMonitorCleanup();
+        setP2PMonitorCleanup(null);
+        setP2PMonitoring(false);
+      }
+    };
+  }, []);
 
   const loadUsers = async () => {
     try {
@@ -1127,7 +1157,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   // P2P Tab Content
   const renderP2PTab = () => {
     const systemInfo = p2pDebugger.systemInfo;
-    const logs = p2pDebugger.logs; // Show all logs directly
+    const logs = p2pLogs; // Use state logs
     
     return (
       <div style={{ padding: '12px' }}>
@@ -1195,8 +1225,19 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </button>
             <button
               onClick={() => {
-                p2pDebugger.startMonitoring();
-                console.log('👁️ P2P Monitoring started');
+                if (!p2pMonitoring) {
+                  const cleanup = p2pDebugger.startMonitoring();
+                  setP2PMonitorCleanup(() => cleanup);
+                  setP2PMonitoring(true);
+                  console.log('👁️ P2P Monitoring started');
+                } else {
+                  if (p2pMonitorCleanup) {
+                    p2pMonitorCleanup();
+                    setP2PMonitorCleanup(null);
+                  }
+                  setP2PMonitoring(false);
+                  console.log('⏹️ P2P Monitoring stopped');
+                }
               }}
               style={{
                 padding: '6px 12px',
@@ -1208,7 +1249,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 fontSize: '11px'
               }}
             >
-              Start Monitor
+              {p2pMonitoring ? 'Stop Monitor' : 'Start Monitor'}
             </button>
             <button
               onClick={() => {
@@ -1243,8 +1284,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => {
-                  setP2PLogs(p2pDebugger.logs);
-                  setRefreshKey(prev => prev + 1);
+                  setP2PLogs([...p2pDebugger.logs]);
                 }}
                 style={{
                   padding: '4px 8px',
