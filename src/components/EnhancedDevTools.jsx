@@ -73,12 +73,19 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     try {
       const user = gunAuthService.getCurrentUser();
       if (user) {
-        const peerId = webrtcService.getPeerId();
+        // Check Gun P2P status instead of WebRTC
+        const gunPeers = gunAuthService.gun?._.opt?.peers || {};
+        const connectedPeers = Object.keys(gunPeers).filter(url => {
+          const peer = gunPeers[url];
+          return peer && peer.wire && !peer.wire.closed;
+        });
+        
         setCurrentUserInfo({
           publicKey: user.pub,
           alias: user.alias,
-          peerId: peerId || 'Not initialized',
-          webrtcReady: webrtcService.isReady()
+          gunConnected: connectedPeers.length > 0,
+          peerCount: connectedPeers.length,
+          peers: connectedPeers
         });
       }
     } catch (error) {
