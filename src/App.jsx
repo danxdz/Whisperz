@@ -594,20 +594,45 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 }}>
                   {escapeHtml(selectedFriend.nickname)}
                 </h3>
-                {/* Connection Status Indicator */}
+                {/* Connection Status & P2P Button */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  padding: screen.isTiny ? '2px 4px' : '2px 6px',
-                  background: colors.bgTertiary,
-                  borderRadius: '10px',
-                  fontSize: screen.isTiny ? '9px' : '10px'
+                  gap: '8px'
                 }}>
-                  <span style={{
-                    width: screen.isTiny ? '6px' : '7px',
-                    height: screen.isTiny ? '6px' : '7px',
-                    borderRadius: '50%',
+                  {/* P2P Connect Button */}
+                  <button
+                    onClick={() => handleDirectP2PConnect(selectedFriend)}
+                    style={{
+                      padding: screen.isTiny ? '4px 8px' : '6px 10px',
+                      background: 'rgba(67, 231, 123, 0.2)',
+                      border: '1px solid #43e97b',
+                      borderRadius: '6px',
+                      color: '#43e97b',
+                      fontSize: screen.isTiny ? '10px' : '11px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title="Establish direct P2P connection"
+                  >
+                    🔗 P2P
+                  </button>
+                  
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: screen.isTiny ? '2px 4px' : '2px 6px',
+                    background: colors.bgTertiary,
+                    borderRadius: '10px',
+                    fontSize: screen.isTiny ? '9px' : '10px'
+                  }}>
+                    <span style={{
+                      width: screen.isTiny ? '6px' : '7px',
+                      height: screen.isTiny ? '6px' : '7px',
+                      borderRadius: '50%',
                     background: connectionState.status === 'webrtc' ? colors.success :
                                connectionState.status === 'gun' ? colors.warning :
                                connectionState.status === 'connecting' ? colors.primary :
