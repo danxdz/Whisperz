@@ -51,8 +51,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadInvites();
     loadStats();
     loadRelayConfig();
-    loadCurrentUserInfo();
-    loadOnlineUsers();
+    // loadCurrentUserInfo(); // TODO: implement
+    // loadOnlineUsers(); // TODO: implement
   }, [isVisible]);
   
   // Update P2P logs when P2P tab is active
