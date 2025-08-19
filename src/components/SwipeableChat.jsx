@@ -16,7 +16,8 @@ function SwipeableChat({
   onFriendsUpdate,
   onGenerateInvite,
   userNickname,
-  onLogout
+  onLogout,
+  onlineStatus
 }) {
   const { colors } = useTheme();
   const [currentPanel, setCurrentPanel] = useState(0); // 0: Chat, 1: Friends, 2: DevTools
@@ -133,6 +134,7 @@ function SwipeableChat({
           onGenerateInvite={onGenerateInvite}
           userNickname={userNickname}
           onLogout={onLogout}
+          onlineStatus={onlineStatus}
         />
         {children}
         

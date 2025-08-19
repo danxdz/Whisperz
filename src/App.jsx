@@ -285,7 +285,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  // const [onlineStatus, setOnlineStatus] = useState(new Map()); // Not used currently
+  const [onlineStatus, setOnlineStatus] = useState(new Map());
   const [typingStatus, setTypingStatus] = useState(new Map());
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
@@ -352,7 +352,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         // Subscribe to presence updates
         hybridGunService.subscribeToPresence(friend.publicKey, (presenceData) => {
           const isOnline = presenceData?.status === 'online' && 
-                          presenceData?.lastSeen > Date.now() - 60000;
+                          presenceData?.lastSeen && 
+                          (Date.now() - presenceData.lastSeen) < 60000;
           setOnlineStatus(prev => new Map(prev).set(friend.publicKey, isOnline));
         });
       }
@@ -577,6 +578,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       onGenerateInvite={handleGenerateInvite}
       userNickname={userNickname}
       onLogout={onLogout}
+      onlineStatus={onlineStatus}
     >
       {/* Chat Area */}
       <div style={{ 

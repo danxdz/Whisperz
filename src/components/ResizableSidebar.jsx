@@ -10,11 +10,12 @@ function ResizableSidebar({
   friends, 
   selectedFriend, 
   onSelectFriend, 
-  currentUser, 
-  onFriendsUpdate, 
+  currentUser,
+  onFriendsUpdate,
   onGenerateInvite,
   userNickname,
-  onLogout 
+  onLogout,
+  onlineStatus: passedOnlineStatus
 }) {
   const [width, setWidth] = useState(280);
   const [isMinimized, setIsMinimized] = useState(false);
