@@ -331,7 +331,10 @@ class FriendsService {
             conversationId: conversationId
           }
         });
-      });
+      };
+      
+      // Start trying to get the invite
+      tryGetInvite();
     });
   }
 
@@ -342,21 +345,36 @@ class FriendsService {
 
     return new Promise((resolve) => {
       const invites = [];
+      const pendingFriends = [];
       
+      // Get sent invites
       this.user.get('invites').map().once((data, key) => {
         if (data) {
           invites.push({
             ...data,
             code: key,
-            link: `${window.location.origin}/?invite=${key}`
+            link: `${window.location.origin}/?invite=${key}`,
+            status: data.used ? 'accepted' : (data.revoked ? 'revoked' : 'pending')
+          });
+        }
+      });
+      
+      // Get pending friends (invites we sent that are waiting)
+      this.user.get('pending_friends').map().once((data, key) => {
+        if (data && data.status === 'pending') {
+          pendingFriends.push({
+            ...data,
+            code: key,
+            isPending: true
           });
         }
       });
 
       setTimeout(() => {
-        // Sort by creation date, newest first
-        invites.sort((a, b) => b.createdAt - a.createdAt);
-        resolve(invites);
+        // Combine and sort by creation date, newest first
+        const allInvites = [...invites, ...pendingFriends];
+        allInvites.sort((a, b) => (b.createdAt || b.sentAt) - (a.createdAt || a.sentAt));
+        resolve(allInvites);
       }, 500);
     });
   }
