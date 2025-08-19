@@ -11,6 +11,36 @@ class P2PDebugger {
   constructor() {
     this.logs = [];
     this.connectionAttempts = new Map();
+    this.systemInfo = this.getSystemInfo();
+  }
+
+  // Get system information
+  getSystemInfo() {
+    const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
+    const deviceType = isMobile ? '📱 Mobile' : '💻 Desktop';
+    const screenSize = `${window.innerWidth}x${window.innerHeight}`;
+    
+    return {
+      deviceType,
+      isMobile,
+      screenSize,
+      userAgent: navigator.userAgent,
+      browser: this.detectBrowser(),
+      platform: navigator.platform,
+      language: navigator.language,
+      onLine: navigator.onLine,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  // Detect browser type
+  detectBrowser() {
+    const ua = navigator.userAgent;
+    if (ua.includes('Firefox')) return 'Firefox';
+    if (ua.includes('Chrome')) return 'Chrome';
+    if (ua.includes('Safari')) return 'Safari';
+    if (ua.includes('Edge')) return 'Edge';
+    return 'Unknown';
   }
 
   // Add debug log
