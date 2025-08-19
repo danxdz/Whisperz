@@ -58,7 +58,7 @@ class WebRTCService {
 
         // Handle peer events
         this.peer.on('open', (id) => {
-          // console.log('WebRTC peer opened with ID:', id);
+          console.log('🎉 WebRTC peer opened with ID:', id);
           this.peerId = id;
           this.reconnectAttempts = 0;
           resolve(id);
@@ -101,8 +101,10 @@ class WebRTCService {
 
   // Connect to another peer
   async connectToPeer(remotePeerId, metadata = {}) {
+    console.log('🔗 Attempting to connect to peer:', remotePeerId);
     return new Promise((resolve, reject) => {
       if (!this.peer || !this.peer.open) {
+        console.error('❌ Peer not initialized or not open');
         reject(new Error('Peer not initialized'));
         return;
       }
@@ -126,6 +128,7 @@ class WebRTCService {
         });
 
         conn.on('open', () => {
+          console.log('✅ Connection established with:', remotePeerId);
           this.connections.set(remotePeerId, conn);
           this.setupConnectionHandlers(conn);
           this.notifyConnectionHandlers('connected', remotePeerId, metadata);
@@ -133,7 +136,7 @@ class WebRTCService {
         });
 
         conn.on('error', (err) => {
-          // console.error(`Connection error with ${remotePeerId}:`, err);
+          console.error(`❌ Connection error with ${remotePeerId}:`, err);
           this.connections.delete(remotePeerId);
           reject(err);
         });

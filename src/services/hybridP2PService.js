@@ -49,7 +49,7 @@ class HybridP2PService {
       status: 'online'
     });
     
-    console.log('📡 Broadcasting peer ID for P2P discovery:', peerId);
+    console.log('📡 Broadcasting peer ID for P2P discovery:', peerId, 'for user:', user.pub);
   }
 
   /**

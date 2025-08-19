@@ -373,9 +373,18 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   useEffect(() => {
     loadFriends();
 
-    // Update own presence
-    const peerId = webrtcService.getPeerId();
-    hybridGunService.updatePresence('online', { peerId });
+    // Update own presence with a delay to ensure WebRTC is ready
+    const updatePresenceWithPeerId = () => {
+      const peerId = webrtcService.getPeerId();
+      console.log('📍 Updating presence with peer ID:', peerId);
+      hybridGunService.updatePresence('online', { peerId });
+    };
+    
+    // Initial update
+    updatePresenceWithPeerId();
+    
+    // Update again after a short delay in case WebRTC wasn't ready
+    setTimeout(updatePresenceWithPeerId, 2000);
 
     // Handle page visibility
     const handleVisibility = () => {
