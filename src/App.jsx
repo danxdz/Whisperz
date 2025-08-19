@@ -382,8 +382,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           await webrtcService.initialize(user.pub);
           console.log('✅ WebRTC ready with peer ID:', webrtcService.getPeerId());
           
-          // Initialize hybrid P2P service after WebRTC
-          await hybridP2PService.initialize();
+          // Gun P2P already initialized in main flow
         } catch (error) {
           console.error('❌ Failed to initialize WebRTC in ChatView:', error);
         }
