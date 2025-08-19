@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import webrtcService from '../services/webrtcService';
 import gunOnlyP2P from '../services/gunOnlyP2P';
 import friendsService from '../services/friendsService';
 import gunAuthService from '../services/gunAuthService';
@@ -14,9 +15,9 @@ export function useConnectionState(friendPublicKey) {
   });
   
   // Debug logging
-  useEffect(() => {
-    console.log('🔍 Connection state updated:', connectionState, 'for friend:', friendPublicKey);
-  }, [connectionState]);
+  // useEffect(() => {
+  //   console.log('🔍 Connection state updated:', connectionState, 'for friend:', friendPublicKey);
+  // }, [connectionState]);
 
   useEffect(() => {
     if (!friendPublicKey) return;
@@ -33,7 +34,7 @@ export function useConnectionState(friendPublicKey) {
       try {
         // Check friend's online presence
         const presence = await friendsService.getFriendPresence(friendPublicKey);
-        console.log('👤 Friend presence check:', presence, 'for:', friendPublicKey);
+        // console.log('👤 Friend presence check:', presence, 'for:', friendPublicKey);
         
         if (presence && presence.isOnline && presence.peerId) {
           // Check WebRTC connection status
@@ -94,53 +95,53 @@ export function useConnectionState(friendPublicKey) {
   }, [friendPublicKey]);
 
   const attemptWebRTCConnection = async () => {
-    console.log('🚀 Attempting WebRTC connection with state:', connectionState);
+    // console.log('🚀 Attempting WebRTC connection with state:', connectionState);
     
     // First check if our own WebRTC is ready
     if (!webrtcService.isReady()) {
-      console.error('❌ Our WebRTC is not ready!');
+      // console.error('❌ Our WebRTC is not ready!');
       const user = gunAuthService.getCurrentUser();
       if (user) {
-        console.log('🔧 Attempting to reinitialize WebRTC...');
+        // console.log('🔧 Attempting to reinitialize WebRTC...');
         try {
-          await webrtcService.forceReconnect(user.pub);
-          console.log('✅ WebRTC reinitialized');
+          await webrtcService.initialize(user.pub);
+          // console.log('✅ WebRTC reinitialized');
         } catch (error) {
-          console.error('❌ Failed to reinitialize WebRTC:', error);
+          // console.error('❌ Failed to reinitialize WebRTC:', error);
           return false;
         }
       } else {
-        console.error('❌ No user found for WebRTC initialization');
+        // console.error('❌ No user found for WebRTC initialization');
         return false;
       }
     }
     
     try {
       if (connectionState.peerId && connectionState.isOnline && webrtcService?.connectToPeer) {
-        console.log('📡 Connecting to peer:', connectionState.peerId);
-        console.log('Our peer ID:', webrtcService.getPeerId());
+        // console.log('📡 Connecting to peer:', connectionState.peerId);
+        // console.log('Our peer ID:', webrtcService.getPeerId());
         setConnectionState(prev => ({ ...prev, status: 'connecting' }));
         try {
           await webrtcService.connectToPeer(connectionState.peerId);
-          console.log('✅ WebRTC connection established!');
+          // console.log('✅ WebRTC connection established!');
           setConnectionState(prev => ({ ...prev, status: 'webrtc', method: 'webrtc' }));
           return true;
         } catch (error) {
-          console.error('❌ Failed to establish WebRTC connection:', error);
+          // console.error('❌ Failed to establish WebRTC connection:', error);
           setConnectionState(prev => ({ ...prev, status: 'gun', method: 'gun' }));
           return false;
         }
       } else {
-        console.log('⚠️ Cannot connect - missing requirements:', {
-          hasPeerId: !!connectionState.peerId,
-          friendPeerId: connectionState.peerId,
-          isOnline: connectionState.isOnline,
-          hasConnectToPeer: !!webrtcService?.connectToPeer,
-          ourWebRTCReady: webrtcService.isReady()
-        });
+        // console.log('⚠️ Cannot connect - missing requirements:', {
+        //   hasPeerId: !!connectionState.peerId,
+        //   friendPeerId: connectionState.peerId,
+        //   isOnline: connectionState.isOnline,
+        //   hasConnectToPeer: !!webrtcService?.connectToPeer,
+        //   ourWebRTCReady: webrtcService.isReady()
+        // });
       }
     } catch (error) {
-      console.error('❌ Error in attemptWebRTCConnection:', error);
+      // console.error('❌ Error in attemptWebRTCConnection:', error);
     }
     return false;
   };
