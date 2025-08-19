@@ -88,30 +88,86 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const loadOnlineUsers = async () => {
     try {
+      // First, make sure we broadcast our own presence
+      const currentUser = gunAuthService.getCurrentUser();
+      if (currentUser) {
+        const peerId = webrtcService.getPeerId();
+        hybridGunService.updatePresence('online', { peerId });
+        console.log('📢 Broadcasting our presence before checking others');
+      }
+      
       const onlineList = [];
+      const seenKeys = new Set();
       
       // Get all online users from Gun presence space
       await new Promise((resolve) => {
+        let checkCount = 0;
+        
+        // Check presence space
         gunAuthService.gun.get('presence').map().once((data, key) => {
-          if (data && key && key !== '_') {
+          checkCount++;
+          console.log('🔍 Checking presence for key:', key, data);
+          
+          if (data && key && key !== '_' && !key.startsWith('~')) {
+            // Clean Gun metadata
+            const cleanData = Object.keys(data).reduce((acc, k) => {
+              if (!k.startsWith('_') && k !== '#' && k !== '>') {
+                acc[k] = data[k];
+              }
+              return acc;
+            }, {});
+            
             // Check if user is online (seen in last 2 minutes)
-            if (data.status === 'online' && data.lastSeen && 
-                (Date.now() - data.lastSeen) < 120000) {
-              onlineList.push({
-                publicKey: key,
-                lastSeen: data.lastSeen,
-                peerId: data.peerId,
-                status: data.status
+            if (cleanData.status === 'online' && cleanData.lastSeen && 
+                (Date.now() - cleanData.lastSeen) < 120000) {
+              if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                onlineList.push({
+                  publicKey: key,
+                  lastSeen: cleanData.lastSeen,
+                  peerId: cleanData.peerId,
+                  status: cleanData.status
+                });
+                console.log('✅ Found online user:', key);
+              }
+            }
+          }
+        });
+        
+        // Also check users space for presence
+        gunAuthService.gun.get('~@').map().once((alias, key) => {
+          if (alias && key && key !== '_') {
+            // Extract public key from the ~pubkey format
+            const pubKey = key.replace('~', '').split('.')[0];
+            if (pubKey && !seenKeys.has(pubKey)) {
+              // Check this user's presence
+              gunAuthService.gun.user(pubKey).get('presence').once((data) => {
+                if (data && data.status === 'online' && data.lastSeen && 
+                    (Date.now() - data.lastSeen) < 120000) {
+                  seenKeys.add(pubKey);
+                  onlineList.push({
+                    publicKey: pubKey,
+                    alias: alias,
+                    lastSeen: data.lastSeen,
+                    peerId: data.peerId,
+                    status: data.status
+                  });
+                  console.log('✅ Found online user via alias:', alias, pubKey);
+                }
               });
             }
           }
         });
+        
         // Wait a bit for data to load
-        setTimeout(resolve, 1000);
+        setTimeout(() => {
+          console.log('📊 Total presence checks:', checkCount);
+          resolve();
+        }, 2000);
       });
       
       setAllOnlineUsers(onlineList);
-      console.log('📊 Online users found:', onlineList.length);
+      console.log('📊 Online users found:', onlineList.length, onlineList);
     } catch (error) {
       console.error('Failed to load online users:', error);
     }
@@ -1289,7 +1345,9 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                     color: user.publicKey === currentUserInfo?.publicKey ? 
                       '#00ff00' : 'rgba(255, 255, 255, 0.8)'
                   }}>
-                    {user.publicKey === currentUserInfo?.publicKey ? '👤 You' : `User ${i + 1}`}
+                    {user.publicKey === currentUserInfo?.publicKey ? 
+                      '👤 You' : 
+                      (user.alias ? `👤 ${user.alias}` : `User ${i + 1}`)}
                   </div>
                   <div style={{ 
                     fontFamily: 'monospace', 
