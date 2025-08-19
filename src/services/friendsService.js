@@ -100,8 +100,8 @@ class FriendsService {
     const nickname = await this.getUserNickname();
     
     // Get current Gun peer URLs for direct connection
-    const currentPeers = gunAuthService.gun._.opt.peers;
-    const peerUrls = Object.keys(currentPeers || {}).slice(0, 3); // Include top 3 peers
+    const currentPeers = gunAuthService.gun?._.opt?.peers || {};
+    const peerUrls = Object.keys(currentPeers).filter(url => url && url !== 'undefined').slice(0, 3); // Include top 3 peers if any
     
     const inviteData = {
       from: user.pub,
@@ -280,10 +280,10 @@ class FriendsService {
         }
 
         // Connect to the inviter's Gun peers for direct mesh connection
-        if (inviteData.peers && inviteData.peers.length > 0) {
+        if (inviteData.peers && Array.isArray(inviteData.peers) && inviteData.peers.length > 0) {
           console.log('🌐 Connecting to inviter\'s Gun peers:', inviteData.peers);
           inviteData.peers.forEach(peerUrl => {
-            if (peerUrl && !gunAuthService.gun._.opt.peers[peerUrl]) {
+            if (peerUrl && typeof peerUrl === 'string' && !gunAuthService.gun?._.opt?.peers?.[peerUrl]) {
               try {
                 gunAuthService.gun.opt({peers: [peerUrl]});
                 console.log('✅ Added peer:', peerUrl);
@@ -292,6 +292,8 @@ class FriendsService {
               }
             }
           });
+        } else {
+          console.log('⚠️ No peers in invite - will work via local storage or direct connection');
         }
         
         // Create bidirectional friendship FIRST (before marking as used)
