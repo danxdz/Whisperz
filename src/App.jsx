@@ -447,14 +447,24 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
   // Load messages when friend is selected
   useEffect(() => {
-    if (!selectedFriend) return;
+    if (!selectedFriend || !selectedFriend.conversationId) {
+      console.log('⚠️ No friend selected or missing conversationId');
+      setMessages([]);
+      return;
+    }
 
     const loadMessages = async () => {
-      // console.log('📋 Loading messages for:', selectedFriend.nickname);
-      const history = await messageService.getConversationHistory(selectedFriend.conversationId);
-      // console.log(`📜 Loaded ${history.length} messages`);
-      setMessages(history);
-      messageService.markAsRead(selectedFriend.conversationId);
+      console.log('📋 Loading messages for:', selectedFriend.nickname || 'Unknown', 'ID:', selectedFriend.conversationId);
+      try {
+        const history = await messageService.getConversationHistory(selectedFriend.conversationId);
+        const safeHistory = Array.isArray(history) ? history : [];
+        console.log(`📜 Loaded ${safeHistory.length} messages`);
+        setMessages(safeHistory);
+        messageService.markAsRead(selectedFriend.conversationId);
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+        setMessages([]); // Set empty array to prevent crash
+      }
     };
 
     loadMessages();
@@ -463,18 +473,20 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     const refreshInterval = setInterval(loadMessages, 5000);
 
     // Subscribe to new messages
-    const unsubscribe = messageService.subscribeToConversation(
+    const unsubscribe = selectedFriend.conversationId ? messageService.subscribeToConversation(
       selectedFriend.conversationId,
       (message) => {
         // console.log('📨 New message received:', message);
         setMessages(prev => {
+          // Ensure prev is an array
+          const currentMessages = prev || [];
           // Check if message already exists to avoid duplicates
-          const exists = prev.some(m => m.id === message.id || 
-            (m.timestamp === message.timestamp && m.content === message.content));
+          const exists = currentMessages.some(m => m && (m.id === message.id || 
+            (m.timestamp === message.timestamp && m.content === message.content)));
           if (!exists) {
-            return [...prev, message].sort((a, b) => a.timestamp - b.timestamp);
+            return [...currentMessages, message].sort((a, b) => a.timestamp - b.timestamp);
           }
-          return prev;
+          return currentMessages;
         });
         messageService.markAsRead(selectedFriend.conversationId);
       }
@@ -572,6 +584,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
   // Escape HTML for safe rendering
   const escapeHtml = (text) => {
+    if (!text) return '';
+    const textStr = String(text);
     const map = {
       '&': '&amp;',
       '<': '&lt;',
@@ -580,7 +594,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       "'": '&#x27;',
       '/': '&#x2F;'
     };
-    return text.replace(/[&<>"'/]/g, char => map[char]);
+    return textStr.replace(/[&<>"'/]/g, char => map[char]);
   };
 
   return (
@@ -604,14 +618,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       onlineStatus={onlineStatus}
     >
       {/* Chat Area */}
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
+            <div style={{
+        flex: 1,
+        display: 'flex',
         flexDirection: 'column',
         height: '100%',
         position: 'relative'
       }}>
-        {selectedFriend ? (
+        {selectedFriend && selectedFriend.nickname ? (
           <>
             <div style={{ 
               padding: screen.isTiny ? '6px 8px' : screen.isMobile ? '8px 12px' : '16px 20px',
@@ -634,7 +648,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
                 }}>
-                  {escapeHtml(selectedFriend.nickname)}
+                  {escapeHtml(selectedFriend.nickname || 'Unknown')}
                 </h3>
                 {/* Connection Status & P2P Button */}
                 <div style={{
@@ -710,12 +724,12 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               display: 'flex',
               flexDirection: 'column'
             }}>
-              {messages.map((msg, index) => (
+              {(messages || []).map((msg, index) => msg && (
                 <div
                   key={index}
                   style={{
                     display: 'flex',
-                    justifyContent: msg.from === user.pub ? 'flex-end' : 'flex-start',
+                    justifyContent: msg?.from === user.pub ? 'flex-end' : 'flex-start',
                     marginBottom: screen.isTiny ? '3px' : screen.isMobile ? '6px' : '12px'
                   }}
                 >
@@ -723,28 +737,28 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                     maxWidth: screen.isTiny ? '90%' : screen.isMobile ? '85%' : '70%',
                     padding: screen.isTiny ? '4px 8px' : screen.isMobile ? '6px 10px' : '10px 14px',
                     borderRadius: screen.isTiny ? '8px' : '12px',
-                    background: msg.from === user.pub 
+                    background: msg?.from === user.pub 
                       ? colors.messageSent
                       : colors.messageReceived,
-                    color: msg.from === user.pub ? '#fff' : colors.textPrimary
+                    color: msg?.from === user.pub ? '#fff' : colors.textPrimary
                   }}>
                     <div style={{ 
                       fontSize: screen.isTiny ? '12px' : screen.isMobile ? '13px' : '14px',
                       wordBreak: 'break-word'
                     }}>
-                      {escapeHtml(msg.content)}
+                      {escapeHtml(msg.content || '')}
                     </div>
                     <div style={{ 
                       fontSize: screen.isTiny ? '8px' : screen.isMobile ? '9px' : '11px', 
                       opacity: 0.7,
                       marginTop: '1px',
-                      color: msg.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted,
+                      color: msg?.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      justifyContent: msg.from === user.pub ? 'flex-end' : 'flex-start'
+                      justifyContent: msg?.from === user.pub ? 'flex-end' : 'flex-start'
                     }}>
-                      <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                      <span>{msg?.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : 'Unknown'}</span>
                       {msg.deliveryMethod && (
                         <span style={{
                           padding: '1px 3px',
@@ -763,7 +777,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                            'LOCAL'}
                         </span>
                       )}
-                      {msg.from === user.pub && (
+                      {msg?.from === user.pub && (
                         <span style={{ marginLeft: '2px' }}>
                           {msg.delivered ? '✓✓' : '✓'}
                         </span>
@@ -786,7 +800,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                     fontSize: '14px',
                     fontStyle: 'italic'
                   }}>
-                    {escapeHtml(selectedFriend.nickname)} is typing...
+                    {escapeHtml(selectedFriend?.nickname || 'Friend')} is typing...
                   </div>
                 </div>
               )}
@@ -1031,7 +1045,7 @@ function App() {
           // If there's an invite, show register page by default
           // But user can switch to login if they already have an account
           setAuthMode('register');
-          // console.log('📧 Invite code detected:', code);
+          console.log('📧 Invite code detected:', code);
         }
 
         // Initialize Gun
