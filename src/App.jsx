@@ -5,6 +5,7 @@ import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import hybridP2PService from './services/hybridP2PService';
+import p2pDebugger from './utils/p2pDebugger';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
@@ -875,6 +876,12 @@ function App() {
       try {
         await hybridGunService.initialize();
         await friendsService.initialize();
+        
+        // Start P2P monitoring in development
+        if (import.meta.env.DEV) {
+          p2pDebugger.startMonitoring();
+          console.log('🔍 P2P debugging enabled');
+        }
         
         // Add test helper to window for debugging
         window.testMessage = async (message = 'Test message from console!') => {
