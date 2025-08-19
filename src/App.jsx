@@ -603,7 +603,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 }}>
                   {/* P2P Connect Button */}
                   <button
-                    onClick={() => handleDirectP2PConnect(selectedFriend)}
+                    onClick={() => attemptWebRTCConnection()}
                     style={{
                       padding: screen.isTiny ? '4px 8px' : '6px 10px',
                       background: 'rgba(67, 231, 123, 0.2)',
