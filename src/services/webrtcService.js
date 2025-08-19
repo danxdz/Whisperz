@@ -35,10 +35,28 @@ class WebRTCService {
 
         // NO PeerJS public server - use Gun for signaling instead
         console.log('🌐 NO PUBLIC SERVERS - Using Gun.js for WebRTC signaling');
-
         console.log('🎯 Initializing PeerJS with ID:', this.peerId);
 
-        this.peer = new Peer(this.peerId, config);
+        // Skip PeerJS for now - it won't work without a signaling server
+        // We'll use Gun-only P2P instead
+        console.warn('⚠️ WebRTC disabled - using Gun P2P only');
+        this.peerId = `gun-only-${userId}`;
+        
+        // Fake the peer object to prevent errors
+        this.peer = {
+          id: this.peerId,
+          open: true,
+          on: () => {},
+          destroy: () => {},
+          connect: () => ({ on: () => {}, send: () => {} })
+        };
+        
+        // Immediately resolve as "ready"
+        setTimeout(() => {
+          resolve(this.peerId);
+        }, 100);
+        
+        return;
 
         // Handle peer events
         this.peer.on('open', (id) => {
