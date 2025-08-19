@@ -616,10 +616,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         height: '100%',
         position: 'relative'
       }}>
-        {(() => {
-          console.log('Rendering chat for friend:', selectedFriend);
-          if (selectedFriend) {
-            return (
+        {selectedFriend ? (
           <>
             <div style={{ 
               padding: screen.isTiny ? '6px 8px' : screen.isMobile ? '8px 12px' : '16px 20px',
@@ -847,32 +844,28 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               </button>
             </form>
           </>
-          );
-        } else {
-          return (
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              color: colors.textMuted
-            }}>
-              <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                <ThemeToggle />
-              </div>
-              <div style={{ position: 'absolute', bottom: '20px', left: '20px', fontSize: '10px', color: colors.textMuted, opacity: 0.5 }}>
-                v2.1.0
-              </div>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
-              <h3 style={{ margin: '0 0 8px 0', color: colors.textPrimary, fontSize: '24px', fontWeight: '600' }}>
-                Welcome to Whisperz
-              </h3>
-              <p style={{ margin: 0, fontSize: '16px' }}>Select a friend to start chatting</p>
+        ) : (
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            color: colors.textMuted
+          }}>
+            <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
+              <ThemeToggle />
             </div>
-          );
-        }
-      })()}
+            <div style={{ position: 'absolute', bottom: '20px', left: '20px', fontSize: '10px', color: colors.textMuted, opacity: 0.5 }}>
+              v2.1.0
+            </div>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
+            <h3 style={{ margin: '0 0 8px 0', color: colors.textPrimary, fontSize: '24px', fontWeight: '600' }}>
+              Welcome to Whisperz
+            </h3>
+            <p style={{ margin: 0, fontSize: '16px' }}>Select a friend to start chatting</p>
+          </div>
+        )}
       </div>
     </SwipeableChat>
 
