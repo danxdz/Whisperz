@@ -2,22 +2,17 @@ import React, { useState, useEffect } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import friendsService from '../services/friendsService';
 import webrtcService from '../services/webrtcService';
-import debugLogger from '../utils/debugLogger';
 import { useTheme } from '../contexts/ThemeContext';
-import { useResponsive } from '../hooks/useResponsive';
 
 /**
- * SimplifiedDevTools Component
- * Cleaned up version with only working features and no duplicates
+ * SimplifiedDevTools - Cleaned up version with only working features
  */
 function SimplifiedDevTools({ isVisible, onClose }) {
   const { colors } = useTheme();
-  const screen = useResponsive();
   const [activeTab, setActiveTab] = useState('status');
   const [currentUser, setCurrentUser] = useState(null);
   const [friends, setFriends] = useState([]);
   const [connectionInfo, setConnectionInfo] = useState({});
-  const [debugEnabled, setDebugEnabled] = useState(debugLogger.enabled);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -42,7 +37,7 @@ function SimplifiedDevTools({ isVisible, onClose }) {
       const friendList = await friendsService.getFriends();
       setFriends(friendList);
     } catch (error) {
-      debugLogger.error('Failed to load friends:', error);
+      console.error('Failed to load friends:', error);
     }
   };
 
@@ -57,8 +52,7 @@ function SimplifiedDevTools({ isVisible, onClose }) {
       webrtcReady: webrtcService.isReady(),
       peerId: webrtcService.getPeerId() || 'Not initialized',
       connectedPeers: webrtcService.getConnectedPeers().length,
-      gunRelays: connectedRelays.length,
-      relayUrls: connectedRelays
+      gunRelays: connectedRelays.length
     });
   };
 
@@ -69,33 +63,7 @@ function SimplifiedDevTools({ isVisible, onClose }) {
     }
   };
 
-  const toggleDebug = () => {
-    if (debugEnabled) {
-      debugLogger.disable();
-    } else {
-      debugLogger.enable();
-    }
-    setDebugEnabled(!debugEnabled);
-  };
-
-  const clearLocalStorage = () => {
-    if (window.confirm('Clear all local data? This will log you out.')) {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.reload();
-    }
-  };
-
-  const removeFriend = async (publicKey) => {
-    if (window.confirm('Remove this friend?')) {
-      try {
-        await friendsService.removeFriend(publicKey);
-        loadFriends();
-      } catch (error) {
-        alert('Failed to remove friend');
-      }
-    }
-  };
+  if (!isVisible) return null;
 
   const tabs = [
     { id: 'status', label: 'Status' },
@@ -103,14 +71,12 @@ function SimplifiedDevTools({ isVisible, onClose }) {
     { id: 'debug', label: 'Debug' }
   ];
 
-  if (!isVisible) return null;
-
   return (
     <div style={{
       position: 'fixed',
       top: 0,
       right: 0,
-      width: screen.isMobile ? '100%' : '400px',
+      width: '400px',
       height: '100vh',
       background: colors.bgSecondary,
       borderLeft: `1px solid ${colors.borderColor}`,
@@ -138,8 +104,7 @@ function SimplifiedDevTools({ isVisible, onClose }) {
             border: 'none',
             color: colors.textMuted,
             fontSize: '20px',
-            cursor: 'pointer',
-            padding: '4px 8px'
+            cursor: 'pointer'
           }}
         >
           ✕
@@ -163,8 +128,7 @@ function SimplifiedDevTools({ isVisible, onClose }) {
               color: activeTab === tab.id ? '#fff' : colors.textSecondary,
               border: 'none',
               cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: activeTab === tab.id ? '600' : '400'
+              fontSize: '13px'
             }}
           >
             {tab.label}
@@ -180,7 +144,6 @@ function SimplifiedDevTools({ isVisible, onClose }) {
       }}>
         {activeTab === 'status' && (
           <div>
-            {/* Current User */}
             {currentUser && (
               <div style={{
                 background: colors.bgCard,
@@ -199,7 +162,6 @@ function SimplifiedDevTools({ isVisible, onClose }) {
               </div>
             )}
 
-            {/* Connection Info */}
             <div style={{
               background: colors.bgCard,
               padding: '12px',
@@ -211,43 +173,26 @@ function SimplifiedDevTools({ isVisible, onClose }) {
               </h4>
               <div style={{ fontSize: '13px', color: colors.textSecondary }}>
                 <div>WebRTC: {connectionInfo.webrtcReady ? '✅' : '❌'}</div>
-                <div>Peer ID: {connectionInfo.peerId?.substring(0, 20)}...</div>
                 <div>P2P Peers: {connectionInfo.connectedPeers}</div>
                 <div>Gun Relays: {connectionInfo.gunRelays}</div>
               </div>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button
-                onClick={handleLogout}
-                style={{
-                  padding: '10px',
-                  background: colors.danger,
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px'
-                }}
-              >
-                Logout
-              </button>
-              <button
-                onClick={clearLocalStorage}
-                style={{
-                  padding: '10px',
-                  background: colors.warning,
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px'
-                }}
-              >
-                Clear Local Storage
-              </button>
-            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: colors.danger,
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px'
+              }}
+            >
+              Logout
+            </button>
           </div>
         )}
 
@@ -263,34 +208,15 @@ function SimplifiedDevTools({ isVisible, onClose }) {
                   background: colors.bgCard,
                   padding: '10px',
                   borderRadius: '6px',
-                  marginBottom: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
+                  marginBottom: '8px'
                 }}
               >
-                <div style={{ fontSize: '13px' }}>
-                  <div style={{ color: colors.textPrimary, fontWeight: '500' }}>
-                    {friend.nickname}
-                  </div>
-                  <div style={{ color: colors.textMuted, fontSize: '11px' }}>
-                    {friend.publicKey.substring(0, 20)}...
-                  </div>
+                <div style={{ color: colors.textPrimary, fontWeight: '500' }}>
+                  {friend.nickname}
                 </div>
-                <button
-                  onClick={() => removeFriend(friend.publicKey)}
-                  style={{
-                    padding: '4px 8px',
-                    background: colors.danger,
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '11px'
-                  }}
-                >
-                  Remove
-                </button>
+                <div style={{ color: colors.textMuted, fontSize: '11px' }}>
+                  {friend.publicKey.substring(0, 30)}...
+                </div>
               </div>
             ))}
           </div>
@@ -301,29 +227,11 @@ function SimplifiedDevTools({ isVisible, onClose }) {
             <div style={{
               background: colors.bgCard,
               padding: '12px',
-              borderRadius: '8px',
-              marginBottom: '16px'
+              borderRadius: '8px'
             }}>
               <h4 style={{ margin: '0 0 8px 0', color: colors.textPrimary }}>
-                Debug Settings
+                Debug Console
               </h4>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  color: colors.textSecondary,
-                  fontSize: '13px'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={debugEnabled}
-                    onChange={toggleDebug}
-                  />
-                  Enable Debug Logging
-                </label>
-              </div>
               <div style={{
                 padding: '8px',
                 background: colors.bgSecondary,
@@ -331,63 +239,11 @@ function SimplifiedDevTools({ isVisible, onClose }) {
                 fontSize: '11px',
                 color: colors.textMuted
               }}>
-                <div>Console Commands:</div>
-                <div>• enableDebug() - Enable all</div>
-                <div>• disableDebug() - Disable all</div>
+                <div>Open DevTools console and use:</div>
+                <div>• enableDebug() - Enable logging</div>
+                <div>• disableDebug() - Disable logging</div>
                 <div>• debugSettings() - Show options</div>
               </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button
-                onClick={() => {
-                  debugLogger.enable('p2p');
-                  alert('P2P logging enabled');
-                }}
-                style={{
-                  padding: '8px',
-                  background: colors.bgTertiary,
-                  color: colors.textPrimary,
-                  border: `1px solid ${colors.borderColor}`,
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '12px'
-                }}
-              >
-                Enable P2P Logs
-              </button>
-              <button
-                onClick={() => {
-                  debugLogger.enable('webrtc');
-                  alert('WebRTC logging enabled');
-                }}
-                style={{
-                  padding: '8px',
-                  background: colors.bgTertiary,
-                  color: colors.textPrimary,
-                  border: `1px solid ${colors.borderColor}`,
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '12px'
-                }}
-              >
-                Enable WebRTC Logs
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                style={{
-                  padding: '8px',
-                  background: colors.primary,
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '12px'
-                }}
-              >
-                Reload App
-              </button>
             </div>
           </div>
         )}
