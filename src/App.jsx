@@ -984,6 +984,8 @@ function App() {
           // Initialize WebRTC
           try {
             await webrtcService.initialize(currentUser.pub);
+            // Initialize hybrid P2P service after WebRTC
+            await hybridP2PService.initialize();
           } catch (error) {
             // console.error('Failed to initialize WebRTC:', error);
           }
@@ -1023,6 +1025,8 @@ function App() {
     try {
       await webrtcService.initialize(authUser.pub);
       // console.log('✅ WebRTC initialized');
+      // Initialize hybrid P2P service after WebRTC
+      await hybridP2PService.initialize();
     } catch (error) {
       // console.error('Failed to initialize WebRTC:', error);
     }
