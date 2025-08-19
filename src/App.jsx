@@ -375,18 +375,32 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   useEffect(() => {
     loadFriends();
 
-    // Update own presence with a delay to ensure WebRTC is ready
-    const updatePresenceWithPeerId = () => {
+    // Ensure WebRTC is initialized
+    const initializeWebRTC = async () => {
+      if (!webrtcService.isReady() && user?.pub) {
+        try {
+          console.log('🔄 Re-initializing WebRTC in ChatView...');
+          await webrtcService.initialize(user.pub);
+          console.log('✅ WebRTC ready with peer ID:', webrtcService.getPeerId());
+          
+          // Initialize hybrid P2P service after WebRTC
+          await hybridP2PService.initialize();
+        } catch (error) {
+          console.error('❌ Failed to initialize WebRTC in ChatView:', error);
+        }
+      }
+      
+      // Update own presence with peer ID
       const peerId = webrtcService.getPeerId();
       console.log('📍 Updating presence with peer ID:', peerId);
       hybridGunService.updatePresence('online', { peerId });
     };
     
     // Initial update
-    updatePresenceWithPeerId();
+    initializeWebRTC();
     
-    // Update again after a short delay in case WebRTC wasn't ready
-    setTimeout(updatePresenceWithPeerId, 2000);
+    // Update again after a short delay to ensure everything is ready
+    setTimeout(initializeWebRTC, 2000);
 
     // Handle page visibility
     const handleVisibility = () => {
@@ -1022,11 +1036,13 @@ function App() {
           
           // Initialize WebRTC
           try {
+            console.log('🚀 Initializing WebRTC for existing session...');
             await webrtcService.initialize(currentUser.pub);
+            console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
             // Initialize hybrid P2P service after WebRTC
             await hybridP2PService.initialize();
           } catch (error) {
-            // console.error('Failed to initialize WebRTC:', error);
+            console.error('❌ Failed to initialize WebRTC:', error);
           }
 
           // Initialize message service
@@ -1062,12 +1078,13 @@ function App() {
     
     // Initialize WebRTC
     try {
+      console.log('🚀 Initializing WebRTC after login...');
       await webrtcService.initialize(authUser.pub);
-      // console.log('✅ WebRTC initialized');
+      console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
       // Initialize hybrid P2P service after WebRTC
       await hybridP2PService.initialize();
     } catch (error) {
-      // console.error('Failed to initialize WebRTC:', error);
+      console.error('❌ Failed to initialize WebRTC:', error);
     }
 
     // Initialize message service
