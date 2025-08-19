@@ -101,7 +101,16 @@ class FriendsService {
     
     // Get current Gun peer URLs for direct connection
     const currentPeers = gunAuthService.gun?._.opt?.peers || {};
-    const peerUrls = Object.keys(currentPeers).filter(url => url && url !== 'undefined').slice(0, 3); // Include top 3 peers if any
+    let peerUrls = Object.keys(currentPeers).filter(url => url && url !== 'undefined').slice(0, 3);
+    
+    // Always include our relay server
+    const ourRelay = 'https://gun-relay-nchb.onrender.com/gun';
+    if (!peerUrls.includes(ourRelay)) {
+      peerUrls.push(ourRelay);
+    }
+    
+    // Ensure peerUrls is always an array (even if empty)
+    peerUrls = peerUrls || [];
     
     const inviteData = {
       from: user.pub,
