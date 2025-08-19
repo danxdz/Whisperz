@@ -6,6 +6,7 @@ import friendsService from './services/friendsService';
 import messageService from './services/messageService';
 import hybridP2PService from './services/hybridP2PService';
 import p2pDebugger from './utils/p2pDebugger';
+import onlineStatusManager from './utils/onlineStatusFix';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
@@ -344,18 +345,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         }
       });
 
-      // Update presence for each friend
+      // Online status is now handled by onlineStatusManager
+      // Subscribe to each friend's presence
       for (const friend of friendList) {
-        const presence = await friendsService.getFriendPresence(friend.publicKey);
-        setOnlineStatus(prev => new Map(prev).set(friend.publicKey, presence.isOnline));
-        
-        // Subscribe to presence updates
-        hybridGunService.subscribeToPresence(friend.publicKey, (presenceData) => {
-          const isOnline = presenceData?.status === 'online' && 
-                          presenceData?.lastSeen && 
-                          (Date.now() - presenceData.lastSeen) < 60000;
-          setOnlineStatus(prev => new Map(prev).set(friend.publicKey, isOnline));
-        });
+        onlineStatusManager.subscribeFriendPresence(friend.publicKey);
       }
     } catch (error) {
       // console.error('❌ Failed to load friends:', error);
@@ -390,10 +383,22 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         }
       }
       
+      // Start online status monitoring
+      onlineStatusManager.startMonitoring();
+      
+      // Subscribe to status changes
+      const unsubscribe = onlineStatusManager.addListener((statuses) => {
+        setOnlineStatus(statuses);
+      });
+      
       // Update own presence with peer ID
       const peerId = webrtcService.getPeerId();
       console.log('📍 Updating presence with peer ID:', peerId);
       hybridGunService.updatePresence('online', { peerId });
+      
+      return () => {
+        unsubscribe();
+      };
     };
     
     // Initial update
