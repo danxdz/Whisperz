@@ -876,10 +876,18 @@ class FriendsService {
       .get(publicKey)
       .once();
 
+    // Clean up Gun metadata if present
+    const cleanPresence = presence ? {
+      status: presence.status,
+      lastSeen: presence.lastSeen,
+      peerId: presence.peerId
+    } : null;
+
     return {
-      ...presence,
-      isOnline: presence?.status === 'online' && 
-                presence?.lastSeen > Date.now() - 60000 // Consider online if seen in last minute
+      ...cleanPresence,
+      isOnline: cleanPresence?.status === 'online' && 
+                cleanPresence?.lastSeen && 
+                (Date.now() - cleanPresence.lastSeen) < 60000 // Consider online if seen in last minute
     };
   }
 
