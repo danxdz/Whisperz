@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import gunAuthService from '../services/gunAuthService';
-import { loginRateLimiter } from '../utils/rateLimiter';
+// import { loginRateLimiter } from '../utils/rateLimiter'; // TODO: Add rate limiting
 import ThemeToggle from './ThemeToggle';
 
 /**
@@ -37,11 +37,11 @@ function LoginView({ onLogin, inviteCode }) {
     }
 
     // Check rate limiting
-    const rateCheck = loginRateLimiter.check(username);
-    if (!rateCheck.allowed) {
-      setError(rateCheck.error);
-      return;
-    }
+//     const rateCheck = loginRateLimiter.check(username);
+//     if (!rateCheck.allowed) {
+//       setError(rateCheck.error);
+//       return;
+//     }
 
     setLoading(true);
 
