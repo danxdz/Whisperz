@@ -490,7 +490,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         });
         messageService.markAsRead(selectedFriend.conversationId);
       }
-    );
+    ) : null;
 
     // Subscribe to typing indicators
     const unsubscribeTyping = messageService.subscribeToTyping(
