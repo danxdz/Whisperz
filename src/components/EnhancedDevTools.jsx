@@ -914,6 +914,34 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               Clear
             </button>
             
+            {/* Copy button */}
+            <button
+              onClick={() => {
+                const logsText = filteredLogs.map(log => 
+                  `[${log.time}] ${getLogIcon(log.type)} ${log.message}`
+                ).join('\n');
+                navigator.clipboard.writeText(logsText);
+                
+                // Show feedback
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅';
+                setTimeout(() => btn.textContent = originalText, 1000);
+              }}
+              style={{
+                padding: '4px 8px',
+                background: colors.bgTertiary,
+                border: `1px solid ${colors.borderColor}`,
+                borderRadius: '4px',
+                color: colors.textPrimary,
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+              title="Copy logs to clipboard"
+            >
+              📋
+            </button>
+            
             {/* Export button */}
             <button
               onClick={() => consoleCapture.download()}
@@ -926,6 +954,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 fontSize: '12px',
                 cursor: 'pointer'
               }}
+              title="Download logs as JSON"
             >
               💾
             </button>
