@@ -10,7 +10,7 @@ import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
-import { ThemeToggle, SwipeableChat, InviteModal } from './components';
+import { ThemeToggle, SwipeableChat, InviteModal, DevToolsWrapper } from './components';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
 import { useConnectionState } from './hooks/useConnectionState';
@@ -884,6 +884,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       onClose={() => setShowInvite(false)}
       inviteLink={inviteLink}
     />
+    
+    {/* Dev Tools */}
+    <DevToolsWrapper />
     </>
   );
 }

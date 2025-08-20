@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SimplifiedDevTools from './SimplifiedDevTools';
+import SimpleDevToolsButton from './SimpleDevToolsButton';
 import { APP_CONFIG } from '../config/app.config';
 
 /**
@@ -71,23 +72,15 @@ function DevToolsWrapper() {
 
   return (
     <>
-      {/* Show appropriate dev tools based on screen size */}
-      {isMobile ? (
-        // Only use gesture-based tools for mobile (no floating button)
-        isCompactScreen ? (
-          <MobileDevToolsCompact onOpenDevTools={toggleDevTools} />
-        ) : (
-          <MobileDevTools onOpenDevTools={toggleDevTools} />
-        )
-      ) : (
-        <SimpleDevToolsButton 
-          onClick={toggleDevTools}
-          isOpen={isDevToolsOpen}
-        />
-      )}
+      {/* Simple floating button for all devices */}
+      <SimpleDevToolsButton 
+        onClick={toggleDevTools}
+        isOpen={isDevToolsOpen}
+      />
       
+      {/* Use the new SimplifiedDevTools component */}
       {isDevToolsOpen && (
-        <EnhancedDevTools 
+        <SimplifiedDevTools 
           isVisible={isDevToolsOpen}
           onClose={() => setIsDevToolsOpen(false)}
         />
