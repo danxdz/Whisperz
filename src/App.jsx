@@ -288,7 +288,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [onlineStatus, setOnlineStatus] = useState(new Map());
+  const [onlineStatus, setOnlineStatus] = useState({});
   const [typingStatus, setTypingStatus] = useState(new Map());
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
@@ -347,39 +347,19 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         }
       });
 
-      // Subscribe to each friend's presence with real-time updates
+      // Initial presence check for all friends
       for (const friend of friendList) {
-        const friendKey = friend.publicKey;
-        
-        // Subscribe to Gun presence updates directly
-        gunAuthService.gun
-          .get('presence')
-          .get(friendKey)
-          .on((data) => {
-            if (data && typeof data === 'object') {
-              // Use the most recent timestamp available
-              const lastSeenValue = data.lastSeen || data.timestamp || Date.now();
-              const isOnline = data.status === 'online' && 
-                             lastSeenValue && 
-                             (Date.now() - lastSeenValue) < 300000; // 5 minutes
-              
-              // Update the onlineStatus state for this friend
-              setOnlineStatus(prev => {
-                const newStatus = new Map(prev);
-                newStatus.set(friendKey, { 
-                  online: isOnline, 
-                  lastSeen: lastSeenValue,
-                  status: data.status 
-                });
-                return newStatus;
-              });
-              
-              // Debug log
-              if (data.status === 'online') {
-                console.log(`Friend ${friendKey.substring(0, 8)}... is now ${isOnline ? 'ONLINE' : 'OFFLINE (timeout)'}`);
-              }
+        const presence = await friendsService.getFriendPresence(friend.publicKey);
+        if (presence) {
+          setOnlineStatus(prev => ({
+            ...prev,
+            [friend.publicKey]: {
+              online: presence.isOnline,
+              lastSeen: presence.lastSeen,
+              status: presence.status
             }
-          });
+          }));
+        }
       }
     } catch (error) {
       // console.error('❌ Failed to load friends:', error);
