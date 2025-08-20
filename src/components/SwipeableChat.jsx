@@ -32,6 +32,13 @@ function SwipeableChat({
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
+  // Debug: Log what mobile receives
+  useEffect(() => {
+    if (isMobile) {
+      console.log('📱 Mobile SwipeableChat received onlineStatus:', onlineStatus);
+    }
+  }, [onlineStatus, isMobile]);
+
   // Helper function to format time ago
   const getTimeAgo = (timestamp) => {
     if (!timestamp) return 'unknown';
@@ -364,7 +371,16 @@ function SwipeableChat({
               overflowY: 'auto',
               padding: '16px'
             }}>
-              {friends.map(friend => (
+              {friends.map(friend => {
+                // Debug mobile rendering
+                const statusData = onlineStatus[friend.publicKey];
+                console.log(`📱 Mobile rendering ${friend.nickname}:`, {
+                  statusData,
+                  lastSeen: statusData?.lastSeen,
+                  formatted: statusData?.lastSeen ? getTimeAgo(statusData.lastSeen) : 'no lastSeen'
+                });
+                
+                return (
                 <div
                   key={friend.publicKey}
                   onClick={() => {
@@ -433,7 +449,7 @@ function SwipeableChat({
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Bottom Actions */}
