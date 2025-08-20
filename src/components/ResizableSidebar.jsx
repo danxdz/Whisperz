@@ -154,18 +154,19 @@ function ResizableSidebar({
 
   const renderFriend = (friend) => {
     const friendKey = friend.publicKey;
-    const isOnline = onlineStatus[friendKey]?.online === true;
+    const statusData = onlineStatus[friendKey];
+    const isOnline = statusData?.online === true;
     const isSelected = selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
     
-    // Debug: Log the status data
-    if (!isOnline && onlineStatus[friendKey]) {
-      console.log(`Friend ${friend.nickname} status:`, {
-        online: onlineStatus[friendKey].online,
-        lastSeen: onlineStatus[friendKey].lastSeen,
-        formatted: onlineStatus[friendKey].lastSeen ? getTimeAgo(onlineStatus[friendKey].lastSeen) : 'no timestamp'
-      });
-    }
+    // Debug: Always log to see what we have
+    console.log(`🔍 Rendering ${friend.nickname}:`, {
+      friendKey,
+      statusData,
+      isOnline,
+      lastSeenValue: statusData?.lastSeen,
+      formatted: statusData?.lastSeen ? getTimeAgo(statusData.lastSeen) : 'no lastSeen'
+    });
 
     if (isMinimized) {
       // Minimized view - just avatar
@@ -301,8 +302,8 @@ function ResizableSidebar({
                 color: isOnline ? '#43e97b' : 'rgba(255, 255, 255, 0.4)'
               }}>
                 {isOnline ? 'Online' : (
-                  onlineStatus[friendKey]?.lastSeen ? 
-                    `Last seen ${getTimeAgo(onlineStatus[friendKey].lastSeen)}` : 
+                  statusData?.lastSeen ? 
+                    `Last seen ${getTimeAgo(statusData.lastSeen)}` : 
                     'Offline'
                 )}
               </div>
