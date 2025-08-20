@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import EnhancedDevTools from './EnhancedDevTools';
-import SimpleDevToolsButton from './SimpleDevToolsButton';
 import { APP_CONFIG } from '../config/app.config';
 
 /**
@@ -72,12 +71,7 @@ function DevToolsWrapper() {
 
   return (
     <>
-      {/* Simple floating button for all devices */}
-      <SimpleDevToolsButton 
-        onClick={toggleDevTools}
-        isOpen={isDevToolsOpen}
-      />
-      
+      {/* Removed floating button - DevTools are accessed from top menu */}
       {/* Use the EnhancedDevTools component */}
       {isDevToolsOpen && (
         <EnhancedDevTools 
