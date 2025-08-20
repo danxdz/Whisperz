@@ -347,20 +347,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         }
       });
 
-      // Initial presence check for all friends
-      for (const friend of friendList) {
-        const presence = await friendsService.getFriendPresence(friend.publicKey);
-        if (presence) {
-          setOnlineStatus(prev => ({
-            ...prev,
-            [friend.publicKey]: {
-              online: presence.isOnline,
-              lastSeen: presence.lastSeen,
-              status: presence.status
-            }
-          }));
-        }
-      }
+      // Initial presence check will be handled by the useEffect subscription
     } catch (error) {
       // console.error('❌ Failed to load friends:', error);
     } finally {
@@ -445,6 +432,59 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       // clearInterval(refreshInterval); // Removed - no longer needed
     };
   }, []);
+
+  // Subscribe to friends' presence updates in real-time
+  useEffect(() => {
+    if (!friends || friends.length === 0 || !gunAuthService.gun) return;
+
+    const subscriptions = [];
+    console.log('🔔 Setting up presence subscriptions for', friends.length, 'friends');
+    
+    // Subscribe to each friend's presence via Gun
+    friends.forEach(friend => {
+      const sub = gunAuthService.gun
+        .get('presence')
+        .get(friend.publicKey)
+        .on((data, key) => {
+          if (data && typeof data === 'object' && data.status) {
+            // Use the most recent timestamp
+            const lastSeenValue = data.lastSeen || data.timestamp || Date.now();
+            const isOnline = data.status === 'online' && 
+                           lastSeenValue && 
+                           (Date.now() - lastSeenValue) < 300000; // 5 minutes
+            
+            // Update state - this will trigger re-render
+            setOnlineStatus(prev => {
+              const prevStatus = prev[friend.publicKey]?.online;
+              // Only update if status changed
+              if (prevStatus !== isOnline) {
+                console.log(`Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
+                return {
+                  ...prev,
+                  [friend.publicKey]: { 
+                    online: isOnline,
+                    // Only track lastSeen when offline
+                    lastSeen: isOnline ? null : lastSeenValue,
+                    status: data.status 
+                  }
+                };
+              }
+              return prev;
+            });
+          }
+        });
+      
+      subscriptions.push(sub);
+    });
+
+    // Cleanup Gun subscriptions
+    return () => {
+      console.log('🔕 Cleaning up presence subscriptions');
+      subscriptions.forEach(sub => {
+        if (sub && sub.off) sub.off();
+      });
+    };
+  }, [friends]); // Re-subscribe when friends list changes
 
   // Load messages when friend is selected
   useEffect(() => {
