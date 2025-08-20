@@ -31,8 +31,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   });
   const [selectedUser, setSelectedUser] = useState(null);
   
-  // P2P Tab state
-  const [p2pLogs, setP2PLogs] = useState([]);
+  // P2P Tab state (removed - logs go to console)
   
   // Console logs state
   const [consoleLogs, setConsoleLogs] = useState([]);
@@ -77,19 +76,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     return () => unsubscribe();
   }, [isVisible]);
   
-  // Update P2P logs when P2P tab is active
-  useEffect(() => {
-    if (activeTab === 'p2p' && isVisible) {
-      setP2PLogs(p2pDebugger.logs);
-      
-      // Auto-refresh logs every second when on P2P tab
-      const interval = setInterval(() => {
-        setP2PLogs([...p2pDebugger.logs]);
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [activeTab, isVisible]);
+  // P2P logs now go directly to console - no need to track them
 
   // Auto-scroll console logs
   useEffect(() => {
@@ -1044,25 +1031,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   borderRadius: '4px',
                   color: '#fff',
                   fontSize: '11px',
-                  cursor: 'pointer',
-                  marginRight: '8px'
-                }}
-              >
-                Run Diagnostics
-              </button>
-              <button
-                onClick={() => setP2PLogs(p2pDebugger.logs)}
-                style={{
-                  padding: '4px 8px',
-                  background: colors.bgTertiary,
-                  border: `1px solid ${colors.borderColor}`,
-                  borderRadius: '4px',
-                  color: colors.textPrimary,
-                  fontSize: '11px',
                   cursor: 'pointer'
                 }}
               >
-                View Logs ({p2pLogs.length})
+                Run Diagnostics
               </button>
             </div>
           </div>
