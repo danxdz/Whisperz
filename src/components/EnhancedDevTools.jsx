@@ -1036,7 +1036,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div>Connected Peers: {networkStats.connectedPeers}</div>
             <div style={{ marginTop: '8px' }}>
               <button
-                onClick={() => p2pDebugger.diagnose()}
+                onClick={() => p2pDebugger.runFullDiagnostic()}
                 style={{
                   padding: '4px 8px',
                   background: colors.primary,
