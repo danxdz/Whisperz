@@ -464,6 +464,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 if (prevStatus !== isOnline) {
                   console.log(`Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
                 }
+                console.log(`Updating ${friend.nickname} status:`, {
+                  online: isOnline,
+                  lastSeen: lastSeenValue,
+                  status: data.status
+                });
                 return {
                   ...prev,
                   [friend.publicKey]: { 

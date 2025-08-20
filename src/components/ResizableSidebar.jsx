@@ -157,6 +157,15 @@ function ResizableSidebar({
     const isOnline = onlineStatus[friendKey]?.online === true;
     const isSelected = selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
+    
+    // Debug: Log the status data
+    if (!isOnline && onlineStatus[friendKey]) {
+      console.log(`Friend ${friend.nickname} status:`, {
+        online: onlineStatus[friendKey].online,
+        lastSeen: onlineStatus[friendKey].lastSeen,
+        formatted: onlineStatus[friendKey].lastSeen ? getTimeAgo(onlineStatus[friendKey].lastSeen) : 'no timestamp'
+      });
+    }
 
     if (isMinimized) {
       // Minimized view - just avatar
