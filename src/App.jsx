@@ -357,20 +357,27 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           .get(friendKey)
           .on((data) => {
             if (data && typeof data === 'object') {
+              // Fix Gun timestamp issue - if lastSeen is too large, use timestamp
+              const lastSeenValue = data.lastSeen > 4102444800000 ? data.timestamp : data.lastSeen;
               const isOnline = data.status === 'online' && 
-                             data.lastSeen && 
-                             (Date.now() - data.lastSeen) < 300000; // 5 minutes
+                             lastSeenValue && 
+                             (Date.now() - lastSeenValue) < 300000; // 5 minutes
               
               // Update the onlineStatus state for this friend
               setOnlineStatus(prev => {
                 const newStatus = new Map(prev);
                 newStatus.set(friendKey, { 
                   online: isOnline, 
-                  lastSeen: data.lastSeen,
+                  lastSeen: lastSeenValue,
                   status: data.status 
                 });
                 return newStatus;
               });
+              
+              // Debug log
+              if (data.status === 'online') {
+                console.log(`Friend ${friendKey.substring(0, 8)}... is now ${isOnline ? 'ONLINE' : 'OFFLINE (timeout)'}`);
+              }
             }
           });
       }

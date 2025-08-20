@@ -880,11 +880,18 @@ class FriendsService {
       .once();
 
     // Clean up Gun metadata if present
-    const cleanPresence = presence ? {
-      status: presence.status,
-      lastSeen: presence.lastSeen,
-      peerId: presence.peerId
-    } : null;
+    // Check if lastSeen looks like a Gun timestamp (way too large)
+    let cleanPresence = null;
+    if (presence) {
+      // If lastSeen is a Gun timestamp (> year 2100 in ms), use the timestamp field instead
+      const lastSeenValue = presence.lastSeen > 4102444800000 ? presence.timestamp : presence.lastSeen;
+      
+      cleanPresence = {
+        status: presence.status,
+        lastSeen: lastSeenValue,
+        peerId: presence.peerId
+      };
+    }
 
     // Debug log for presence checks
     const isOnline = cleanPresence?.status === 'online' && 
@@ -892,7 +899,7 @@ class FriendsService {
                      (Date.now() - cleanPresence.lastSeen) < 300000;
     
     if (cleanPresence) {
-      const timeSince = Date.now() - cleanPresence.lastSeen;
+      const timeSince = cleanPresence.lastSeen ? Date.now() - cleanPresence.lastSeen : Infinity;
       console.log(`Friend ${publicKey.substring(0, 8)}... presence:`, {
         status: cleanPresence.status,
         timeSinceLastSeen: timeSince,
