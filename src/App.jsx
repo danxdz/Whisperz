@@ -479,6 +479,17 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   }
                 };
               }
+              // Even if no change, preserve existing data
+              if (!prev[friend.publicKey]) {
+                return {
+                  ...prev,
+                  [friend.publicKey]: { 
+                    online: isOnline,
+                    lastSeen: lastSeenValue,
+                    status: data.status 
+                  }
+                };
+              }
               return prev;
             });
           }

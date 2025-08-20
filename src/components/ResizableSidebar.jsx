@@ -48,6 +48,11 @@ function ResizableSidebar({
 
   // Use the passed onlineStatus instead of polling locally
   // The parent component (App.jsx) already handles real-time updates
+  
+  // Debug: Log what we receive
+  useEffect(() => {
+    console.log('📊 ResizableSidebar received onlineStatus:', onlineStatus);
+  }, [onlineStatus]);
 
   // Load pending invites
   useEffect(() => {
