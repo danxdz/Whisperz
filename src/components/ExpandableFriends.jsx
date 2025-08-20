@@ -89,16 +89,12 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
 
   // Filter and sort friends
   const onlineFriends = friends.filter(friend => {
-    const status = onlineStatus instanceof Map ? 
-      onlineStatus.get(friend.pub || friend.publicKey) : 
-      onlineStatus[friend.pub || friend.publicKey];
-    return status?.online;
+    const status = onlineStatus[friend.publicKey];
+    return status?.online === true;
   });
   
   const offlineFriends = friends.filter(friend => {
-    const status = onlineStatus instanceof Map ? 
-      onlineStatus.get(friend.pub || friend.publicKey) : 
-      onlineStatus[friend.pub || friend.publicKey];
+    const status = onlineStatus[friend.publicKey];
     return !status?.online;
   });
 

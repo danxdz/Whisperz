@@ -372,6 +372,59 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     }
   };
 
+  // Discover all registered users
+  const discoverAllUsers = async () => {
+    setDiscoverLoading(true);
+    const discoveredUsers = [];
+    
+    try {
+      const friends = await friendsService.getFriends();
+      const friendKeys = friends.map(f => f.publicKey);
+      const currentUser = gunAuthService.getCurrentUser();
+      
+      // Check presence space
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000); // Give time to collect users
+        
+        gunAuthService.gun.get('presence').map().once((data, key) => {
+          if (data && key && key !== currentUser?.pub && !friendKeys.includes(key)) {
+            const isOnline = data.status === 'online' && 
+                           data.lastSeen && 
+                           (Date.now() - data.lastSeen) < 300000;
+            
+            discoveredUsers.push({
+              publicKey: key,
+              nickname: data.nickname || 'Unknown User',
+              status: data.status,
+              lastSeen: data.lastSeen,
+              isOnline: isOnline
+            });
+          }
+        });
+      });
+      
+      setDiscoverUsers(discoveredUsers);
+    } catch (error) {
+      console.error('Failed to discover users:', error);
+    } finally {
+      setDiscoverLoading(false);
+    }
+  };
+
+  // Add user as friend
+  const addAsFriend = async (user) => {
+    try {
+      await friendsService.addFriend(user.publicKey, user.nickname);
+      alert(`Added ${user.nickname} as friend!`);
+      // Remove from discover list
+      setDiscoverUsers(prev => prev.filter(u => u.publicKey !== user.publicKey));
+      // Reload friends
+      loadUsers();
+    } catch (error) {
+      alert(`Failed to add friend: ${error.message}`);
+    }
+  };
+
   // Missing functions for Social tab
   const generateInvite = handleGenerateInvite; // Use existing function
   
@@ -758,6 +811,96 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           </div>
         </div>
         
+        {/* Discover Users Section */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px'
+          }}>
+            <h4 style={{ margin: 0, fontSize: '14px', color: colors.primary }}>
+              Discover Users
+            </h4>
+            <button
+              onClick={discoverAllUsers}
+              disabled={discoverLoading}
+              style={{
+                padding: '4px 8px',
+                background: colors.primary,
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '11px',
+                cursor: discoverLoading ? 'not-allowed' : 'pointer',
+                opacity: discoverLoading ? 0.5 : 1
+              }}
+            >
+              {discoverLoading ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+          
+          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {discoverUsers.length === 0 ? (
+              <div style={{ 
+                color: colors.textMuted, 
+                fontSize: '12px',
+                textAlign: 'center',
+                padding: '10px'
+              }}>
+                {discoverLoading ? 'Searching for users...' : 'Click Search to find users'}
+              </div>
+            ) : (
+              discoverUsers.map(user => (
+                <div key={user.publicKey} style={{
+                  padding: '8px',
+                  background: colors.bgSecondary,
+                  borderRadius: '4px',
+                  marginBottom: '4px',
+                  fontSize: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ color: colors.textPrimary, fontWeight: '500' }}>
+                      {user.nickname}
+                    </div>
+                    <div style={{ color: colors.textMuted, fontSize: '10px' }}>
+                      {user.publicKey.substring(0, 20)}...
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    {user.isOnline && (
+                      <span style={{ color: colors.success }}>🟢</span>
+                    )}
+                    <button
+                      onClick={() => addAsFriend(user)}
+                      style={{
+                        padding: '2px 6px',
+                        background: colors.success,
+                        border: 'none',
+                        borderRadius: '3px',
+                        color: '#fff',
+                        fontSize: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         {/* Selected User Details */}
         {selectedUser && (
           <div style={{
