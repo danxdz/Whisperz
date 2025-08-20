@@ -17,10 +17,10 @@ class MessageService {
       this.handleIncomingMessage(peerId, data);
     });
 
-    // Check for offline messages periodically
+    // Check for offline messages less frequently
     setInterval(() => {
       this.checkOfflineMessages();
-    }, 5000);
+    }, 30000); // Every 30 seconds instead of 5
   }
 
   // Send message with WebRTC first, Gun fallback

@@ -24,11 +24,12 @@ class OnlineStatusManager {
     // Check friends status
     this.checkAllFriendsStatus();
     
-    // Set up periodic checks
-    this.checkInterval = setInterval(() => {
-      this.updateOwnStatus();
-      this.checkAllFriendsStatus();
-    }, 5000); // Every 5 seconds
+    // DISABLED - No need for periodic status updates
+    // Status is updated on login, logout, and visibility change only
+    // this.checkInterval = setInterval(() => {
+    //   this.updateOwnStatus();
+    //   this.checkAllFriendsStatus();
+    // }, 5000);
     
     // Update on visibility change
     document.addEventListener('visibilitychange', () => {

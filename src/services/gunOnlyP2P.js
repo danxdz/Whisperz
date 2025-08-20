@@ -78,8 +78,9 @@ class GunOnlyP2P {
       // Broadcasting presence
     };
 
+    // Broadcast presence once on initialization
     broadcastPresence();
-    setInterval(broadcastPresence, 30000);
+    // No need for periodic broadcasting - only on login/visibility change
   }
 
   // Get list of connected Gun peers
