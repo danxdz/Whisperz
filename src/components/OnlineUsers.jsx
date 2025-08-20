@@ -6,8 +6,7 @@ import hybridGunService from '../services/hybridGunService';
  * Shows only online friends with real-time status updates
  * Responsive design for small screens (4-inch and up)
  */
-function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
-  const [onlineStatus, setOnlineStatus] = useState({});
+function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onlineStatus = {} }) {
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCompact, setIsCompact] = useState(window.innerWidth <= 375);
@@ -22,34 +21,8 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Monitor friends' online status
-  useEffect(() => {
-    if (!friends || friends.length === 0) return;
-
-    const checkPresence = async () => {
-      const status = {};
-      
-      for (const friend of friends) {
-        try {
-          const presence = await hybridGunService.getPresence(friend.publicKey);
-          status[friend.publicKey] = presence;
-        } catch (error) {
-          // console.error(`Failed to get presence for ${friend.nickname}:`, error);
-          status[friend.publicKey] = { online: false };
-        }
-      }
-      
-      setOnlineStatus(status);
-    };
-
-    // Initial check
-    checkPresence();
-
-    // Set up interval for periodic checks
-    const interval = setInterval(checkPresence, 5000); // Check every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [friends]);
+  // Use the passed onlineStatus instead of polling locally
+  // The parent component should handle real-time updates
 
   // Filter friends based on online status and search
   const filteredFriends = friends.filter(friend => {
@@ -223,8 +196,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
           sortedFriends.map((friend) => {
             const isOnline = onlineStatus[friend.publicKey]?.online;
             const presence = onlineStatus[friend.publicKey];
-            const isSelected = selectedFriend?.pub === (friend.publicKey) || 
-                              selectedFriend?.publicKey === (friend.publicKey);
+            const isSelected = selectedFriend?.publicKey === friend.publicKey;
             const lastSeen = presence?.lastActive 
               ? new Date(presence.lastActive).toLocaleTimeString([], { 
                   hour: '2-digit', 

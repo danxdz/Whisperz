@@ -14,36 +14,15 @@ function CollapsibleSidebar({
   onFriendsUpdate, 
   onGenerateInvite,
   userNickname,
-  onLogout 
+  onLogout,
+  onlineStatus = {} // Accept onlineStatus prop with default
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [onlineStatus, setOnlineStatus] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [showActions, setShowActions] = useState(null);
 
-  // Monitor friends' online status
-  useEffect(() => {
-    if (!friends || friends.length === 0) return;
-
-    const checkPresence = async () => {
-      const status = {};
-      
-      for (const friend of friends) {
-        try {
-          const presence = await hybridGunService.getPresence(friend.publicKey);
-          status[friend.publicKey] = presence;
-        } catch (error) {
-          status[friend.publicKey] = { online: false };
-        }
-      }
-      
-      setOnlineStatus(status);
-    };
-
-    checkPresence();
-    const interval = setInterval(checkPresence, 5000);
-    return () => clearInterval(interval);
-  }, [friends]);
+  // Use the passed onlineStatus instead of polling locally
+  // The parent component should handle real-time updates
 
   const onlineFriends = friends.filter(friend => 
     onlineStatus[friend.publicKey]?.online
@@ -94,7 +73,7 @@ function CollapsibleSidebar({
   const renderFriend = (friend) => {
     const friendKey = friend.publicKey;
     const isOnline = onlineStatus[friendKey]?.online === true;
-    const isSelected = selectedFriend?.pub === friendKey || selectedFriend?.publicKey === friendKey;
+    const isSelected = selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
 
     if (isCollapsed) {

@@ -15,13 +15,12 @@ function ResizableSidebar({
   onGenerateInvite,
   userNickname,
   onLogout,
-  onlineStatus: passedOnlineStatus
+  onlineStatus
 }) {
   const [width, setWidth] = useState(280);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [onlineStatus, setOnlineStatus] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [showActions, setShowActions] = useState(null);
   const sidebarRef = useRef(null);
@@ -30,29 +29,8 @@ function ResizableSidebar({
   const MAX_WIDTH = 500;
   const MINIMIZED_WIDTH = 60;
 
-  // Monitor friends' online status
-  useEffect(() => {
-    if (!friends || friends.length === 0) return;
-
-    const checkPresence = async () => {
-      const status = {};
-      
-      for (const friend of friends) {
-        try {
-          const presence = await hybridGunService.getPresence(friend.publicKey);
-          status[friend.publicKey] = presence;
-        } catch (error) {
-          status[friend.publicKey] = { online: false };
-        }
-      }
-      
-      setOnlineStatus(status);
-    };
-
-    checkPresence();
-    const interval = setInterval(checkPresence, 5000);
-    return () => clearInterval(interval);
-  }, [friends]);
+  // Use the passed onlineStatus instead of polling locally
+  // The parent component (App.jsx) already handles real-time updates
 
   // Handle resize
   useEffect(() => {
@@ -143,7 +121,7 @@ function ResizableSidebar({
   const renderFriend = (friend) => {
     const friendKey = friend.publicKey;
     const isOnline = onlineStatus[friendKey]?.online === true;
-    const isSelected = selectedFriend?.pub === friendKey || selectedFriend?.publicKey === friendKey;
+    const isSelected = selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
 
     if (isMinimized) {

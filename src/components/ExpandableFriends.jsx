@@ -108,8 +108,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
 
   const renderFriend = (friend, isOnline) => {
     const friendKey = friend.publicKey;
-    const isSelected = selectedFriend?.pub === friendKey || 
-                      selectedFriend?.publicKey === friendKey;
+    const isSelected = selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
 
     return (
