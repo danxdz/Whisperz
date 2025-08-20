@@ -380,22 +380,22 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         }
       }
       
-      // Start online status monitoring
-      onlineStatusManager.startMonitoring();
+      // Disabled - using Gun.js subscriptions instead
+      // onlineStatusManager.startMonitoring();
       
       // Subscribe to status changes
-      const unsubscribe = onlineStatusManager.addListener((statuses) => {
-        setOnlineStatus(statuses);
-      });
+      // const unsubscribe = onlineStatusManager.addListener((statuses) => {
+      //   setOnlineStatus(statuses);
+      // });
       
       // Update own presence with peer ID
       const peerId = webrtcService.getPeerId();
       console.log('📍 Updating presence with peer ID:', peerId);
       hybridGunService.updatePresence('online', { peerId });
       
-      return () => {
-        unsubscribe();
-      };
+      // return () => {
+      //   unsubscribe();
+      // };
     };
     
     // Initial update
@@ -439,6 +439,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
     const subscriptions = [];
     // Setting up presence subscriptions for friends
+    
+    // Don't clear existing data when re-subscribing
+    // This preserves lastSeen values during re-renders
     
     // Subscribe to each friend's presence via Gun
     friends.forEach(friend => {
@@ -505,7 +508,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         if (sub && sub.off) sub.off();
       });
     };
-  }, [friends.length, friends.map(f => f.publicKey).join(',')]); // Only re-subscribe when friends actually change
+  }, [JSON.stringify(friends.map(f => f.publicKey).sort())]); // Only re-subscribe when friend list actually changes
 
   // Load messages when friend is selected
   useEffect(() => {
@@ -574,7 +577,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
     return () => {
       // clearInterval(refreshInterval); // Removed
-      unsubscribe();
+      // unsubscribe(); // Disabled - was interfering with Gun subscriptions
       unsubscribeTyping();
     };
   }, [selectedFriend, user]);
