@@ -178,8 +178,21 @@ class WebRTCService {
       return;
     }
     
-    debugLogger.webrtc('Adding ICE candidate from:', from);
-    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    try {
+      debugLogger.webrtc('Adding ICE candidate from:', from);
+      // Check if candidate is already an RTCIceCandidate object or needs to be created
+      if (candidate instanceof RTCIceCandidate) {
+        await pc.addIceCandidate(candidate);
+      } else if (candidate && typeof candidate === 'object') {
+        // Create new RTCIceCandidate from plain object
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } else {
+        debugLogger.error('Invalid ICE candidate format:', candidate);
+      }
+    } catch (error) {
+      debugLogger.error('Failed to add ICE candidate:', error.message);
+      // Don't throw - ICE candidates can fail and that's okay
+    }
   }
 
   // Setup peer connection handlers
@@ -187,9 +200,15 @@ class WebRTCService {
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         debugLogger.webrtc('Sending ICE candidate to:', peerId);
+        // Send only the serializable properties of the ICE candidate
         this.sendSignal(peerId, {
           type: 'ice-candidate',
-          candidate: event.candidate,
+          candidate: {
+            candidate: event.candidate.candidate,
+            sdpMLineIndex: event.candidate.sdpMLineIndex,
+            sdpMid: event.candidate.sdpMid,
+            usernameFragment: event.candidate.usernameFragment
+          },
           from: this.peerId,
           timestamp: Date.now()
         });
