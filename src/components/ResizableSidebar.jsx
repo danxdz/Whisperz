@@ -39,10 +39,10 @@ function ResizableSidebar({
       
       for (const friend of friends) {
         try {
-          const presence = await hybridGunService.getPresence(friend.pub || friend.publicKey);
-          status[friend.pub || friend.publicKey] = presence;
+          const presence = await hybridGunService.getPresence(friend.publicKey);
+          status[friend.publicKey] = presence;
         } catch (error) {
-          status[friend.pub || friend.publicKey] = { online: false };
+          status[friend.publicKey] = { online: false };
         }
       }
       
@@ -86,7 +86,7 @@ function ResizableSidebar({
   }, [isResizing]);
 
   const onlineFriends = friends.filter(friend => 
-    onlineStatus[friend.pub || friend.publicKey]?.online
+    onlineStatus[friend.publicKey]?.online
   );
 
   const filteredFriends = friends.filter(friend =>
@@ -99,7 +99,7 @@ function ResizableSidebar({
     if (!confirmRemove) return;
 
     try {
-      await friendsService.removeFriend(friend.pub || friend.publicKey, false);
+      await friendsService.removeFriend(friend.publicKey, false);
       alert(`${friend.nickname} has been removed from your friends.`);
       if (onFriendsUpdate) onFriendsUpdate();
     } catch (error) {
@@ -120,7 +120,7 @@ function ResizableSidebar({
     if (!confirmBlock) return;
 
     try {
-      await friendsService.removeFriend(friend.pub || friend.publicKey, true);
+      await friendsService.removeFriend(friend.publicKey, true);
       alert(`${friend.nickname} has been blocked.`);
       if (onFriendsUpdate) onFriendsUpdate();
     } catch (error) {
@@ -141,8 +141,8 @@ function ResizableSidebar({
   };
 
   const renderFriend = (friend) => {
-    const friendKey = friend.pub || friend.publicKey;
-    const isOnline = onlineStatus[friendKey]?.online;
+    const friendKey = friend.publicKey;
+    const isOnline = onlineStatus[friendKey]?.online === true;
     const isSelected = selectedFriend?.pub === friendKey || selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
 

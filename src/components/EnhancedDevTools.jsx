@@ -392,13 +392,27 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                            data.lastSeen && 
                            (Date.now() - data.lastSeen) < 300000;
             
-            discoveredUsers.push({
-              publicKey: key,
-              nickname: data.nickname || 'Unknown User',
-              status: data.status,
-              lastSeen: data.lastSeen,
-              isOnline: isOnline
-            });
+            // Try to get username if no nickname
+            if (!data.nickname) {
+              gunAuthService.gun.user(key).once((userData) => {
+                const displayName = data.nickname || userData?.alias || key.substring(0, 8) + '...';
+                discoveredUsers.push({
+                  publicKey: key,
+                  nickname: displayName,
+                  status: data.status,
+                  lastSeen: data.lastSeen,
+                  isOnline: isOnline
+                });
+              });
+            } else {
+              discoveredUsers.push({
+                publicKey: key,
+                nickname: data.nickname,
+                status: data.status,
+                lastSeen: data.lastSeen,
+                isOnline: isOnline
+              });
+            }
           }
         });
       });
