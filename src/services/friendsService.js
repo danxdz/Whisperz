@@ -458,6 +458,17 @@ class FriendsService {
     // Store in local map
     this.friends.set(publicKey, friendData);
 
+    // Track as pending invite until accepted
+    const inviteId = `invite_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    await new Promise((resolve) => {
+      gunAuthService.user.get('pending_invites').get(inviteId).put({
+        publicKey,
+        nickname,
+        status: 'pending',
+        sentAt: Date.now()
+      }, resolve);
+    });
+
     // Create friend request in PUBLIC space (not user's private space)
     // This is readable by the other user when they check for friend requests
     const myData = {
@@ -919,6 +930,51 @@ class FriendsService {
     gunAuthService.user.get('friends').put(null);
     this.friends.clear();
     this.notifyFriendListeners('cleared', {});
+  }
+
+  // Get pending invites (invites we've sent that haven't been accepted)
+  async getPendingInvites() {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) return [];
+
+    const pendingInvites = [];
+    
+    return new Promise((resolve) => {
+      gunAuthService.user.get('pending_invites').map().once((data, key) => {
+        if (data && data.publicKey && data.status === 'pending') {
+          pendingInvites.push({
+            id: key,
+            publicKey: data.publicKey,
+            nickname: data.nickname || 'Unknown',
+            sentAt: data.sentAt || Date.now()
+          });
+        }
+      });
+      
+      // Give it time to load
+      setTimeout(() => resolve(pendingInvites), 500);
+    });
+  }
+
+  // Cancel a pending invite
+  async cancelInvite(publicKey) {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Remove from our pending invites
+    await new Promise((resolve) => {
+      gunAuthService.user.get('pending_invites').map().once((data, key) => {
+        if (data && data.publicKey === publicKey) {
+          gunAuthService.user.get('pending_invites').get(key).put(null);
+        }
+      });
+      setTimeout(resolve, 100);
+    });
+
+    // Remove the friend request from the other user
+    gunAuthService.gun.get('friendRequests').get(publicKey).get(user.pub).put(null);
+    
+    return true;
   }
 }
 
