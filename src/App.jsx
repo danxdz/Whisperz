@@ -438,7 +438,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     if (!friends || friends.length === 0 || !gunAuthService.gun) return;
 
     const subscriptions = [];
-    console.log('🔔 Setting up presence subscriptions for', friends.length, 'friends');
+    // Setting up presence subscriptions for friends
     
     // Subscribe to each friend's presence via Gun
     friends.forEach(friend => {
@@ -480,17 +480,17 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
     // Cleanup Gun subscriptions
     return () => {
-      console.log('🔕 Cleaning up presence subscriptions');
+      // Cleaning up presence subscriptions
       subscriptions.forEach(sub => {
         if (sub && sub.off) sub.off();
       });
     };
-  }, [friends]); // Re-subscribe when friends list changes
+  }, [friends.length, friends.map(f => f.publicKey).join(',')]); // Only re-subscribe when friends actually change
 
   // Load messages when friend is selected
   useEffect(() => {
     if (!selectedFriend || !selectedFriend.conversationId) {
-      console.log('⚠️ No friend selected or missing conversationId');
+      // No friend selected or missing conversationId
       setMessages([]);
       return;
     }

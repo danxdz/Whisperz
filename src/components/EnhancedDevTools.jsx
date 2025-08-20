@@ -190,7 +190,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         
         // Wait a bit for data to load
         setTimeout(() => {
-          console.log('📊 Total presence checks:', checkCount);
+          // Total presence checks: checkCount
           resolve();
         }, 2000);
       });
