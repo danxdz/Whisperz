@@ -357,8 +357,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           .get(friendKey)
           .on((data) => {
             if (data && typeof data === 'object') {
-              // Fix Gun timestamp issue - if lastSeen is too large, use timestamp
-              const lastSeenValue = data.lastSeen > 4102444800000 ? data.timestamp : data.lastSeen;
+              // Use the most recent timestamp available
+              const lastSeenValue = data.lastSeen || data.timestamp || Date.now();
               const isOnline = data.status === 'online' && 
                              lastSeenValue && 
                              (Date.now() - lastSeenValue) < 300000; // 5 minutes

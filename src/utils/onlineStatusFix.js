@@ -93,14 +93,15 @@ class OnlineStatusManager {
         return false;
       }
       
-      // Check if online (seen in last 30 seconds)
+      // Check if online (seen in last 5 minutes)
       const isOnline = presence.status === 'online' && 
                       presence.lastSeen && 
-                      (Date.now() - presence.lastSeen) < 30000;
+                      (Date.now() - presence.lastSeen) < 300000; // 5 minutes, not 30 seconds
       
       this.onlineUsers.set(publicKey, isOnline);
       
-      console.log(`👤 Friend ${publicKey.substring(0, 8)}... is ${isOnline ? 'online' : 'offline'}`, presence);
+      // Only log significant changes, not every check
+      // console.log(`👤 Friend ${publicKey.substring(0, 8)}... is ${isOnline ? 'online' : 'offline'}`, presence);
       
       return isOnline;
     } catch (error) {

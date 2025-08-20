@@ -880,11 +880,10 @@ class FriendsService {
       .once();
 
     // Clean up Gun metadata if present
-    // Check if lastSeen looks like a Gun timestamp (way too large)
     let cleanPresence = null;
     if (presence) {
-      // If lastSeen is a Gun timestamp (> year 2100 in ms), use the timestamp field instead
-      const lastSeenValue = presence.lastSeen > 4102444800000 ? presence.timestamp : presence.lastSeen;
+      // Use the most recent timestamp available
+      const lastSeenValue = presence.lastSeen || presence.timestamp || Date.now();
       
       cleanPresence = {
         status: presence.status,
