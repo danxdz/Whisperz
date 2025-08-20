@@ -17,10 +17,8 @@ class MessageService {
       this.handleIncomingMessage(peerId, data);
     });
 
-    // Check for offline messages less frequently
-    setInterval(() => {
-      this.checkOfflineMessages();
-    }, 30000); // Every 30 seconds instead of 5
+    // Offline messages are checked on initialization and friend selection
+    // No need for periodic checking
   }
 
   // Send message with WebRTC first, Gun fallback

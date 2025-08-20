@@ -24,12 +24,8 @@ class HybridP2PService {
     // Listen for friends' peer IDs and auto-connect
     this.listenForFriendsPeerIds();
     
-    // Periodically refresh our peer ID broadcast
-    setInterval(() => {
-      if (this.autoConnectEnabled) {
-        this.broadcastPeerId();
-      }
-    }, 30000); // Every 30 seconds
+    // Peer ID is broadcast on initialization and connection
+    // No need for periodic broadcasting
   }
 
   /**

@@ -465,8 +465,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
     loadMessages();
 
-    // Refresh messages periodically to catch any missed updates
-    const refreshInterval = setInterval(loadMessages, 5000);
+    // Messages are received via subscriptions - no need for polling
+    // const refreshInterval = setInterval(loadMessages, 5000);
 
     // Subscribe to new messages
     const unsubscribe = selectedFriend.conversationId ? messageService.subscribeToConversation(
@@ -507,7 +507,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     );
 
     return () => {
-      clearInterval(refreshInterval);
+      // clearInterval(refreshInterval); // Removed
       unsubscribe();
       unsubscribeTyping();
     };
