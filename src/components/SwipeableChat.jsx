@@ -310,34 +310,52 @@ function SwipeableChat({
             <div style={{
               padding: '16px',
               borderBottom: `1px solid ${colors.borderColor}`,
-              background: colors.bgCard,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
+              background: colors.bgCard
             }}>
-              <h3 style={{
-                margin: 0,
-                fontSize: '18px',
-                color: colors.textPrimary,
-                fontWeight: '600'
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '8px'
               }}>
-                Friends ({friends.length})
-              </h3>
-              <button
-                onClick={() => setCurrentPanel(0)}
-                style={{
-                  background: 'transparent',
-                  border: `1px solid ${colors.borderColor}`,
-                  borderRadius: '6px',
-                  color: colors.textMuted,
-                  width: '32px',
-                  height: '32px',
-                  cursor: 'pointer',
-                  fontSize: '18px'
-                }}
-              >
-                ×
-              </button>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  color: colors.textPrimary,
+                  fontWeight: '600'
+                }}>
+                  Friends ({friends.length})
+                </h3>
+                <button
+                  onClick={() => setCurrentPanel(0)}
+                  style={{
+                    background: 'transparent',
+                    border: `1px solid ${colors.borderColor}`,
+                    borderRadius: '6px',
+                    color: colors.textMuted,
+                    width: '32px',
+                    height: '32px',
+                    cursor: 'pointer',
+                    fontSize: '18px'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              {/* Current User */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px',
+                background: 'rgba(102, 126, 234, 0.1)',
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: colors.textSecondary
+              }}>
+                <span style={{ color: colors.primary }}>●</span>
+                <span>{userNickname || 'Anonymous'}</span>
+              </div>
             </div>
 
             {/* Friends List */}

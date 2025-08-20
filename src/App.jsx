@@ -457,15 +457,19 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             // Update state - this will trigger re-render
             setOnlineStatus(prev => {
               const prevStatus = prev[friend.publicKey]?.online;
-              // Only update if status changed
-              if (prevStatus !== isOnline) {
-                console.log(`Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
+              const prevLastSeen = prev[friend.publicKey]?.lastSeen;
+              
+              // Update if status changed OR if we have a newer lastSeen value
+              if (prevStatus !== isOnline || prevLastSeen !== lastSeenValue) {
+                if (prevStatus !== isOnline) {
+                  console.log(`Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
+                }
                 return {
                   ...prev,
                   [friend.publicKey]: { 
                     online: isOnline,
-                    // Only track lastSeen when offline
-                    lastSeen: isOnline ? null : lastSeenValue,
+                    // Always keep lastSeen value for when they go offline
+                    lastSeen: lastSeenValue,
                     status: data.status 
                   }
                 };
