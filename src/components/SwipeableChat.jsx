@@ -362,9 +362,22 @@ function SwipeableChat({
                     fontSize: '16px',
                     fontWeight: '600',
                     color: '#fff',
-                    marginRight: '12px'
+                    marginRight: '12px',
+                    position: 'relative'
                   }}>
                     {friend.nickname.charAt(0).toUpperCase()}
+                    {onlineStatus[friend.publicKey]?.online && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        right: '0',
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        background: '#43e97b',
+                        border: '2px solid ' + colors.bgPrimary
+                      }} />
+                    )}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{
@@ -379,7 +392,7 @@ function SwipeableChat({
                       color: onlineStatus[friend.publicKey]?.online ? colors.success : colors.textMuted,
                       marginTop: '2px'
                     }}>
-                      {onlineStatus[friend.publicKey]?.online ? '🟢 Online' : '⚫ Offline'}
+                      {onlineStatus[friend.publicKey]?.online ? 'Online' : 'Offline'}
                     </div>
                   </div>
                 </div>
