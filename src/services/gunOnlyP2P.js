@@ -75,7 +75,7 @@ class GunOnlyP2P {
       };
       
       gun.get('presence').get(user.pub).put(presence);
-      console.log('📡 Broadcasting presence');
+      // Broadcasting presence
     };
 
     broadcastPresence();

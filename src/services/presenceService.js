@@ -22,7 +22,7 @@ class PresenceService {
     const user = gunAuthService.getCurrentUser();
     if (!user) return;
 
-    console.log('🟢 Initializing presence service...');
+    // Initializing presence service...
     
     // Set online status
     this.setOnline();
@@ -102,12 +102,12 @@ class PresenceService {
    * Start heartbeat to keep presence alive
    */
   startHeartbeat() {
-    // Send heartbeat every 20 seconds
+    // Send heartbeat every 60 seconds (reduced from 20)
     this.heartbeatInterval = setInterval(() => {
       if (this.isOnline) {
         this.setOnline();
       }
-    }, 20000);
+    }, 60000);
   }
 
   /**
@@ -246,7 +246,7 @@ class PresenceService {
    */
   handleWebRTCPresence(fromPeerId, message) {
     if (message.type === 'presence') {
-      console.log('📨 Received presence via WebRTC:', message);
+      // Received presence via WebRTC
       
       // Update friend status based on WebRTC message
       if (message.from) {
@@ -265,7 +265,7 @@ class PresenceService {
         // Page hidden - keeping online status
         // Don't go offline when tab is hidden, just stop updates
       } else {
-        console.log('📱 Page visible - updating presence');
+        // Page visible - updating presence
         this.setOnline();
       }
     });
@@ -308,7 +308,7 @@ class PresenceService {
    * Cleanup and destroy
    */
   destroy() {
-    console.log('🔴 Destroying presence service...');
+    // Destroying presence service...
     
     // Set offline before destroying
     this.setOffline();
@@ -332,7 +332,7 @@ class PresenceService {
    * Debug function
    */
   debug() {
-    console.log('📊 Presence Service Debug:');
+    // Presence Service Debug:
     // Is online: this.isOnline
     console.log('Friends tracked:', this.friendsStatus.size);
     
