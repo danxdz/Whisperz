@@ -886,11 +886,20 @@ class FriendsService {
       peerId: presence.peerId
     } : null;
 
+    // Debug log
+    if (cleanPresence) {
+      console.log(`Friend ${publicKey.substring(0, 8)}... presence:`, {
+        status: cleanPresence.status,
+        timeSinceLastSeen: Date.now() - cleanPresence.lastSeen,
+        peerId: cleanPresence.peerId?.substring(0, 20)
+      });
+    }
+
     return {
       ...cleanPresence,
       isOnline: cleanPresence?.status === 'online' && 
                 cleanPresence?.lastSeen && 
-                (Date.now() - cleanPresence.lastSeen) < 60000 // Consider online if seen in last minute
+                (Date.now() - cleanPresence.lastSeen) < 300000 // Consider online if seen in last 5 minutes (was 1 minute)
     };
   }
 

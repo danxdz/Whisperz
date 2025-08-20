@@ -37,7 +37,9 @@ export function useConnectionState(friendPublicKey) {
         const presence = await friendsService.getFriendPresence(friendPublicKey);
         // console.log('👤 Friend presence check:', presence, 'for:', friendPublicKey);
         
-        if (presence && presence.isOnline && presence.peerId) {
+        if (presence && presence.peerId) {
+          // Check if friend is actually online
+          const isActuallyOnline = presence.status === 'online' || presence.isOnline;
           // Check WebRTC connection status
           const connStatus = webrtcService.getConnectionStatus ? 
             webrtcService.getConnectionStatus(presence.peerId) : 
@@ -52,7 +54,7 @@ export function useConnectionState(friendPublicKey) {
               latency: connStatus.latency || null,
               method: 'webrtc'
             });
-          } else if (presence.isOnline) {
+          } else if (isActuallyOnline) {
             // Online but not connected via WebRTC
             setConnectionState({
               status: 'gun',
@@ -61,6 +63,16 @@ export function useConnectionState(friendPublicKey) {
               lastSeen: presence.lastSeen,
               latency: null,
               method: 'gun'
+            });
+          } else {
+            // Has peer ID but offline
+            setConnectionState({
+              status: 'disconnected',
+              peerId: presence.peerId,
+              isOnline: false,
+              lastSeen: presence.lastSeen,
+              latency: null,
+              method: 'local'
             });
           }
         } else {

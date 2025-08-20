@@ -100,12 +100,15 @@ class PresenceService {
 
   /**
    * Start heartbeat to keep presence alive
-   * DISABLED - We don't need to constantly update online status
+   * Minimal heartbeat every 2 minutes to stay online
    */
   startHeartbeat() {
-    // Heartbeat disabled - online status is set on login and page visibility
-    // No need to spam the network every X seconds
-    return;
+    // Minimal heartbeat to prevent appearing offline
+    this.heartbeatInterval = setInterval(() => {
+      if (this.isOnline) {
+        this.setOnline();
+      }
+    }, 120000); // Every 2 minutes (minimal to stay online)
   }
 
   /**
