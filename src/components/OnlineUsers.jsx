@@ -31,11 +31,11 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
       
       for (const friend of friends) {
         try {
-          const presence = await hybridGunService.getPresence(friend.pub || friend.publicKey);
-          status[friend.pub || friend.publicKey] = presence;
+          const presence = await hybridGunService.getPresence(friend.publicKey);
+          status[friend.publicKey] = presence;
         } catch (error) {
           // console.error(`Failed to get presence for ${friend.nickname}:`, error);
-          status[friend.pub || friend.publicKey] = { online: false };
+          status[friend.publicKey] = { online: false };
         }
       }
       
@@ -53,7 +53,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
 
   // Filter friends based on online status and search
   const filteredFriends = friends.filter(friend => {
-    const isOnline = onlineStatus[friend.pub || friend.publicKey]?.online;
+    const isOnline = onlineStatus[friend.publicKey]?.online;
     const matchesSearch = friend.nickname.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (showOnlineOnly) {
@@ -221,10 +221,10 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
           </div>
         ) : (
           sortedFriends.map((friend) => {
-            const isOnline = onlineStatus[friend.pub || friend.publicKey]?.online;
-            const presence = onlineStatus[friend.pub || friend.publicKey];
-            const isSelected = selectedFriend?.pub === (friend.pub || friend.publicKey) || 
-                              selectedFriend?.publicKey === (friend.pub || friend.publicKey);
+            const isOnline = onlineStatus[friend.publicKey]?.online;
+            const presence = onlineStatus[friend.publicKey];
+            const isSelected = selectedFriend?.pub === (friend.publicKey) || 
+                              selectedFriend?.publicKey === (friend.publicKey);
             const lastSeen = presence?.lastActive 
               ? new Date(presence.lastActive).toLocaleTimeString([], { 
                   hour: '2-digit', 
@@ -234,7 +234,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser }) {
 
             return (
               <div
-                key={friend.pub || friend.publicKey}
+                key={friend.publicKey}
                 onClick={() => onSelectFriend(friend)}
                 style={{
                   display: 'flex',

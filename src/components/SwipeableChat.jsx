@@ -333,7 +333,7 @@ function SwipeableChat({
             }}>
               {friends.map(friend => (
                 <div
-                  key={friend.pub || friend.publicKey}
+                  key={friend.publicKey}
                   onClick={() => {
                     onSelectFriend(friend);
                     setCurrentPanel(0); // Auto-switch to chat after selecting
@@ -343,7 +343,7 @@ function SwipeableChat({
                     alignItems: 'center',
                     padding: '12px',
                     marginBottom: '8px',
-                    background: selectedFriend?.publicKey === (friend.pub || friend.publicKey)
+                    background: selectedFriend?.publicKey === (friend.publicKey)
                       ? colors.primaryBg
                       : colors.bgTertiary,
                     borderRadius: '8px',
@@ -373,6 +373,13 @@ function SwipeableChat({
                       color: colors.textPrimary
                     }}>
                       {friend.nickname}
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: onlineStatus[friend.publicKey]?.online ? colors.success : colors.textMuted,
+                      marginTop: '2px'
+                    }}>
+                      {onlineStatus[friend.publicKey]?.online ? '🟢 Online' : '⚫ Offline'}
                     </div>
                   </div>
                 </div>

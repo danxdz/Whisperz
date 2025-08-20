@@ -23,10 +23,10 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
       
       for (const friend of friends) {
         try {
-          const presence = await hybridGunService.getPresence(friend.pub || friend.publicKey);
-          status[friend.pub || friend.publicKey] = presence;
+          const presence = await hybridGunService.getPresence(friend.publicKey);
+          status[friend.publicKey] = presence;
         } catch (error) {
-          status[friend.pub || friend.publicKey] = { online: false };
+          status[friend.publicKey] = { online: false };
         }
       }
       
@@ -44,7 +44,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     if (!confirmRemove) return;
 
     try {
-      await friendsService.removeFriend(friend.pub || friend.publicKey, false);
+      await friendsService.removeFriend(friend.publicKey, false);
       alert(`${friend.nickname} has been removed from your friends.`);
       
       // Refresh friends list
@@ -72,7 +72,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     if (!confirmBlock) return;
 
     try {
-      await friendsService.removeFriend(friend.pub || friend.publicKey, true); // true = also block
+      await friendsService.removeFriend(friend.publicKey, true); // true = also block
       alert(`${friend.nickname} has been blocked.`);
       
       // Refresh friends list
@@ -107,7 +107,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     filteredFriends;
 
   const renderFriend = (friend, isOnline) => {
-    const friendKey = friend.pub || friend.publicKey;
+    const friendKey = friend.publicKey;
     const isSelected = selectedFriend?.pub === friendKey || 
                       selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
@@ -461,9 +461,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
               <>
                 {/* Online Friends */}
                 {displayedFriends.filter(f => {
-                  const status = onlineStatus instanceof Map ? 
-                    onlineStatus.get(f.pub || f.publicKey) : 
-                    onlineStatus[f.pub || f.publicKey];
+                  const status = onlineStatus[f.publicKey];
                   return status?.online;
                 }).length > 0 && (
                   <>
@@ -475,20 +473,20 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
                     }}>
                       ONLINE ({displayedFriends.filter(f => {
                         const status = onlineStatus instanceof Map ? 
-                          onlineStatus.get(f.pub || f.publicKey) : 
-                          onlineStatus[f.pub || f.publicKey];
+                          onlineStatus.get(f.publicKey) : 
+                          onlineStatus[f.publicKey];
                         return status?.online;
                       }).length})
                     </div>
                     {displayedFriends
-                      .filter(f => onlineStatus[f.pub || f.publicKey]?.online)
+                      .filter(f => onlineStatus[f.publicKey]?.online)
                       .map(friend => renderFriend(friend, true))
                     }
                   </>
                 )}
                 
                 {/* Offline Friends */}
-                {!showOnlineOnly && displayedFriends.filter(f => !onlineStatus[f.pub || f.publicKey]?.online).length > 0 && (
+                {!showOnlineOnly && displayedFriends.filter(f => !onlineStatus[f.publicKey]?.online).length > 0 && (
                   <>
                     <div style={{
                       fontSize: '11px',
@@ -497,10 +495,10 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
                       marginBottom: '6px',
                       fontWeight: '600'
                     }}>
-                      OFFLINE ({displayedFriends.filter(f => !onlineStatus[f.pub || f.publicKey]?.online).length})
+                      OFFLINE ({displayedFriends.filter(f => !onlineStatus[f.publicKey]?.online).length})
                     </div>
                     {displayedFriends
-                      .filter(f => !onlineStatus[f.pub || f.publicKey]?.online)
+                      .filter(f => !onlineStatus[f.publicKey]?.online)
                       .map(friend => renderFriend(friend, false))
                     }
                   </>
