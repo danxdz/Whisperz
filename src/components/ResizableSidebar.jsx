@@ -657,7 +657,7 @@ function ResizableSidebar({
                 .filter(f => !onlineStatus[f.publicKey]?.online)
                 .map(friend => renderFriend(friend))}
             </>
-          )}
+          ))}
         </div>
 
         {/* Footer */}
