@@ -11,7 +11,7 @@ import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
-import { ThemeToggle, SwipeableChat, InviteModal, DevToolsWrapper } from './components';
+import { ThemeToggle, SwipeableChat, InviteModal } from './components';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
 import { useConnectionState } from './hooks/useConnectionState';
@@ -881,8 +881,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       inviteLink={inviteLink}
     />
     
-    {/* Dev Tools */}
-    <DevToolsWrapper />
+    {/* Dev Tools handled by SwipeableChat */}
     </>
   );
 }
