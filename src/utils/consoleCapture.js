@@ -62,11 +62,26 @@ class ConsoleCapture {
   }
 
   capture(type, args) {
+    // Determine the actual type from the message content
+    let actualType = type;
+    const message = this.formatArgs(args);
+    
+    // Check for debugLogger prefixes
+    if (message.includes('[DEBUG]')) actualType = 'debug';
+    else if (message.includes('[P2P]')) actualType = 'p2p';
+    else if (message.includes('[GUN]')) actualType = 'gun';
+    else if (message.includes('[WebRTC]')) actualType = 'webrtc';
+    else if (message.includes('❌') || message.includes('Error') || message.includes('Failed')) actualType = 'error';
+    else if (message.includes('⚠️') || message.includes('Warning')) actualType = 'warn';
+    else if (message.includes('✅') || message.includes('Success')) actualType = 'success';
+    else if (message.includes('🔧') || message.includes('Debug')) actualType = 'debug';
+    else if (message.includes('📹') || message.includes('🚀') || message.includes('💡')) actualType = 'info';
+    
     const log = {
-      type,
+      type: actualType,
       timestamp: new Date().toISOString(),
       time: new Date().toLocaleTimeString(),
-      message: this.formatArgs(args),
+      message: message,
       raw: args,
       stack: type === 'error' ? new Error().stack : undefined
     };

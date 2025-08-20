@@ -16,7 +16,7 @@ class OnlineStatusManager {
 
   // Start monitoring online status
   startMonitoring() {
-    console.log('🟢 Starting online status monitoring...');
+    // Starting online status monitoring...
     
     // Update own status immediately
     this.updateOwnStatus();
@@ -68,7 +68,7 @@ class OnlineStatusManager {
       // Update in public space
       gunAuthService.gun.get('presence').get(user.pub).put(status);
       
-      console.log('✅ Updated own presence:', status);
+      // Updated own presence
     } catch (error) {
       console.error('❌ Failed to update presence:', error);
     }

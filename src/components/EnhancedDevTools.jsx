@@ -133,7 +133,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       if (currentUser) {
         const peerId = webrtcService.getPeerId();
         hybridGunService.updatePresence('online', { peerId });
-        console.log('📢 Broadcasting our presence before checking others');
+        // Broadcasting our presence before checking others
       }
       
       const onlineList = [];
@@ -146,7 +146,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         // Check presence space
         gunAuthService.gun.get('presence').map().once((data, key) => {
           checkCount++;
-          console.log('🔍 Checking presence for key:', key, data);
+          // Checking presence for key
           
           if (data && key && key !== '_' && !key.startsWith('~')) {
             // Clean Gun metadata
@@ -168,7 +168,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   peerId: cleanData.peerId,
                   status: cleanData.status
                 });
-                console.log('✅ Found online user:', key);
+                // Found online user
               }
             }
           }
@@ -192,7 +192,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                     peerId: data.peerId,
                     status: data.status
                   });
-                  console.log('✅ Found online user via alias:', alias, pubKey);
+                  // Found online user via alias
                 }
               });
             }
@@ -207,7 +207,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       });
       
       setAllOnlineUsers(onlineList);
-      console.log('📊 Online users found:', onlineList.length, onlineList);
+      // Online users found: onlineList.length
     } catch (error) {
       console.error('Failed to load online users:', error);
     }
@@ -383,6 +383,46 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     }
   };
 
+  // Missing functions for Social tab
+  const generateInvite = handleGenerateInvite; // Use existing function
+  
+  // Missing functions for Advanced tab
+  const createBackup = async () => {
+    if (!backupPassword) {
+      alert('Please enter a password');
+      return;
+    }
+    try {
+      setBackupStatus('Creating backup...');
+      const result = await backupService.createBackup(backupPassword);
+      if (result.success) {
+        setBackupStatus('✅ Backup created successfully');
+        setTimeout(() => setBackupStatus(''), 3000);
+      }
+    } catch (error) {
+      setBackupStatus('❌ Backup failed: ' + error.message);
+    }
+  };
+
+  const handleRestoreBackup = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const password = prompt('Enter backup password:');
+    if (!password) return;
+    
+    try {
+      setBackupStatus('Restoring backup...');
+      const result = await backupService.restoreBackup(file, password);
+      if (result.success) {
+        setBackupStatus('✅ Backup restored! Reloading...');
+        setTimeout(() => window.location.reload(), 2000);
+      }
+    } catch (error) {
+      setBackupStatus('❌ Restore failed: ' + error.message);
+    }
+  };
+
   // Gun DB Relay Configuration Functions
   const loadRelayConfig = () => {
     // Load saved relay configurations
@@ -392,7 +432,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         const relays = JSON.parse(saved);
         setSavedRelays(relays);
       } catch (e) {
-        console.error('Failed to load saved relays:', e);
+        // Failed to load saved relays
       }
     }
 
@@ -778,7 +818,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         case 'error': return colors.danger;
         case 'warn': return colors.warning;
         case 'info': return colors.info;
+        case 'success': return colors.success;
         case 'debug': return colors.textMuted;
+        case 'p2p': return '#00bcd4';
+        case 'gun': return '#ff9800';
+        case 'webrtc': return '#9c27b0';
         default: return colors.textSecondary;
       }
     };
@@ -788,7 +832,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         case 'error': return '❌';
         case 'warn': return '⚠️';
         case 'info': return '💡';
+        case 'success': return '✅';
         case 'debug': return '🔍';
+        case 'p2p': return '🔗';
+        case 'gun': return '🔫';
+        case 'webrtc': return '📡';
         default: return '📝';
       }
     };
@@ -837,7 +885,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               <option value="error">Error</option>
               <option value="warn">Warn</option>
               <option value="info">Info</option>
+              <option value="success">Success</option>
               <option value="debug">Debug</option>
+              <option value="p2p">P2P</option>
+              <option value="gun">Gun</option>
+              <option value="webrtc">WebRTC</option>
             </select>
             
             {/* Auto-scroll toggle */}
