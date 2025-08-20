@@ -81,7 +81,7 @@ class HybridP2PService {
     // Check if we're already connected
     const existingConn = webrtcService.getConnectionStatus(friendPeerId);
     if (existingConn.connected) {
-      console.log('✅ Already connected to', friendNickname);
+      // Already connected
       return;
     }
     
@@ -91,7 +91,7 @@ class HybridP2PService {
       return; // Don't retry within 10 seconds
     }
     
-    console.log('🔗 Friend online, attempting P2P connection:', friendNickname);
+    // Friend online, attempting P2P connection
     this.peerExchange.set(friendPublicKey, Date.now());
     
     try {
@@ -99,7 +99,7 @@ class HybridP2PService {
       const connection = await webrtcService.connectToPeer(friendPeerId);
       
       if (connection) {
-        console.log('✅ P2P connection established with', friendNickname);
+        // P2P connection established
         
         // Store connection info
         connection.metadata = {

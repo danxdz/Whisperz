@@ -65,7 +65,7 @@ class PresenceService {
       timestamp: Date.now()
     });
 
-    console.log('✅ Set status to online:', presence);
+    // Status set to online
   }
 
   /**
@@ -95,7 +95,7 @@ class PresenceService {
       timestamp: Date.now()
     });
 
-    console.log('⚫ Set status to offline');
+    // Status set to offline
   }
 
   /**
@@ -204,7 +204,7 @@ class PresenceService {
 
     this.friendsStatus.set(publicKey, status);
     
-    console.log(`👤 ${publicKey.substring(0, 8)}... is ${isOnline ? '🟢 online' : '⚫ offline'}`);
+    // Friend status updated
   }
 
   /**
@@ -223,7 +223,7 @@ class PresenceService {
 
     this.friendsStatus.set(publicKey, newStatus);
     
-    console.log(`🔄 Updated ${publicKey.substring(0, 8)}... to ${status}`);
+    // Updated friend status
   }
 
   /**
@@ -262,7 +262,7 @@ class PresenceService {
     // Handle page visibility
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        console.log('📱 Page hidden - keeping online status');
+        // Page hidden - keeping online status
         // Don't go offline when tab is hidden, just stop updates
       } else {
         console.log('📱 Page visible - updating presence');
@@ -333,16 +333,16 @@ class PresenceService {
    */
   debug() {
     console.log('📊 Presence Service Debug:');
-    console.log('Is online:', this.isOnline);
+    // Is online: this.isOnline
     console.log('Friends tracked:', this.friendsStatus.size);
     
     let onlineCount = 0;
     this.friendsStatus.forEach((status, publicKey) => {
       if (status.online) onlineCount++;
-      console.log(`  ${publicKey.substring(0, 16)}... : ${status.online ? '🟢' : '⚫'} ${status.status}`);
+      // Friend status
     });
     
-    console.log(`Summary: ${onlineCount} online, ${this.friendsStatus.size - onlineCount} offline`);
+    // Summary: onlineCount online, offline count
     
     return {
       isOnline: this.isOnline,

@@ -15,7 +15,7 @@ class GunOnlyP2P {
   // Initialize the P2P service
   async initialize(userId) {
     if (this.isInitialized) {
-      console.log('✅ Gun P2P already initialized');
+      // Gun P2P already initialized
       return true;
     }
 

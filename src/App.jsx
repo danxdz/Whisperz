@@ -380,7 +380,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         try {
           console.log('🔄 Re-initializing WebRTC in ChatView...');
           await webrtcService.initialize(user.pub);
-          console.log('✅ WebRTC ready with peer ID:', webrtcService.getPeerId());
+          // WebRTC ready
           
           // Gun P2P already initialized in main flow
         } catch (error) {
@@ -914,14 +914,8 @@ function App() {
     const deviceType = isMobile ? '📱 Mobile' : '💻 Desktop';
     const screenSize = `${window.innerWidth}x${window.innerHeight}`;
     
-    console.log('%c🚀 Whisperz v2.1.0 - P2P Chat', 'color: #43e97b; font-size: 16px; font-weight: bold');
-    console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #666');
-    console.log(`📅 Started: ${new Date().toLocaleString()}`);
-    console.log(`${deviceType} Device | Screen: ${screenSize}`);
-    console.log(`🌐 Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
-    console.log(`🔒 Encryption: E2E Enabled`);
-    console.log(`🔗 P2P: WebRTC Ready`);
-    console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #666');
+    // Only show minimal startup info
+    console.log('%c🚀 Whisperz v2.1.0', 'color: #43e97b; font-size: 14px; font-weight: bold');
     
     if (import.meta.env.DEV) {
       console.log('🔧 Development Mode - Debug tools available');
@@ -1071,11 +1065,11 @@ function App() {
           try {
             console.log('🚀 Initializing WebRTC for existing session...');
             await webrtcService.initialize(currentUser.pub);
-            console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
+            // WebRTC initialized
             
             // Also initialize Gun P2P as fallback
             await gunOnlyP2P.initialize(currentUser.pub);
-            console.log('✅ Gun P2P initialized as fallback');
+            // Gun P2P initialized as fallback
           } catch (error) {
             console.error('❌ Failed to initialize P2P:', error);
           }

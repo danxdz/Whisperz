@@ -24,7 +24,7 @@ class SimpleWebRTC {
   // Initialize WebRTC
   async initialize(userId) {
     if (this.isInitialized) {
-      console.log('✅ WebRTC already initialized');
+      // WebRTC already initialized
       return true;
     }
 
@@ -79,7 +79,7 @@ class SimpleWebRTC {
     if (this.connections.has(friendPublicKey)) {
       const conn = this.connections.get(friendPublicKey);
       if (conn.connectionState === 'connected') {
-        console.log('✅ Already connected to:', friendPublicKey);
+        // Already connected
         return true;
       }
     }
@@ -103,7 +103,7 @@ class SimpleWebRTC {
       pc.onconnectionstatechange = () => {
         console.log('🔌 Connection state:', pc.connectionState, 'for:', friendPublicKey);
         if (pc.connectionState === 'connected') {
-          console.log('✅ WebRTC connected to:', friendPublicKey);
+          // WebRTC connected
         } else if (pc.connectionState === 'failed') {
           console.error('❌ WebRTC connection failed to:', friendPublicKey);
           this.cleanup(friendPublicKey);
@@ -216,7 +216,7 @@ class SimpleWebRTC {
       const pc = this.connections.get(from);
       if (pc) {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        console.log('✅ Set remote description from:', from);
+        // Set remote description
       }
     } catch (error) {
       console.error('❌ Failed to handle answer:', error);
