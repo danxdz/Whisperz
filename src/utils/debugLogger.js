@@ -7,15 +7,16 @@
 class DebugLogger {
   constructor() {
     // Check localStorage for debug settings
-    this.enabled = localStorage.getItem('debug_enabled') === 'true';
+    // Enable by default for important categories
+    this.enabled = localStorage.getItem('debug_enabled') !== 'false'; // Default to true
     this.levels = {
       error: true, // Always show errors
       warn: localStorage.getItem('debug_warn') !== 'false',
-      info: localStorage.getItem('debug_info') === 'true',
+      info: localStorage.getItem('debug_info') !== 'false', // Default to true
       debug: localStorage.getItem('debug_debug') === 'true',
-      p2p: localStorage.getItem('debug_p2p') === 'true',
+      p2p: localStorage.getItem('debug_p2p') !== 'false', // Default to true for P2P
       gun: localStorage.getItem('debug_gun') === 'true',
-      webrtc: localStorage.getItem('debug_webrtc') === 'true'
+      webrtc: localStorage.getItem('debug_webrtc') !== 'false' // Default to true for WebRTC
     };
 
     // Expose to window for DevTools access
