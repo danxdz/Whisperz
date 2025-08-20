@@ -347,15 +347,33 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         }
       });
 
-      // Subscribe to each friend's presence
+      // Subscribe to each friend's presence with real-time updates
       for (const friend of friendList) {
-        presenceService.subscribeFriendPresence(friend.publicKey);
-        onlineStatusManager.subscribeFriendPresence(friend.publicKey);
+        const friendKey = friend.publicKey;
+        
+        // Subscribe to Gun presence updates directly
+        gunAuthService.gun
+          .get('presence')
+          .get(friendKey)
+          .on((data) => {
+            if (data && typeof data === 'object') {
+              const isOnline = data.status === 'online' && 
+                             data.lastSeen && 
+                             (Date.now() - data.lastSeen) < 300000; // 5 minutes
+              
+              // Update the onlineStatus state for this friend
+              setOnlineStatus(prev => {
+                const newStatus = new Map(prev);
+                newStatus.set(friendKey, { 
+                  online: isOnline, 
+                  lastSeen: data.lastSeen,
+                  status: data.status 
+                });
+                return newStatus;
+              });
+            }
+          });
       }
-      
-      // Update online status from presence service
-      const allStatuses = presenceService.getAllFriendsStatus();
-      setOnlineStatus(allStatuses);
     } catch (error) {
       // console.error('❌ Failed to load friends:', error);
     } finally {

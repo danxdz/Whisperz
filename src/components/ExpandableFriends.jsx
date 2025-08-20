@@ -88,13 +88,19 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
   };
 
   // Filter and sort friends
-  const onlineFriends = friends.filter(friend => 
-    onlineStatus[friend.pub || friend.publicKey]?.online
-  );
+  const onlineFriends = friends.filter(friend => {
+    const status = onlineStatus instanceof Map ? 
+      onlineStatus.get(friend.pub || friend.publicKey) : 
+      onlineStatus[friend.pub || friend.publicKey];
+    return status?.online;
+  });
   
-  const offlineFriends = friends.filter(friend => 
-    !onlineStatus[friend.pub || friend.publicKey]?.online
-  );
+  const offlineFriends = friends.filter(friend => {
+    const status = onlineStatus instanceof Map ? 
+      onlineStatus.get(friend.pub || friend.publicKey) : 
+      onlineStatus[friend.pub || friend.publicKey];
+    return !status?.online;
+  });
 
   const filteredFriends = friends.filter(friend =>
     friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
@@ -458,7 +464,12 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
             ) : (
               <>
                 {/* Online Friends */}
-                {displayedFriends.filter(f => onlineStatus[f.pub || f.publicKey]?.online).length > 0 && (
+                {displayedFriends.filter(f => {
+                  const status = onlineStatus instanceof Map ? 
+                    onlineStatus.get(f.pub || f.publicKey) : 
+                    onlineStatus[f.pub || f.publicKey];
+                  return status?.online;
+                }).length > 0 && (
                   <>
                     <div style={{
                       fontSize: '11px',
@@ -466,7 +477,12 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
                       marginBottom: '6px',
                       fontWeight: '600'
                     }}>
-                      ONLINE ({displayedFriends.filter(f => onlineStatus[f.pub || f.publicKey]?.online).length})
+                      ONLINE ({displayedFriends.filter(f => {
+                        const status = onlineStatus instanceof Map ? 
+                          onlineStatus.get(f.pub || f.publicKey) : 
+                          onlineStatus[f.pub || f.publicKey];
+                        return status?.online;
+                      }).length})
                     </div>
                     {displayedFriends
                       .filter(f => onlineStatus[f.pub || f.publicKey]?.online)
