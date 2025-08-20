@@ -32,6 +32,21 @@ function SwipeableChat({
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
+  // Helper function to format time ago
+  const getTimeAgo = (timestamp) => {
+    if (!timestamp) return 'unknown';
+    
+    const now = Date.now();
+    const diff = now - timestamp;
+    
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+    
+    return new Date(timestamp).toLocaleDateString();
+  };
+
   // Update mobile detection on resize
   useEffect(() => {
     const handleResize = () => {
@@ -392,7 +407,11 @@ function SwipeableChat({
                       color: onlineStatus[friend.publicKey]?.online ? colors.success : colors.textMuted,
                       marginTop: '2px'
                     }}>
-                      {onlineStatus[friend.publicKey]?.online ? 'Online' : 'Offline'}
+                      {onlineStatus[friend.publicKey]?.online ? 'Online' : (
+                        onlineStatus[friend.publicKey]?.lastSeen ? 
+                          `Last seen ${getTimeAgo(onlineStatus[friend.publicKey].lastSeen)}` : 
+                          'Offline'
+                      )}
                     </div>
                   </div>
                 </div>

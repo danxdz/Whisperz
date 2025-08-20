@@ -31,6 +31,21 @@ function ResizableSidebar({
   const MAX_WIDTH = 500;
   const MINIMIZED_WIDTH = 60;
 
+  // Helper function to format time ago
+  const getTimeAgo = (timestamp) => {
+    if (!timestamp) return 'unknown';
+    
+    const now = Date.now();
+    const diff = now - timestamp;
+    
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+    
+    return new Date(timestamp).toLocaleDateString();
+  };
+
   // Use the passed onlineStatus instead of polling locally
   // The parent component (App.jsx) already handles real-time updates
 
@@ -276,7 +291,11 @@ function ResizableSidebar({
                 fontSize: '10px',
                 color: isOnline ? '#43e97b' : 'rgba(255, 255, 255, 0.4)'
               }}>
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? 'Online' : (
+                  onlineStatus[friendKey]?.lastSeen ? 
+                    `Last seen ${getTimeAgo(onlineStatus[friendKey].lastSeen)}` : 
+                    'Offline'
+                )}
               </div>
             )}
           </div>
