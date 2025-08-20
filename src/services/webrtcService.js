@@ -202,12 +202,27 @@ class WebRTCService {
     
     try {
       debugLogger.webrtc('Adding ICE candidate from:', from);
+      
+      // Skip if no candidate (end of candidates signal)
+      if (!candidate) {
+        return;
+      }
+      
       // Check if candidate is already an RTCIceCandidate object or needs to be created
       if (candidate instanceof RTCIceCandidate) {
         await pc.addIceCandidate(candidate);
       } else if (candidate && typeof candidate === 'object') {
-        // Create new RTCIceCandidate from plain object
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        // Ensure required fields are present
+        const candidateInit = {
+          candidate: candidate.candidate || '',
+          sdpMLineIndex: candidate.sdpMLineIndex !== undefined ? candidate.sdpMLineIndex : 0,
+          sdpMid: candidate.sdpMid || '0'
+        };
+        
+        // Only add if we have a valid candidate string
+        if (candidateInit.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidateInit));
+        }
       } else {
         debugLogger.error('Invalid ICE candidate format:', candidate);
       }
