@@ -23,6 +23,8 @@ function ResizableSidebar({
   const [isResizing, setIsResizing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showActions, setShowActions] = useState(null);
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [showPending, setShowPending] = useState(false);
   const sidebarRef = useRef(null);
 
   const MIN_WIDTH = 200;
@@ -31,6 +33,23 @@ function ResizableSidebar({
 
   // Use the passed onlineStatus instead of polling locally
   // The parent component (App.jsx) already handles real-time updates
+
+  // Load pending invites
+  useEffect(() => {
+    const loadPendingInvites = async () => {
+      try {
+        const invites = await friendsService.getPendingInvites();
+        setPendingInvites(invites || []);
+      } catch (error) {
+        console.error('Failed to load pending invites:', error);
+      }
+    };
+    
+    loadPendingInvites();
+    // Refresh every 30 seconds
+    const interval = setInterval(loadPendingInvites, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle resize
   useEffect(() => {
@@ -429,30 +448,84 @@ function ResizableSidebar({
           </div>
 
           {!isMinimized && (
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: '4px 8px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '4px',
-                  color: '#fff',
-                  fontSize: '12px',
-                  outline: 'none'
-                }}
-              />
-              <button
-                onClick={onGenerateInvite}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '4px',
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            <>
+              {/* Tabs */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '4px',
+                marginBottom: '8px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingBottom: '4px'
+              }}>
+                <button
+                  onClick={() => setShowPending(false)}
+                  style={{
+                    flex: 1,
+                    padding: '4px',
+                    background: !showPending ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: !showPending ? '#fff' : 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '11px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Friends ({friends.length})
+                </button>
+                <button
+                  onClick={() => setShowPending(true)}
+                  style={{
+                    flex: 1,
+                    padding: '4px',
+                    background: showPending ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: showPending ? '#fff' : 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                >
+                  Pending
+                  {pendingInvites.length > 0 && (
+                    <span style={{
+                      marginLeft: '4px',
+                      padding: '0 4px',
+                      background: '#ff6b6b',
+                      borderRadius: '8px',
+                      fontSize: '10px'
+                    }}>
+                      {pendingInvites.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+              
+              {/* Search and Invite */}
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="text"
+                  placeholder={showPending ? "Search invites..." : "Search friends..."}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '4px 8px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '12px',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  onClick={onGenerateInvite}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '4px',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
                   border: 'none',
                   color: '#fff',
                   fontSize: '16px',
@@ -465,18 +538,78 @@ function ResizableSidebar({
               >
                 +
               </button>
-            </div>
+              </div>
+            </>
           )}
         </div>
 
-        {/* Friends List */}
+        {/* Content Area */}
         <div style={{ 
           flex: 1, 
           padding: isMinimized ? '10px 5px' : '10px',
           overflowY: 'auto',
           overflowX: 'hidden'
         }}>
-          {filteredFriends.length === 0 ? (
+          {showPending ? (
+            // Pending Invites View
+            pendingInvites.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '30px 15px',
+                color: 'rgba(255, 255, 255, 0.4)'
+              }}>
+                <div style={{ fontSize: '24px', marginBottom: '6px' }}>📨</div>
+                <p style={{ margin: 0, fontSize: '12px' }}>No pending invites</p>
+              </div>
+            ) : (
+              pendingInvites.map(invite => (
+                <div
+                  key={invite.id || invite.publicKey}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px',
+                    marginBottom: '4px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '6px',
+                    fontSize: '12px'
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: '#fff' }}>
+                      {invite.nickname || invite.publicKey?.substring(0, 8) + '...'}
+                    </div>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '10px' }}>
+                      Invite sent
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await friendsService.cancelInvite(invite.publicKey);
+                        setPendingInvites(prev => prev.filter(i => i.publicKey !== invite.publicKey));
+                      } catch (error) {
+                        console.error('Failed to cancel invite:', error);
+                      }
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      background: 'rgba(255, 99, 99, 0.2)',
+                      border: '1px solid rgba(255, 99, 99, 0.4)',
+                      borderRadius: '4px',
+                      color: '#ff9999',
+                      fontSize: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ))
+            )
+          ) : (
+            // Friends List View
+            filteredFriends.length === 0 ? (
             !isMinimized && (
               <div style={{
                 textAlign: 'center',
@@ -500,13 +633,13 @@ function ResizableSidebar({
             <>
               {/* Online friends first */}
               {filteredFriends
-                .filter(f => onlineStatus[f.pub || f.publicKey]?.online)
+                .filter(f => onlineStatus[f.publicKey]?.online)
                 .map(friend => renderFriend(friend))}
               
               {/* Separator */}
               {!isMinimized && 
-               filteredFriends.some(f => onlineStatus[f.pub || f.publicKey]?.online) &&
-               filteredFriends.some(f => !onlineStatus[f.pub || f.publicKey]?.online) && (
+               filteredFriends.some(f => onlineStatus[f.publicKey]?.online) &&
+               filteredFriends.some(f => !onlineStatus[f.publicKey]?.online) && (
                 <div style={{
                   margin: '8px 0',
                   padding: '2px 0',
@@ -521,7 +654,7 @@ function ResizableSidebar({
               
               {/* Offline friends */}
               {filteredFriends
-                .filter(f => !onlineStatus[f.pub || f.publicKey]?.online)
+                .filter(f => !onlineStatus[f.publicKey]?.online)
                 .map(friend => renderFriend(friend))}
             </>
           )}
