@@ -96,32 +96,13 @@ export function useConnectionState(friendPublicKey) {
   }, [friendPublicKey]);
 
   const attemptWebRTCConnection = async () => {
-    // Helper to show user notifications
-    const showNotification = (message, isError = false) => {
-      debugLogger[isError ? 'error' : 'info'](message);
-      
-      const notification = document.createElement('div');
-      notification.textContent = message;
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${isError ? '#ff4444' : '#44ff44'};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        z-index: 10000;
-        font-size: 14px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        animation: slideDown 0.3s ease;
-      `;
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transition = 'opacity 0.3s';
-        setTimeout(() => notification.remove(), 300);
-      }, 3000);
+    // Just log to debugLogger, no popups
+    const logStatus = (message, isError = false) => {
+      if (isError) {
+        debugLogger.error(`[P2P] ${message}`);
+      } else {
+        debugLogger.info(`[P2P] ${message}`);
+      }
     };
     
     debugLogger.p2p('🚀 Attempting P2P connection');
@@ -136,13 +117,11 @@ export function useConnectionState(friendPublicKey) {
           await webrtcService.initialize(user.pub);
           debugLogger.p2p('✅ WebRTC reinitialized');
         } catch (error) {
-          showNotification('❌ Failed to initialize P2P', true);
-          debugLogger.error('Failed to reinitialize WebRTC:', error);
+          logStatus('Failed to initialize P2P', true);
           return false;
         }
       } else {
-        showNotification('❌ Not logged in', true);
-        debugLogger.error('No user found for WebRTC initialization');
+        logStatus('Not logged in', true);
         return false;
       }
     }
@@ -150,15 +129,25 @@ export function useConnectionState(friendPublicKey) {
     try {
       // Check friend's online status
       if (!connectionState.isOnline) {
-        showNotification('❌ Friend is offline', true);
-        debugLogger.p2p('Friend is offline');
+        logStatus('Friend is offline', true);
         return false;
       }
       
       // Check if friend has peer ID
       if (!connectionState.peerId) {
-        showNotification('❌ Friend P2P not available', true);
-        debugLogger.p2p('Friend peer ID not found');
+        logStatus('Friend P2P not available', true);
+        return false;
+      }
+      
+      // Check if we're already connected
+      if (connectionState.status === 'webrtc') {
+        debugLogger.p2p('Already connected via WebRTC');
+        return true;
+      }
+      
+      // Check if already connecting to avoid conflicts
+      if (connectionState.status === 'connecting') {
+        debugLogger.p2p('Connection already in progress');
         return false;
       }
       
@@ -167,20 +156,23 @@ export function useConnectionState(friendPublicKey) {
         setConnectionState(prev => ({ ...prev, status: 'connecting' }));
         
         try {
+          // Add a small random delay to avoid simultaneous connections
+          if (Math.random() > 0.5) {
+            await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+          }
+          
           await webrtcService.connectToPeer(connectionState.peerId);
-          showNotification('✅ P2P connection established!');
-          debugLogger.p2p('✅ WebRTC connection established!');
+          logStatus('P2P connection established!');
           setConnectionState(prev => ({ ...prev, status: 'webrtc', method: 'webrtc' }));
           return true;
         } catch (error) {
           const errorMsg = error.message || 'Connection timeout';
-          showNotification(`❌ P2P failed: ${errorMsg}`, true);
-          debugLogger.error('Failed to establish WebRTC connection:', error);
+          logStatus(`P2P failed: ${errorMsg}`, true);
           setConnectionState(prev => ({ ...prev, status: 'gun', method: 'gun' }));
           return false;
         }
       } else {
-        showNotification('❌ Cannot connect - missing requirements', true);
+        logStatus('Cannot connect - missing requirements', true);
         debugLogger.warn('Missing P2P requirements:', {
           hasPeerId: !!connectionState.peerId,
           isOnline: connectionState.isOnline,
@@ -188,8 +180,7 @@ export function useConnectionState(friendPublicKey) {
         });
       }
     } catch (error) {
-      showNotification('❌ P2P Error', true);
-      debugLogger.error('Error in attemptWebRTCConnection:', error);
+      logStatus('P2P Error: ' + error.message, true);
     }
     return false;
   };

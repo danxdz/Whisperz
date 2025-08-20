@@ -116,9 +116,31 @@ class WebRTCService {
   async handleOffer(signal) {
     const { from, offer, metadata } = signal;
     
-    if (this.connections.has(from)) {
-      debugLogger.webrtc('Connection already exists for:', from);
-      return;
+    // Check if we already have a connection
+    const existingPc = this.connections.get(from);
+    if (existingPc) {
+      // If we're already connected, ignore
+      if (existingPc.connectionState === 'connected') {
+        debugLogger.webrtc('Already connected to:', from);
+        return;
+      }
+      
+      // Handle simultaneous connection attempts (offer collision)
+      // Use peer ID comparison to decide who wins
+      if (existingPc.signalingState === 'have-local-offer') {
+        // We both sent offers - use deterministic resolution
+        if (this.peerId > from) {
+          // We win - ignore their offer
+          debugLogger.webrtc('Offer collision - we win, ignoring offer from:', from);
+          return;
+        } else {
+          // They win - accept their offer, cancel ours
+          debugLogger.webrtc('Offer collision - they win, accepting offer from:', from);
+          existingPc.close();
+          this.connections.delete(from);
+          this.dataChannels.delete(from);
+        }
+      }
     }
     
     debugLogger.webrtc('Handling offer from:', from);
