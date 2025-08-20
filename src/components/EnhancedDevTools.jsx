@@ -30,6 +30,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     gunPeers: 0
   });
   const [selectedUser, setSelectedUser] = useState(null);
+  const [discoverUsers, setDiscoverUsers] = useState([]);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
   
   // P2P Tab state (removed - logs go to console)
   
