@@ -1,7 +1,7 @@
 {
   "name": "whisperz",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Secure decentralized P2P chat application with WebRTC and Gun.js",
   "author": "Whisperz Team",
   "license": "MIT",

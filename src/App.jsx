@@ -449,9 +449,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           if (data && typeof data === 'object' && data.status) {
             // Use the most recent timestamp
             const lastSeenValue = data.lastSeen || data.timestamp || Date.now();
+            // Consider online if status is 'online' AND last seen within 5 minutes
             const isOnline = data.status === 'online' && 
                            lastSeenValue && 
-                           (Date.now() - lastSeenValue) < 300000; // 5 minutes
+                           (Date.now() - lastSeenValue) < 300000; // Within 5 minutes
             
             // Update state - this will trigger re-render
             setOnlineStatus(prev => {
@@ -954,7 +955,7 @@ function App() {
     const screenSize = `${window.innerWidth}x${window.innerHeight}`;
     
     // Only show minimal startup info
-    console.log('%c🚀 Whisperz v2.1.0', 'color: #43e97b; font-size: 14px; font-weight: bold');
+    console.log('%c🚀 Whisperz v2.1.1', 'color: #43e97b; font-size: 14px; font-weight: bold');
     
     if (import.meta.env.DEV) {
       console.log('🔧 Development Mode - Debug tools available');

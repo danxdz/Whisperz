@@ -108,7 +108,7 @@ class PresenceService {
       if (this.isOnline) {
         this.setOnline();
       }
-    }, 120000); // Every 2 minutes (minimal to stay online)
+    }, 60000); // Every 1 minute (more frequent to prevent status flipping)
   }
 
   /**
@@ -125,17 +125,17 @@ class PresenceService {
    * Start cleanup interval for stale presences
    */
   startCleanup() {
-    // Check for stale presences every 10 seconds
+    // Check for stale presences every 30 seconds (less frequent since timeout is 5 minutes)
     this.cleanupInterval = setInterval(() => {
       const now = Date.now();
       
       this.friendsStatus.forEach((status, publicKey) => {
-        // If friend hasn't been seen in 40 seconds, mark as offline
-        if (status.lastSeen && (now - status.lastSeen) > 40000) {
+        // If friend hasn't been seen in 5 minutes, mark as offline (same as App.jsx)
+        if (status.lastSeen && (now - status.lastSeen) > 300000) {
           this.updateFriendStatus(publicKey, 'offline');
         }
       });
-    }, 10000);
+    }, 30000); // Check every 30 seconds
   }
 
   /**
