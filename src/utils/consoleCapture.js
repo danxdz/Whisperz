@@ -168,9 +168,4 @@ class ConsoleCapture {
 // Create singleton instance
 const consoleCapture = new ConsoleCapture();
 
-// Auto-start in development mode
-if (import.meta.env.DEV || window.location.hostname === 'localhost') {
-  consoleCapture.start();
-}
-
 export default consoleCapture;

@@ -16,7 +16,7 @@ import { useResponsive } from '../hooks/useResponsive';
 function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const { colors } = useTheme();
   const screen = useResponsive();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('status');
   const [currentUserInfo, setCurrentUserInfo] = useState(null);
   const [allOnlineUsers, setAllOnlineUsers] = useState([]);
   const [users, setUsers] = useState([]);
@@ -456,8 +456,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     alert('Using all saved relays. Reload the app to connect.');
   };
 
-  // Render Overview Tab - Consolidated key information
-  const renderOverviewTab = () => {
+  // Render Status Tab - Consolidated system information
+  const renderStatusTab = () => {
     const stats = consoleCapture.getStats();
     
     return (
@@ -469,7 +469,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>
-          📊 System Overview
+          📊 System Status
         </h3>
         
         {/* Current User Info */}
@@ -550,6 +550,219 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div>Storage Used: {storageStats ? `${(storageStats.usage / 1024 / 1024).toFixed(2)} MB` : 'N/A'}</div>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  // Render Social Tab - Friends and Invites combined
+  const renderSocialTab = () => {
+    return (
+      <div style={{ 
+        padding: screen.isTiny ? '8px' : '12px',
+        height: '100%',
+        overflowY: 'auto'
+      }}>
+        <h3 style={{ 
+          fontSize: '16px', 
+          marginBottom: '12px',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          👥 Social Management
+        </h3>
+        
+        {/* Friends Section */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px'
+          }}>
+            <h4 style={{ margin: 0, fontSize: '14px', color: colors.primary }}>
+              Friends ({users.length})
+            </h4>
+            <button
+              onClick={loadUsers}
+              style={{
+                padding: '4px 8px',
+                background: colors.bgTertiary,
+                border: `1px solid ${colors.borderColor}`,
+                borderRadius: '4px',
+                color: colors.textPrimary,
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              Refresh
+            </button>
+          </div>
+          
+          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {users.length === 0 ? (
+              <div style={{ 
+                color: colors.textMuted, 
+                fontSize: '12px',
+                textAlign: 'center',
+                padding: '20px'
+              }}>
+                No friends yet
+              </div>
+            ) : (
+              users.map(user => (
+                <div key={user.publicKey} style={{
+                  padding: '8px',
+                  background: colors.bgSecondary,
+                  borderRadius: '4px',
+                  marginBottom: '4px',
+                  fontSize: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ color: colors.textPrimary, fontWeight: '500' }}>
+                      {user.nickname || user.alias}
+                    </div>
+                    <div style={{ color: colors.textMuted, fontSize: '10px' }}>
+                      {user.publicKey.substring(0, 20)}...
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {allOnlineUsers.includes(user.publicKey) && (
+                      <span style={{ color: colors.success }}>🟢</span>
+                    )}
+                    <button
+                      onClick={() => setSelectedUser(user)}
+                      style={{
+                        padding: '2px 6px',
+                        background: colors.primary,
+                        border: 'none',
+                        borderRadius: '3px',
+                        color: '#fff',
+                        fontSize: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Info
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        
+        {/* Invites Section */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px'
+          }}>
+            <h4 style={{ margin: 0, fontSize: '14px', color: colors.primary }}>
+              Active Invites ({invites.length})
+            </h4>
+            <button
+              onClick={generateInvite}
+              style={{
+                padding: '4px 8px',
+                background: colors.success,
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              + New Invite
+            </button>
+          </div>
+          
+          <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+            {invites.length === 0 ? (
+              <div style={{ 
+                color: colors.textMuted, 
+                fontSize: '12px',
+                textAlign: 'center',
+                padding: '10px'
+              }}>
+                No active invites
+              </div>
+            ) : (
+              invites.map(invite => (
+                <div key={invite.code} style={{
+                  padding: '8px',
+                  background: colors.bgSecondary,
+                  borderRadius: '4px',
+                  marginBottom: '4px',
+                  fontSize: '11px'
+                }}>
+                  <div style={{ color: colors.textPrimary }}>
+                    Code: {invite.code.substring(0, 8)}...
+                  </div>
+                  <div style={{ color: colors.textMuted }}>
+                    Created: {new Date(invite.createdAt).toLocaleDateString()}
+                  </div>
+                  {invite.used && (
+                    <div style={{ color: colors.success }}>
+                      ✅ Used by: {invite.usedBy}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        
+        {/* Selected User Details */}
+        {selectedUser && (
+          <div style={{
+            background: colors.bgCard,
+            borderRadius: '8px',
+            padding: '12px',
+            border: `1px solid ${colors.borderColor}`
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+              User Details
+            </h4>
+            <div style={{ fontSize: '11px', color: colors.textSecondary }}>
+              <div>Nickname: {selectedUser.nickname || 'Not set'}</div>
+              <div>Alias: {selectedUser.alias}</div>
+              <div>Public Key: {selectedUser.publicKey}</div>
+              <div>Added: {selectedUser.addedAt ? new Date(selectedUser.addedAt).toLocaleDateString() : 'Unknown'}</div>
+            </div>
+            <button
+              onClick={() => setSelectedUser(null)}
+              style={{
+                marginTop: '8px',
+                padding: '4px 8px',
+                background: colors.bgTertiary,
+                border: `1px solid ${colors.borderColor}`,
+                borderRadius: '4px',
+                color: colors.textPrimary,
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -736,6 +949,284 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     );
   };
 
+  // Render Advanced Tab - P2P, GunDB, and Backup combined
+  const renderAdvancedTab = () => {
+    return (
+      <div style={{ 
+        padding: screen.isTiny ? '8px' : '12px',
+        height: '100%',
+        overflowY: 'auto'
+      }}>
+        <h3 style={{ 
+          fontSize: '16px', 
+          marginBottom: '12px',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          ⚙️ Advanced Settings
+        </h3>
+        
+        {/* P2P Diagnostics */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+            🔗 P2P Diagnostics
+          </h4>
+          <div style={{ fontSize: '11px', color: colors.textSecondary }}>
+            <div>WebRTC: {networkStats.webrtcStatus}</div>
+            <div>Peer ID: {networkStats.peerId?.substring(0, 20)}...</div>
+            <div>Connected Peers: {networkStats.connectedPeers}</div>
+            <div style={{ marginTop: '8px' }}>
+              <button
+                onClick={() => p2pDebugger.diagnose()}
+                style={{
+                  padding: '4px 8px',
+                  background: colors.primary,
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  marginRight: '8px'
+                }}
+              >
+                Run Diagnostics
+              </button>
+              <button
+                onClick={() => setP2PLogs(p2pDebugger.logs)}
+                style={{
+                  padding: '4px 8px',
+                  background: colors.bgTertiary,
+                  border: `1px solid ${colors.borderColor}`,
+                  borderRadius: '4px',
+                  color: colors.textPrimary,
+                  fontSize: '11px',
+                  cursor: 'pointer'
+                }}
+              >
+                View Logs ({p2pLogs.length})
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Gun Relay Configuration */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+            🌐 Gun Relay Settings
+          </h4>
+          <div style={{ fontSize: '11px' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={privateMode}
+                  onChange={() => togglePrivateMode()}
+                />
+                <span style={{ color: colors.textSecondary }}>Private Mode (P2P Only)</span>
+              </label>
+            </div>
+            <div style={{ color: colors.textMuted, marginBottom: '8px' }}>
+              Connected Relays: {currentRelays.length}
+            </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <input
+                type="text"
+                value={customRelay}
+                onChange={(e) => setCustomRelay(e.target.value)}
+                placeholder="Add custom relay URL"
+                style={{
+                  flex: 1,
+                  padding: '4px 8px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.borderColor}`,
+                  borderRadius: '4px',
+                  color: colors.textPrimary,
+                  fontSize: '11px'
+                }}
+              />
+              <button
+                onClick={addCustomRelay}
+                style={{
+                  padding: '4px 8px',
+                  background: colors.success,
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  fontSize: '11px',
+                  cursor: 'pointer'
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Backup & Restore */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+            💾 Backup & Restore
+          </h4>
+          <div style={{ fontSize: '11px' }}>
+            {storageStats && (
+              <div style={{ color: colors.textMuted, marginBottom: '8px' }}>
+                Storage Used: {(storageStats.usage / 1024 / 1024).toFixed(2)} MB
+              </div>
+            )}
+            <div style={{ marginBottom: '8px' }}>
+              <input
+                type="password"
+                value={backupPassword}
+                onChange={(e) => setBackupPassword(e.target.value)}
+                placeholder="Backup password"
+                style={{
+                  width: '100%',
+                  padding: '4px 8px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.borderColor}`,
+                  borderRadius: '4px',
+                  color: colors.textPrimary,
+                  fontSize: '11px',
+                  marginBottom: '8px'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={createBackup}
+                disabled={!backupPassword}
+                style={{
+                  flex: 1,
+                  padding: '6px',
+                  background: backupPassword ? colors.primary : colors.bgTertiary,
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: backupPassword ? '#fff' : colors.textMuted,
+                  fontSize: '11px',
+                  cursor: backupPassword ? 'pointer' : 'not-allowed'
+                }}
+              >
+                Create Backup
+              </button>
+              <button
+                onClick={() => document.getElementById('backupFileInput').click()}
+                style={{
+                  flex: 1,
+                  padding: '6px',
+                  background: colors.bgTertiary,
+                  border: `1px solid ${colors.borderColor}`,
+                  borderRadius: '4px',
+                  color: colors.textPrimary,
+                  fontSize: '11px',
+                  cursor: 'pointer'
+                }}
+              >
+                Restore
+              </button>
+              <input
+                id="backupFileInput"
+                type="file"
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={handleRestoreBackup}
+              />
+            </div>
+            {backupStatus && (
+              <div style={{ 
+                marginTop: '8px', 
+                padding: '4px 8px',
+                background: colors.bgSecondary,
+                borderRadius: '4px',
+                color: colors.textSecondary 
+              }}>
+                {backupStatus}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Debug Actions */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+            🔧 Debug Actions
+          </h4>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('Storage cleared! Reloading...');
+                window.location.reload();
+              }}
+              style={{
+                padding: '6px 12px',
+                background: colors.danger,
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              Clear Storage
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '6px 12px',
+                background: colors.warning,
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              Reload App
+            </button>
+            <button
+              onClick={() => consoleCapture.download()}
+              style={{
+                padding: '6px 12px',
+                background: colors.bgTertiary,
+                border: `1px solid ${colors.borderColor}`,
+                borderRadius: '4px',
+                color: colors.textPrimary,
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              Export Logs
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderCompactTabs = () => (
     <div style={{
       display: 'flex',
@@ -745,7 +1236,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch'
     }}>
-      {['overview', 'console', 'me', 'friends', 'network', 'p2p', 'gundb', 'backup'].map(tab => (
+      {['status', 'console', 'social', 'advanced'].map(tab => (
         <button
           key={tab}
           onClick={() => {
@@ -767,7 +1258,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             transition: 'all 0.2s'
           }}
         >
-          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      {tab === 'status' ? '📊 Status' : 
+             tab === 'console' ? '📝 Console' :
+             tab === 'social' ? '👥 Social' :
+             tab === 'advanced' ? '⚙️ Advanced' : tab}
         </button>
       ))}
     </div>
@@ -1914,24 +2408,16 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderContent = () => {
     switch(activeTab) {
-      case 'overview':
-        return renderOverviewTab();
+      case 'status':
+        return renderStatusTab();
       case 'console':
         return renderConsoleTab();
-      case 'me':
-        return renderMeTab();
-      case 'friends':
-        return renderUsersTab();
-      case 'network':
-        return renderStatsTab();
-      case 'p2p':
-        return renderP2PTab();
-      case 'backup':
-        return renderBackupTab();
-      case 'gundb':
-        return renderGunDBTab();
+      case 'social':
+        return renderSocialTab();
+      case 'advanced':
+        return renderAdvancedTab();
       default:
-        return null;
+        return renderStatusTab();
     }
   };
 

@@ -8,6 +8,7 @@ import messageService from './services/messageService';
 import p2pDebugger from './utils/p2pDebugger';
 import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
+import consoleCapture from './utils/consoleCapture';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal, DevToolsWrapper } from './components';
@@ -903,6 +904,12 @@ function App() {
 
   // Version indicator for deployment verification
   useEffect(() => {
+    // Start console capture immediately
+    if (!consoleCapture.isCapturing) {
+      consoleCapture.start();
+      console.log('📹 Console capture started');
+    }
+    
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
     const deviceType = isMobile ? '📱 Mobile' : '💻 Desktop';
     const screenSize = `${window.innerWidth}x${window.innerHeight}`;
