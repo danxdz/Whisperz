@@ -428,21 +428,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     };
     window.addEventListener('beforeunload', handleUnload);
 
-    // Refresh friends list and presence periodically
-    const refreshInterval = setInterval(() => {
-      loadFriends();
-      // Also update presence with current peer ID
-      const peerId = webrtcService.getPeerId();
-      if (peerId) {
-        hybridGunService.updatePresence('online', { peerId });
-        console.log('🔄 Periodic presence update with peer ID:', peerId);
-      }
-    }, 10000); // Refresh every 10 seconds
+    // Load friends once - no need for periodic refresh
+    // Presence is already handled by presenceService on login/visibility
+    // const refreshInterval = setInterval(() => {
+    //   loadFriends();
+    // }, 10000);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('beforeunload', handleUnload);
-      clearInterval(refreshInterval);
+      // clearInterval(refreshInterval); // Removed - no longer needed
     };
   }, []);
 
