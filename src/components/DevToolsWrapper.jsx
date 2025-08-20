@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import SimplifiedDevTools from './SimplifiedDevTools';
+import EnhancedDevTools from './EnhancedDevTools';
 import SimpleDevToolsButton from './SimpleDevToolsButton';
 import { APP_CONFIG } from '../config/app.config';
 
@@ -78,9 +78,9 @@ function DevToolsWrapper() {
         isOpen={isDevToolsOpen}
       />
       
-      {/* Use the new SimplifiedDevTools component */}
+      {/* Use the EnhancedDevTools component */}
       {isDevToolsOpen && (
-        <SimplifiedDevTools 
+        <EnhancedDevTools 
           isVisible={isDevToolsOpen}
           onClose={() => setIsDevToolsOpen(false)}
         />

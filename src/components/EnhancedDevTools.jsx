@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import friendsService from '../services/friendsService';
 import hybridGunService from '../services/hybridGunService';
 import webrtcService from '../services/webrtcService';
 import backupService from '../services/backupService';
 import p2pDebugger from '../utils/p2pDebugger';
+import consoleCapture from '../utils/consoleCapture';
 import { useTheme } from '../contexts/ThemeContext';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -15,7 +16,7 @@ import { useResponsive } from '../hooks/useResponsive';
 function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const { colors } = useTheme();
   const screen = useResponsive();
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('overview');
   const [currentUserInfo, setCurrentUserInfo] = useState(null);
   const [allOnlineUsers, setAllOnlineUsers] = useState([]);
   const [users, setUsers] = useState([]);
@@ -32,6 +33,12 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   
   // P2P Tab state
   const [p2pLogs, setP2PLogs] = useState([]);
+  
+  // Console logs state
+  const [consoleLogs, setConsoleLogs] = useState([]);
+  const [logFilter, setLogFilter] = useState('all');
+  const consoleEndRef = useRef(null);
+  const [autoScroll, setAutoScroll] = useState(true);
   
   // Backup state
   const [backupPassword, setBackupPassword] = useState('');
@@ -53,6 +60,21 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadRelayConfig();
     loadCurrentUserInfo();
     loadOnlineUsers();
+    
+    // Load console logs
+    const logs = consoleCapture.getLogs();
+    setConsoleLogs(logs);
+    
+    // Subscribe to new console logs
+    const unsubscribe = consoleCapture.subscribe((log) => {
+      if (log.type === 'clear') {
+        setConsoleLogs([]);
+      } else {
+        setConsoleLogs(prev => [...prev, log].slice(-200)); // Keep last 200 logs
+      }
+    });
+    
+    return () => unsubscribe();
   }, [isVisible]);
   
   // Update P2P logs when P2P tab is active
@@ -68,6 +90,13 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       return () => clearInterval(interval);
     }
   }, [activeTab, isVisible]);
+
+  // Auto-scroll console logs
+  useEffect(() => {
+    if (autoScroll && consoleEndRef.current && activeTab === 'console') {
+      consoleEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [consoleLogs, activeTab, autoScroll]);
 
   const loadCurrentUserInfo = () => {
     try {
@@ -427,6 +456,286 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     alert('Using all saved relays. Reload the app to connect.');
   };
 
+  // Render Overview Tab - Consolidated key information
+  const renderOverviewTab = () => {
+    const stats = consoleCapture.getStats();
+    
+    return (
+      <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
+        <h3 style={{ 
+          fontSize: '16px', 
+          marginBottom: '12px',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          📊 System Overview
+        </h3>
+        
+        {/* Current User Info */}
+        {currentUserInfo && (
+          <div style={{
+            background: colors.bgCard,
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '12px',
+            border: `1px solid ${colors.borderColor}`
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+              👤 Current User
+            </h4>
+            <div style={{ fontSize: '12px', color: colors.textSecondary }}>
+              <div>Alias: {currentUserInfo.alias}</div>
+              <div>Public Key: {currentUserInfo.publicKey?.substring(0, 20)}...</div>
+              <div>WebRTC: {currentUserInfo.webrtcReady ? '✅ Ready' : '❌ Not Ready'}</div>
+              <div>Gun Connected: {currentUserInfo.gunConnected ? `✅ (${currentUserInfo.peerCount} peers)` : '❌'}</div>
+            </div>
+          </div>
+        )}
+        
+        {/* Network Status */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+            🌐 Network Status
+          </h4>
+          <div style={{ fontSize: '12px', color: colors.textSecondary }}>
+            <div>WebRTC Status: {networkStats.webrtcStatus}</div>
+            <div>P2P Connections: {networkStats.connectedPeers}</div>
+            <div>Gun Relays: {networkStats.gunPeers}</div>
+            <div>Online Users: {allOnlineUsers.length}</div>
+          </div>
+        </div>
+        
+        {/* Console Stats */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+            📝 Console Activity
+          </h4>
+          <div style={{ fontSize: '12px', color: colors.textSecondary }}>
+            <div>Total Logs: {stats.total}</div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+              <span>ℹ️ {stats.log}</span>
+              <span style={{ color: colors.danger }}>❌ {stats.error}</span>
+              <span style={{ color: colors.warning }}>⚠️ {stats.warn}</span>
+              <span style={{ color: colors.info }}>💡 {stats.info}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Quick Stats */}
+        <div style={{
+          background: colors.bgCard,
+          borderRadius: '8px',
+          padding: '12px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: colors.primary }}>
+            📈 Quick Stats
+          </h4>
+          <div style={{ fontSize: '12px', color: colors.textSecondary }}>
+            <div>Friends: {users.length}</div>
+            <div>Active Invites: {invites.length}</div>
+            <div>Storage Used: {storageStats ? `${(storageStats.usage / 1024 / 1024).toFixed(2)} MB` : 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Console Tab - Live console logs
+  const renderConsoleTab = () => {
+    const filteredLogs = logFilter === 'all' 
+      ? consoleLogs 
+      : consoleLogs.filter(log => log.type === logFilter);
+    
+    const getLogColor = (type) => {
+      switch(type) {
+        case 'error': return colors.danger;
+        case 'warn': return colors.warning;
+        case 'info': return colors.info;
+        case 'debug': return colors.textMuted;
+        default: return colors.textSecondary;
+      }
+    };
+    
+    const getLogIcon = (type) => {
+      switch(type) {
+        case 'error': return '❌';
+        case 'warn': return '⚠️';
+        case 'info': return '💡';
+        case 'debug': return '🔍';
+        default: return '📝';
+      }
+    };
+    
+    return (
+      <div style={{ 
+        padding: screen.isTiny ? '8px' : '12px',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Header with filters */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '12px',
+          flexShrink: 0
+        }}>
+          <h3 style={{ 
+            margin: 0,
+            fontSize: '16px',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            🖥️ Console Logs
+          </h3>
+          
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {/* Filter buttons */}
+            <select 
+              value={logFilter}
+              onChange={(e) => setLogFilter(e.target.value)}
+              style={{
+                padding: '4px 8px',
+                background: colors.bgTertiary,
+                border: `1px solid ${colors.borderColor}`,
+                borderRadius: '4px',
+                color: colors.textPrimary,
+                fontSize: '12px'
+              }}
+            >
+              <option value="all">All</option>
+              <option value="log">Log</option>
+              <option value="error">Error</option>
+              <option value="warn">Warn</option>
+              <option value="info">Info</option>
+              <option value="debug">Debug</option>
+            </select>
+            
+            {/* Auto-scroll toggle */}
+            <button
+              onClick={() => setAutoScroll(!autoScroll)}
+              style={{
+                padding: '4px 8px',
+                background: autoScroll ? colors.primary : colors.bgTertiary,
+                border: `1px solid ${colors.borderColor}`,
+                borderRadius: '4px',
+                color: autoScroll ? '#fff' : colors.textPrimary,
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              {autoScroll ? '📍 Auto' : '📌 Manual'}
+            </button>
+            
+            {/* Clear button */}
+            <button
+              onClick={() => {
+                consoleCapture.clear();
+                setConsoleLogs([]);
+              }}
+              style={{
+                padding: '4px 8px',
+                background: colors.danger,
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Clear
+            </button>
+            
+            {/* Export button */}
+            <button
+              onClick={() => consoleCapture.download()}
+              style={{
+                padding: '4px 8px',
+                background: colors.bgTertiary,
+                border: `1px solid ${colors.borderColor}`,
+                borderRadius: '4px',
+                color: colors.textPrimary,
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              💾
+            </button>
+          </div>
+        </div>
+        
+        {/* Console output */}
+        <div style={{
+          flex: 1,
+          background: '#0a0a0a',
+          borderRadius: '8px',
+          padding: '8px',
+          overflowY: 'auto',
+          fontFamily: 'Consolas, Monaco, monospace',
+          fontSize: '11px',
+          border: `1px solid ${colors.borderColor}`
+        }}>
+          {filteredLogs.length === 0 ? (
+            <div style={{ 
+              color: colors.textMuted, 
+              textAlign: 'center', 
+              padding: '20px' 
+            }}>
+              No logs to display
+            </div>
+          ) : (
+            filteredLogs.map((log, index) => (
+              <div 
+                key={index}
+                style={{
+                  padding: '4px 8px',
+                  borderBottom: `1px solid rgba(255,255,255,0.05)`,
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'flex-start',
+                  wordBreak: 'break-word'
+                }}
+              >
+                <span style={{ flexShrink: 0 }}>{getLogIcon(log.type)}</span>
+                <span style={{ 
+                  color: colors.textMuted, 
+                  flexShrink: 0,
+                  fontSize: '10px'
+                }}>
+                  {log.time}
+                </span>
+                <span style={{ 
+                  color: getLogColor(log.type),
+                  flex: 1,
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {log.message}
+                </span>
+              </div>
+            ))
+          )}
+          <div ref={consoleEndRef} />
+        </div>
+      </div>
+    );
+  };
+
   const renderCompactTabs = () => (
     <div style={{
       display: 'flex',
@@ -436,7 +745,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch'
     }}>
-      {['me', 'friends', 'network', 'p2p', 'gundb', 'backup'].map(tab => (
+      {['overview', 'console', 'me', 'friends', 'network', 'p2p', 'gundb', 'backup'].map(tab => (
         <button
           key={tab}
           onClick={() => {
@@ -1605,6 +1914,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderContent = () => {
     switch(activeTab) {
+      case 'overview':
+        return renderOverviewTab();
+      case 'console':
+        return renderConsoleTab();
       case 'me':
         return renderMeTab();
       case 'friends':
