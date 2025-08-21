@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import hybridGunService from '../services/hybridGunService';
 import friendsService from '../services/friendsService';
 
@@ -31,28 +31,55 @@ function ResizableSidebar({
   const MAX_WIDTH = 500;
   const MINIMIZED_WIDTH = 60;
 
-  // Helper function to format time ago
-  const getTimeAgo = (timestamp) => {
-    if (!timestamp) return 'unknown';
-    
-    const now = Date.now();
-    const diff = now - timestamp;
-    
-    if (diff < 60000) return 'just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-    
-    return new Date(timestamp).toLocaleDateString();
-  };
+  // Helper function to format time ago - memoized to prevent re-renders
+  const getTimeAgo = useMemo(() => {
+    return (timestamp) => {
+      if (!timestamp) return 'unknown';
+      
+      const now = Date.now();
+      const diff = now - timestamp;
+      
+      if (diff < 60000) return 'just now';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+      
+      return new Date(timestamp).toLocaleDateString();
+    };
+  }, []);
 
   // Use the passed onlineStatus instead of polling locally
   // The parent component (App.jsx) already handles real-time updates
   
-  // Debug: Log what we receive
-  useEffect(() => {
-    console.log('📊 ResizableSidebar received onlineStatus:', onlineStatus);
-  }, [onlineStatus]);
+  // Memoize formatted status for each friend to prevent re-renders
+  const formattedStatuses = useMemo(() => {
+    const statuses = {};
+    friends.forEach(friend => {
+      const status = onlineStatus[friend.publicKey];
+      if (status) {
+        statuses[friend.publicKey] = {
+          online: status.online,
+          text: status.online ? 'Online' : (
+            status.lastSeen ? `Last seen ${getTimeAgo(status.lastSeen)}` : 'Offline'
+          )
+        };
+      } else {
+        statuses[friend.publicKey] = {
+          online: false,
+          text: 'Offline'
+        };
+      }
+    });
+    return statuses;
+  }, [
+    // Only update when friends list or actual status values change
+    JSON.stringify(friends.map(f => f.publicKey)),
+    JSON.stringify(Object.entries(onlineStatus || {}).map(([key, val]) => 
+      [key, val?.online, val?.lastSeen]
+    ))
+  ]);
+  
+  // Debug logs removed to prevent re-renders
 
   // Load pending invites
   useEffect(() => {
@@ -164,14 +191,8 @@ function ResizableSidebar({
     const isSelected = selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
     
-    // Debug: Always log to see what we have
-    console.log(`🔍 Rendering ${friend.nickname}:`, {
-      friendKey,
-      statusData,
-      isOnline,
-      lastSeenValue: statusData?.lastSeen,
-      formatted: statusData?.lastSeen ? getTimeAgo(statusData.lastSeen) : 'no lastSeen'
-    });
+    // Use memoized status for this friend
+    const memoizedStatus = formattedStatuses[friendKey];
 
     if (isMinimized) {
       // Minimized view - just avatar
@@ -306,11 +327,7 @@ function ResizableSidebar({
                 fontSize: '10px',
                 color: isOnline ? '#43e97b' : 'rgba(255, 255, 255, 0.4)'
               }}>
-                {isOnline ? 'Online' : (
-                  statusData?.lastSeen ? 
-                    `Last seen ${getTimeAgo(statusData.lastSeen)}` : 
-                    'Offline'
-                )}
+                {memoizedStatus?.text || 'Offline'}
               </div>
             )}
           </div>

@@ -50,6 +50,7 @@ function SwipeableChat({
   }, []);
 
   // Memoize formatted status for each friend to prevent re-renders
+  // Only recalculate when the actual status data changes, not every render
   const formattedStatuses = useMemo(() => {
     const statuses = {};
     friends.forEach(friend => {
@@ -59,17 +60,27 @@ function SwipeableChat({
           online: status.online,
           text: status.online ? 'Online' : (
             status.lastSeen ? `Last seen ${getTimeAgo(status.lastSeen)}` : 'Offline'
-          )
+          ),
+          // Store the raw timestamp for comparison
+          lastSeenTimestamp: status.lastSeen
         };
       } else {
         statuses[friend.publicKey] = {
           online: false,
-          text: 'Offline'
+          text: 'Offline',
+          lastSeenTimestamp: null
         };
       }
     });
     return statuses;
-  }, [friends, onlineStatus, getTimeAgo]);
+  }, [
+    // Only update when friends list or actual status values change
+    // Use JSON.stringify to create a stable dependency
+    JSON.stringify(friends.map(f => f.publicKey)),
+    JSON.stringify(Object.entries(onlineStatus).map(([key, val]) => 
+      [key, val.online, val.lastSeen]
+    ))
+  ]);
 
   // Update mobile detection on resize
   useEffect(() => {
