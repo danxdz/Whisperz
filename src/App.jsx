@@ -9,6 +9,7 @@ import p2pDebugger from './utils/p2pDebugger';
 import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
+import debugLogger from './utils/debugLogger';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
@@ -370,13 +371,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     const initializeWebRTC = async () => {
       if (!webrtcService.isReady() && user?.pub) {
         try {
-          console.log('🔄 Re-initializing WebRTC in ChatView...');
+          debugLogger.info('webrtc', '🔄 Re-initializing WebRTC in ChatView...');
           await webrtcService.initialize(user.pub);
           // WebRTC ready
           
           // Gun P2P already initialized in main flow
         } catch (error) {
-          console.error('❌ Failed to initialize WebRTC in ChatView:', error);
+          debugLogger.error('❌ Failed to initialize WebRTC in ChatView:', error);
         }
       }
       
@@ -390,7 +391,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       
       // Update own presence with peer ID
       const peerId = webrtcService.getPeerId();
-      console.log('📍 Updating presence with peer ID:', peerId);
+      debugLogger.info('gun', '📍 Updating presence with peer ID:', peerId);
       hybridGunService.updatePresence('online', { peerId });
       
       // return () => {
@@ -465,9 +466,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               // Update if status changed OR if we have a newer lastSeen value
               if (prevStatus !== isOnline || prevLastSeen !== lastSeenValue) {
                 if (prevStatus !== isOnline) {
-                  console.log(`Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
+                  debugLogger.info('gun', `Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
                 }
-                console.log(`Updating ${friend.nickname} status:`, {
+                debugLogger.debug('gun', `Updating ${friend.nickname} status:`, {
                   online: isOnline,
                   lastSeen: lastSeenValue,
                   status: data.status
@@ -519,15 +520,15 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     }
 
     const loadMessages = async () => {
-      console.log('📋 Loading messages for:', selectedFriend.nickname || 'Unknown', 'ID:', selectedFriend.conversationId);
+      debugLogger.info('gun', '📋 Loading messages for:', selectedFriend.nickname || 'Unknown', 'ID:', selectedFriend.conversationId);
       try {
         const history = await messageService.getConversationHistory(selectedFriend.conversationId);
         const safeHistory = Array.isArray(history) ? history : [];
-        console.log(`📜 Loaded ${safeHistory.length} messages`);
+        debugLogger.info('gun', `📜 Loaded ${safeHistory.length} messages`);
         setMessages(safeHistory);
         messageService.markAsRead(selectedFriend.conversationId);
       } catch (error) {
-        console.error('Failed to load messages:', error);
+        debugLogger.error('Failed to load messages:', error);
         setMessages([]); // Set empty array to prevent crash
       }
     };
@@ -970,7 +971,7 @@ function App() {
     // Start console capture immediately
     if (!consoleCapture.isCapturing) {
       consoleCapture.start();
-      console.log('📹 Console capture started');
+      debugLogger.info('info', '📹 Console capture started');
     }
     
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
@@ -981,8 +982,8 @@ function App() {
     console.log('%c🚀 Whisperz v2.1.1', 'color: #43e97b; font-size: 14px; font-weight: bold');
     
     if (import.meta.env.DEV) {
-      console.log('🔧 Development Mode - Debug tools available');
-      console.log('💡 Type: p2pDebug.diagnose() for P2P diagnostics');
+      debugLogger.info('info', '🔧 Development Mode - Debug tools available');
+      debugLogger.info('info', '💡 Type: p2pDebug.diagnose() for P2P diagnostics');
     }
   }, []);
 
@@ -1134,7 +1135,7 @@ function App() {
             await gunOnlyP2P.initialize(currentUser.pub);
             // Gun P2P initialized as fallback
           } catch (error) {
-            console.error('❌ Failed to initialize P2P:', error);
+            debugLogger.error('❌ Failed to initialize P2P:', error);
           }
 
           // Initialize message service

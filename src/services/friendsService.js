@@ -3,6 +3,7 @@ import 'gun/sea';
 import gunAuthService from './gunAuthService';
 import encryptionService from './encryptionService';
 import rateLimiter from '../utils/rateLimiter';
+import debugLogger from '../utils/debugLogger';
 
 // Friends service for managing relationships
 class FriendsService {
@@ -173,7 +174,7 @@ class FriendsService {
         this.gun.get('invites').get(inviteCode).once(async (inviteData) => {
           if (!inviteData && attempts < maxAttempts) {
             // Data might not be synced yet, try again
-            console.log(`Attempt ${attempts}/${maxAttempts} - Invite not found yet, retrying...`);
+            debugLogger.debug('gun', `Attempt ${attempts}/${maxAttempts} - Invite not found yet, retrying...`);
             setTimeout(tryGetInvite, 2000); // Wait 2 seconds and retry
             return;
           }
@@ -275,7 +276,7 @@ class FriendsService {
         }
 
         // No need to connect to peers - everyone uses the same relay now
-        console.log('🌐 Using default relay - no peer exchange needed');
+        debugLogger.info('gun', '🌐 Using default relay - no peer exchange needed');
         // Create bidirectional friendship FIRST (before marking as used)
         const conversationId = `conv_${Date.now()}_${Math.random()}`;
         
@@ -910,7 +911,7 @@ class FriendsService {
     
     if (cleanPresence) {
       const timeSince = cleanPresence.lastSeen ? Date.now() - cleanPresence.lastSeen : Infinity;
-      console.log(`Friend ${publicKey.substring(0, 8)}... presence:`, {
+      debugLogger.debug('gun', `Friend ${publicKey.substring(0, 8)}... presence:`, {
         status: cleanPresence.status,
         timeSinceLastSeen: timeSince,
         isOnline: isOnline,

@@ -5,6 +5,7 @@
 
 import gunAuthService from './gunAuthService';
 import webrtcService from './webrtcService';
+import debugLogger from '../utils/debugLogger';
 
 class PresenceService {
   constructor() {
@@ -237,7 +238,7 @@ class PresenceService {
       try {
         webrtcService.sendMessage(peerId, message);
       } catch (error) {
-        console.error('Failed to send presence to peer:', peerId);
+        debugLogger.error('Failed to send presence to peer:', peerId);
       }
     });
   }
@@ -335,7 +336,7 @@ class PresenceService {
   debug() {
     // Presence Service Debug:
     // Is online: this.isOnline
-    console.log('Friends tracked:', this.friendsStatus.size);
+    debugLogger.debug('gun', 'Friends tracked:', this.friendsStatus.size);
     
     let onlineCount = 0;
     this.friendsStatus.forEach((status, publicKey) => {

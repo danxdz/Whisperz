@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import hybridGunService from '../services/hybridGunService';
 import friendsService from '../services/friendsService';
+import debugLogger from '../utils/debugLogger';
 
 /**
  * ResizableSidebar Component
@@ -88,7 +89,7 @@ function ResizableSidebar({
         const invites = await friendsService.getPendingInvites();
         setPendingInvites(invites || []);
       } catch (error) {
-        console.error('Failed to load pending invites:', error);
+        debugLogger.error('Failed to load pending invites:', error);
       }
     };
     
@@ -640,7 +641,7 @@ function ResizableSidebar({
                         await friendsService.cancelInvite(invite.publicKey);
                         setPendingInvites(prev => prev.filter(i => i.publicKey !== invite.publicKey));
                       } catch (error) {
-                        console.error('Failed to cancel invite:', error);
+                        debugLogger.error('Failed to cancel invite:', error);
                       }
                     }}
                     style={{
