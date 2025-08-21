@@ -28,7 +28,10 @@ class GunOnlyP2P {
     this.startPresenceBroadcast();
     
     this.isInitialized = true;
-    console.log('🎉 Gun-only P2P initialized for user:', userId);
+    // Only log in debug mode
+    if (localStorage.getItem('debug_gun') === 'true') {
+      console.log('🎉 Gun-only P2P initialized for user:', userId);
+    }
     return true;
   }
 

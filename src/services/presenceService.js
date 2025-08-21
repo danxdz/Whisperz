@@ -369,7 +369,9 @@ if (typeof window !== 'undefined') {
     getAll: () => presenceService.getAllFriendsStatus()
   };
   
-  console.log(`
+  // Startup log moved to debug level
+  if (localStorage.getItem('debug_gun') === 'true') {
+    console.log(`
 🟢 Presence Service Loaded!
 Commands:
 - presence.debug() - Show presence status
@@ -379,6 +381,7 @@ Commands:
 - presence.isOnline(publicKey) - Is friend online?
 - presence.getAll() - Get all friends' status
   `);
+  }
 }
 
 export default presenceService;

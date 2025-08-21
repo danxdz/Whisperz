@@ -16,8 +16,11 @@ class GunAuthService {
     // Your private Gun relay server - FIXED, no switching needed
     const gunRelay = 'https://gun-relay-nchb.onrender.com/gun';
     
-    console.log('🔫 Initializing Gun.js');
-    console.log('🌐 Private relay:', gunRelay);
+    // Initialization logs moved to debug level
+    if (localStorage.getItem('debug_gun') === 'true') {
+      console.log('🔫 Initializing Gun.js');
+      console.log('🌐 Private relay:', gunRelay);
+    }
 
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);

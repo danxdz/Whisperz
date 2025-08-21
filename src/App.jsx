@@ -391,7 +391,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       
       // Update own presence with peer ID
       const peerId = webrtcService.getPeerId();
-      debugLogger.info('gun', '📍 Updating presence with peer ID:', peerId);
+      debugLogger.debug('gun', '📍 Updating presence with peer ID:', peerId);
       hybridGunService.updatePresence('online', { peerId });
       
       // return () => {
@@ -466,7 +466,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               // Update if status changed OR if we have a newer lastSeen value
               if (prevStatus !== isOnline || prevLastSeen !== lastSeenValue) {
                 if (prevStatus !== isOnline) {
-                  debugLogger.info('gun', `Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
+                  debugLogger.debug('gun', `Friend ${friend.nickname} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
                 }
                 debugLogger.debug('gun', `Updating ${friend.nickname} status:`, {
                   online: isOnline,
@@ -520,11 +520,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     }
 
     const loadMessages = async () => {
-      debugLogger.info('gun', '📋 Loading messages for:', selectedFriend.nickname || 'Unknown', 'ID:', selectedFriend.conversationId);
+      debugLogger.debug('gun', '📋 Loading messages for:', selectedFriend.nickname || 'Unknown', 'ID:', selectedFriend.conversationId);
       try {
         const history = await messageService.getConversationHistory(selectedFriend.conversationId);
         const safeHistory = Array.isArray(history) ? history : [];
-        debugLogger.info('gun', `📜 Loaded ${safeHistory.length} messages`);
+        debugLogger.debug('gun', `📜 Loaded ${safeHistory.length} messages`);
         setMessages(safeHistory);
         messageService.markAsRead(selectedFriend.conversationId);
       } catch (error) {
@@ -971,7 +971,7 @@ function App() {
     // Start console capture immediately
     if (!consoleCapture.isCapturing) {
       consoleCapture.start();
-      debugLogger.info('info', '📹 Console capture started');
+      debugLogger.debug('info', '📹 Console capture started');
     }
     
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
@@ -1127,7 +1127,7 @@ function App() {
           
           // Initialize WebRTC for private chats
           try {
-            console.log('🚀 Initializing WebRTC for existing session...');
+            debugLogger.debug('webrtc', '🚀 Initializing WebRTC for existing session...');
             await webrtcService.initialize(currentUser.pub);
             // WebRTC initialized
             
@@ -1171,13 +1171,13 @@ function App() {
     
     // Initialize WebRTC for private chats
     try {
-      console.log('🚀 Initializing WebRTC after login...');
+      debugLogger.debug('webrtc', '🚀 Initializing WebRTC after login...');
       await webrtcService.initialize(authUser.pub);
-      console.log('✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
+      debugLogger.info('webrtc', '✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
       
       // Also initialize Gun P2P as fallback
       await gunOnlyP2P.initialize(authUser.pub);
-      console.log('✅ Gun P2P initialized as fallback');
+      debugLogger.debug('gun', '✅ Gun P2P initialized as fallback');
     } catch (error) {
       console.error('❌ Failed to initialize P2P:', error);
     }
