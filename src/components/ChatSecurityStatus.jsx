@@ -8,7 +8,7 @@ import friendsService from '../services/friendsService';
  * Shows real-time security status for the current chat
  * Displays encryption status, key exchange status, and connection type
  */
-const ChatSecurityStatus = ({ friend, connectionState, style = {} }) => {
+const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} }) => {
   const { colors } = useTheme();
   const [securityStatus, setSecurityStatus] = useState({
     hasEncryptionKey: false,
@@ -166,6 +166,30 @@ const ChatSecurityStatus = ({ friend, connectionState, style = {} }) => {
       gap: '8px',
       ...style
     }}>
+      {/* P2P Connect Button - only show if not already P2P and friend is online */}
+      {connectionState?.isOnline && connectionState?.status !== 'webrtc' && onAttemptP2P && (
+        <button
+          onClick={onAttemptP2P}
+          style={{
+            padding: '6px 10px',
+            background: 'rgba(0, 255, 0, 0.1)',
+            border: '1px solid #00ff00',
+            borderRadius: '6px',
+            color: '#00ff00',
+            fontSize: '11px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.2s',
+            fontWeight: '600'
+          }}
+          title="Try direct P2P connection"
+        >
+          🚀 P2P
+        </button>
+      )}
+      
       {/* Main Security Indicator */}
       <div
         onClick={() => setShowDetails(!showDetails)}

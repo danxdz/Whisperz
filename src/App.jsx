@@ -722,6 +722,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 <ChatSecurityStatus 
                   friend={selectedFriend}
                   connectionState={connectionState}
+                  onAttemptP2P={attemptWebRTCConnection}
                 />
               </div>
               <ThemeToggle />
@@ -785,10 +786,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                         }
                       >
                         {msg.deliveryMethod === 'webrtc' ? (
-                          <span style={{ color: '#00ff00' }}>●</span>
+                          <span style={{ color: '#00ff00' }}>⬤</span>
                         ) : msg.deliveryMethod === 'gun' ? (
-                          <span style={{ color: selectedFriend?.epub ? '#43e97b' : '#ff6b6b' }}>
-                            {selectedFriend?.epub ? '●' : '○'}
+                          <span style={{ color: selectedFriend?.epub ? '#ffaa00' : '#ff0000' }}>
+                            {selectedFriend?.epub ? '◆' : '◇'}
                           </span>
                         ) : null}
                       </span>
@@ -842,13 +843,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 marginBottom: '4px'
               }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#00ff00' }}>●</span> P2P Direct
+                  <span style={{ color: '#00ff00' }}>⬤</span> P2P Direct
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#43e97b' }}>●</span> Relay (Encrypted)
+                  <span style={{ color: '#ffaa00' }}>◆</span> Relay (Encrypted)
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#ff6b6b' }}>○</span> Relay (Not Encrypted)
+                  <span style={{ color: '#ff0000' }}>◇</span> Relay (Not Encrypted)
                 </span>
               </div>
               <div style={{ display: 'flex', gap: screen.isTiny ? '4px' : '8px' }}>
