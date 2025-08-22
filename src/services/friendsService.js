@@ -105,6 +105,7 @@ class FriendsService {
     // No need for peer exchange - everyone uses the same relay
     const inviteData = {
       from: user.pub,
+      epub: user.epub,  // CRITICAL: Encryption public key for Gun.SEA.secret()
       nickname: nickname || 'Anonymous',
       createdAt: Date.now(),
       expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
@@ -290,7 +291,8 @@ class FriendsService {
         // console.log('Inviter:', inviteData.from, inviteData.nickname);
 
         // Add friend for current user (the one accepting the invite)
-        await this.addFriend(inviteData.from, inviteData.nickname, conversationId);
+        // Pass epub from invite data for encryption to work
+        await this.addFriend(inviteData.from, inviteData.nickname, inviteData.epub);
         // console.log('✅ Step 1: Added inviter as friend for current user');
 
         // Add current user as friend for the inviter
@@ -301,7 +303,9 @@ class FriendsService {
           const friendshipKey = this.generateConversationId(inviteData.from, user.pub);
           const friendshipData = {
             fromPublicKey: inviteData.from,
+            fromEpub: inviteData.epub,  // Inviter's encryption key
             toPublicKey: user.pub,
+            toEpub: user.epub,  // Our encryption key for inviter to use
             fromNickname: inviteData.nickname,
             toNickname: currentUserNickname,
             addedAt: Date.now(),
@@ -431,7 +435,7 @@ class FriendsService {
   }
 
   // Add friend - Fixed to use public space for friend connections
-  async addFriend(publicKey, nickname) {
+  async addFriend(publicKey, nickname, epub = null) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -440,6 +444,7 @@ class FriendsService {
 
     const friendData = {
       publicKey,
+      epub: epub || null,  // CRITICAL: Store encryption key for Gun.SEA
       nickname,
       addedAt: Date.now(),
       conversationId: this.generateConversationId(user.pub, publicKey)
@@ -723,12 +728,14 @@ class FriendsService {
             // Determine which user is the friend
             const isSender = data.fromPublicKey === currentUser.pub;
             const friendKey = isSender ? data.toPublicKey : data.fromPublicKey;
+            const friendEpub = isSender ? data.toEpub : data.fromEpub;
             const friendNickname = isSender ? data.toNickname : data.fromNickname;
 
             // Add friend if not already in list
             if (!friends.has(friendKey)) {
               const friendData = {
                 publicKey: friendKey,
+                epub: friendEpub || null,  // CRITICAL: Include encryption key
                 nickname: friendNickname,
                 addedAt: data.addedAt,
                 conversationId: data.conversationId
