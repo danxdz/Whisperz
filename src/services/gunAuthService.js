@@ -13,13 +13,21 @@ class GunAuthService {
 
   // Initialize Gun instance with peers
   initialize(peers = []) {
-    // Your private Gun relay server - FIXED, no switching needed
-    const gunRelay = 'https://gun-relay-nchb.onrender.com/gun';
+    // Gun relay configuration - can be overridden by environment variable
+    const defaultRelay = 'https://gun-relay-nchb.onrender.com/gun';
+    const gunRelay = import.meta.env.VITE_GUN_RELAY_URL || defaultRelay;
+    
+    // Support for specific database instance (for multi-instance Gun relay servers)
+    const instance = import.meta.env.VITE_GUN_INSTANCE || localStorage.getItem('gun_instance') || '';
+    const finalRelay = instance ? `${gunRelay}?instance=${instance}` : gunRelay;
 
     // Initialization logs moved to debug level
     if (localStorage.getItem('debug_gun') === 'true') {
       console.log('🔫 Initializing Gun.js');
-      console.log('🌐 Private relay:', gunRelay);
+      console.log('🌐 Relay:', finalRelay);
+      if (instance) {
+        console.log('📦 Instance:', instance);
+      }
     }
 
     // Detect if mobile for optimizations
