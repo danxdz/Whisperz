@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ResizableSidebar from './ResizableSidebar';
 import EnhancedDevTools from './EnhancedDevTools';
 import { useTheme } from '../contexts/ThemeContext';
+import friendsService from '../services/friendsService';
 
 /**
  * SwipeableChat Component
@@ -27,10 +28,60 @@ function SwipeableChat({
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showDevTools, setShowDevTools] = useState(false); // For desktop
+  const [showFriendActions, setShowFriendActions] = useState(null); // For friend context menu
+  const [longPressTimer, setLongPressTimer] = useState(null);
   const containerRef = useRef(null);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
+
+  // Handle friend actions
+  const handleRemoveFriend = async (friend) => {
+    const confirmRemove = window.confirm(
+      `Remove ${friend.nickname} from your friends list?\n\nThis will remove them as a friend but they can still send you invites.`
+    );
+    if (!confirmRemove) return;
+
+    try {
+      await friendsService.removeFriend(friend.publicKey, false);
+      alert(`${friend.nickname} has been removed from your friends.`);
+      if (onFriendsUpdate) onFriendsUpdate();
+      setShowFriendActions(null);
+    } catch (error) {
+      alert('Failed to remove friend: ' + error.message);
+    }
+  };
+
+  const handleBlockFriend = async (friend) => {
+    const confirmBlock = window.confirm(
+      `Block ${friend.nickname}?\n\nThis will:\n• Remove them from friends\n• Prevent them from sending invites\n• Delete conversation history\n\nThis action cannot be easily undone.`
+    );
+    if (!confirmBlock) return;
+
+    try {
+      await friendsService.removeFriend(friend.publicKey, true);
+      alert(`${friend.nickname} has been blocked.`);
+      if (onFriendsUpdate) onFriendsUpdate();
+      setShowFriendActions(null);
+    } catch (error) {
+      alert('Failed to block friend: ' + error.message);
+    }
+  };
+
+  // Long press handlers for mobile
+  const handleLongPressStart = (friend) => {
+    const timer = setTimeout(() => {
+      setShowFriendActions(friend);
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
 
   // Helper function to format time ago - memoized to prevent re-renders
   const getTimeAgo = useMemo(() => {
@@ -393,12 +444,120 @@ function SwipeableChat({
               </div>
             </div>
 
+            {/* Long-press hint */}
+            <div style={{
+              padding: '8px 16px',
+              fontSize: '11px',
+              color: colors.textMuted,
+              fontStyle: 'italic',
+              borderBottom: `1px solid ${colors.borderColor}`,
+              textAlign: 'center'
+            }}>
+              💡 Long-press a friend for options (remove/block)
+            </div>
+
             {/* Friends List */}
             <div style={{
               flex: 1,
               overflowY: 'auto',
               padding: '16px'
             }}>
+              {/* Friend Actions Menu */}
+              {showFriendActions && (
+                <div
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    padding: '20px'
+                  }}
+                  onClick={() => setShowFriendActions(null)}
+                >
+                  <div
+                    style={{
+                      background: colors.bgCard,
+                      borderRadius: '12px',
+                      padding: '20px',
+                      maxWidth: '300px',
+                      width: '100%',
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h3 style={{
+                      margin: '0 0 20px 0',
+                      color: colors.textPrimary,
+                      fontSize: '18px'
+                    }}>
+                      {showFriendActions.nickname}
+                    </h3>
+                    
+                    <button
+                      onClick={() => handleRemoveFriend(showFriendActions)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '12px',
+                        marginBottom: '10px',
+                        background: colors.warning + '20',
+                        border: `1px solid ${colors.warning}`,
+                        borderRadius: '8px',
+                        color: colors.warning,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      🗑️ Remove Friend
+                    </button>
+                    
+                    <button
+                      onClick={() => handleBlockFriend(showFriendActions)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '12px',
+                        marginBottom: '10px',
+                        background: colors.danger + '20',
+                        border: `1px solid ${colors.danger}`,
+                        borderRadius: '8px',
+                        color: colors.danger,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      🚫 Block User
+                    </button>
+                    
+                    <button
+                      onClick={() => setShowFriendActions(null)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '12px',
+                        background: colors.bgTertiary,
+                        border: `1px solid ${colors.borderColor}`,
+                        borderRadius: '8px',
+                        color: colors.textSecondary,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {friends.map(friend => {
                 const statusInfo = formattedStatuses[friend.publicKey];
 
@@ -406,9 +565,18 @@ function SwipeableChat({
                 <div
                   key={friend.publicKey}
                   onClick={() => {
-                    onSelectFriend(friend);
-                    setCurrentPanel(0); // Auto-switch to chat after selecting
+                    // Only select friend if not showing actions
+                    if (!showFriendActions) {
+                      onSelectFriend(friend);
+                      setCurrentPanel(0); // Auto-switch to chat after selecting
+                    }
                   }}
+                  onTouchStart={() => handleLongPressStart(friend)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchCancel={handleLongPressEnd}
+                  onMouseDown={() => handleLongPressStart(friend)}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressEnd}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -419,7 +587,8 @@ function SwipeableChat({
                       : colors.bgTertiary,
                     borderRadius: '8px',
                     cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    position: 'relative'
                   }}
                 >
                   <div style={{
