@@ -153,7 +153,7 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
       case 'high': return 'Encrypted';
       case 'partial': return 'Partial Security';
       case 'low': return 'Not Encrypted';
-      case 'critical': return 'Security Issue';
+      case 'critical': return 'Keys Missing';
       case 'pending': return 'Connecting...';
       default: return 'Offline';
     }
@@ -318,8 +318,13 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
               color: colors.danger
             }}>
               ⚠️ <strong>Action Required:</strong><br/>
-              {!securityStatus.hasEncryptionKey && 
-                'Friend needs to generate a new invite link for you, or you need to re-add each other.'}
+              {!securityStatus.hasEncryptionKey && (
+                <>
+                  This friend was added before encryption keys were properly exchanged.<br/>
+                  <strong>To fix:</strong> One of you needs to generate a new invite link and re-add each other.<br/>
+                  <small>This is a one-time fix for old connections.</small>
+                </>
+              )}
               {!gunAuthService.getCurrentUser()?.epub && 
                 'Your encryption keys are missing. Please log out and log back in.'}
             </div>
