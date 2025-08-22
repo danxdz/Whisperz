@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import webrtcService from '../services/webrtcService';
 
@@ -7,7 +7,7 @@ import webrtcService from '../services/webrtcService';
  * Displays real-time connection status for Gun.js and WebRTC
  * Shows as a collapsible status panel in the bottom-left corner
  */
-const ConnectionStatus = () => {
+const ConnectionStatus = memo(() => {
   const [gunStatus, setGunStatus] = useState('connecting');
   const [peerStatus, setPeerStatus] = useState('connecting');
   const [relayStatus, setRelayStatus] = useState('checking...');
@@ -155,6 +155,8 @@ const ConnectionStatus = () => {
       )}
     </div>
   );
-};
+});
+
+ConnectionStatus.displayName = 'ConnectionStatus';
 
 export default ConnectionStatus;

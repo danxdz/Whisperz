@@ -403,7 +403,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     initializeWebRTC();
     
     // Update again after a short delay to ensure everything is ready
-    setTimeout(initializeWebRTC, 2000);
+    const timeoutId = setTimeout(initializeWebRTC, 2000);
 
     // Handle page visibility
     const handleVisibility = () => {
@@ -428,6 +428,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     // }, 10000);
 
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('beforeunload', handleUnload);
       // clearInterval(refreshInterval); // Removed - no longer needed
@@ -979,7 +980,7 @@ function App() {
     const screenSize = `${window.innerWidth}x${window.innerHeight}`;
     
     // Only show minimal startup info
-    console.log('%c🚀 Whisperz v2.1.1', 'color: #43e97b; font-size: 14px; font-weight: bold');
+    debugLogger.info('🚀 Whisperz v2.1.1');
     
     if (import.meta.env.DEV) {
       debugLogger.info('info', '🔧 Development Mode - Debug tools available');
@@ -1002,7 +1003,7 @@ function App() {
         // Start P2P monitoring in development
         if (import.meta.env.DEV) {
           p2pDebugger.startMonitoring();
-          console.log('🔍 P2P debugging enabled');
+          debugLogger.info('🔍 P2P debugging enabled');
         }
         
         // Add test helper to window for debugging
@@ -1113,7 +1114,7 @@ function App() {
           // If there's an invite, show register page by default
           // But user can switch to login if they already have an account
           setAuthMode('register');
-          console.log('📧 Invite code detected:', code);
+          debugLogger.info('📧 Invite code detected:', code);
         }
 
         // Initialize Gun
@@ -1179,7 +1180,7 @@ function App() {
       await gunOnlyP2P.initialize(authUser.pub);
       debugLogger.debug('gun', '✅ Gun P2P initialized as fallback');
     } catch (error) {
-      console.error('❌ Failed to initialize P2P:', error);
+      debugLogger.error('❌ Failed to initialize P2P:', error);
     }
     
     // Initialize presence service and set online

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
-const ThemeToggle = () => {
+const ThemeToggle = memo(() => {
   const { theme, toggleTheme, colors } = useTheme();
 
   return (
@@ -35,6 +35,8 @@ const ThemeToggle = () => {
       {theme === 'dark' ? '☀️' : '🌙'}
     </button>
   );
-};
+});
+
+ThemeToggle.displayName = 'ThemeToggle';
 
 export default ThemeToggle;
