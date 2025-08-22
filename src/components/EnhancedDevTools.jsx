@@ -2357,6 +2357,112 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 </div>
               )}
             </div>
+            
+            {/* Account Actions */}
+            <div style={{
+              marginTop: '12px',
+              paddingTop: '12px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <button
+                onClick={() => {
+                  const confirmDelete = window.confirm(
+                    '⚠️ DELETE ACCOUNT?\n\n' +
+                    'This will:\n' +
+                    '• Delete all your data\n' +
+                    '• Remove all friends\n' +
+                    '• Clear all messages\n' +
+                    '• Log you out\n\n' +
+                    'This CANNOT be undone!\n\n' +
+                    'Are you absolutely sure?'
+                  );
+                  
+                  if (confirmDelete) {
+                    const doubleConfirm = window.confirm(
+                      '🚨 FINAL WARNING 🚨\n\n' +
+                      'You are about to permanently delete your account.\n' +
+                      'Your username will be available for others to use.\n\n' +
+                      'Click OK to DELETE FOREVER\n' +
+                      'Click Cancel to keep your account'
+                    );
+                    
+                    if (doubleConfirm) {
+                      // Delete account
+                      try {
+                        // Clear all user data
+                        const user = gunAuthService.getCurrentUser();
+                        if (user) {
+                          // Clear friends
+                          gunAuthService.user.get('friends').put(null);
+                          gunAuthService.user.get('friendsIndex').put(null);
+                          gunAuthService.user.get('pending_friends').put(null);
+                          
+                          // Clear messages
+                          gunAuthService.user.get('conversations').put(null);
+                          gunAuthService.user.get('messages').put(null);
+                          
+                          // Clear profile
+                          gunAuthService.user.get('profile').put(null);
+                          gunAuthService.user.get('presence').put(null);
+                          
+                          // Clear blocked users
+                          gunAuthService.user.get('blocked').put(null);
+                          
+                          // Clear from public spaces
+                          gunAuthService.gun.get('presence').get(user.pub).put(null);
+                          gunAuthService.gun.get('~' + user.pub).put(null);
+                        }
+                        
+                        // Clear local storage
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        
+                        // Logout and reload
+                        gunAuthService.logout();
+                        alert('Account deleted. Goodbye! 👋');
+                        window.location.reload();
+                      } catch (error) {
+                        console.error('Failed to delete account:', error);
+                        alert('Failed to delete account: ' + error.message);
+                      }
+                    }
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  background: 'rgba(255, 0, 0, 0.2)',
+                  border: '1px solid #ff0000',
+                  borderRadius: '4px',
+                  color: '#ff0000',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                🗑️ DELETE ACCOUNT
+              </button>
+              
+              <button
+                onClick={() => {
+                  gunAuthService.logout();
+                  window.location.reload();
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  marginTop: '8px',
+                  background: 'rgba(255, 165, 0, 0.2)',
+                  border: '1px solid #ffa500',
+                  borderRadius: '4px',
+                  color: '#ffa500',
+                  fontSize: '11px',
+                  cursor: 'pointer'
+                }}
+              >
+                🚪 Logout
+              </button>
+            </div>
           </div>
         )}
 
