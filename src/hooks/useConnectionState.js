@@ -90,7 +90,8 @@ export function useConnectionState(friendPublicKey) {
     // Subscribe to presence changes (real-time, no polling!)
     const gun = gunAuthService.gun;
     const presenceSub = gun.get('presence').get(friendPublicKey).on((data, key) => {
-      if (data && typeof data === 'object' && !data._) {
+      // Validate data before processing
+      if (data && typeof data === 'object' && !data._ && data.status) {
         // Clean presence data
         const cleanPresence = {
           status: data.status,

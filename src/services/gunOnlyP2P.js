@@ -74,7 +74,7 @@ class GunOnlyP2P {
       const presence = {
         status: 'online',
         timestamp: Date.now(),
-        gunPeers: this.getConnectedGunPeers()
+        gunPeerCount: this.getConnectedGunPeers().length // Store count instead of array
       };
 
       gun.get('presence').get(user.pub).put(presence);
@@ -235,17 +235,16 @@ class GunOnlyP2P {
         const isOnline = presence.timestamp && (Date.now() - presence.timestamp) < 120000;
         const status = isOnline ? 'online' : 'offline';
 
-        // Check if we share Gun peers
-        const ourPeers = this.getConnectedGunPeers();
-        const theirPeers = presence.gunPeers || [];
-        const sharedPeers = ourPeers.filter(p => theirPeers.includes(p));
+        // Check if both have Gun peers connected
+        const ourPeerCount = this.getConnectedGunPeers().length;
+        const theirPeerCount = presence.gunPeerCount || 0;
 
         resolve({
-          connected: isOnline,
+          connected: isOnline && ourPeerCount > 0 && theirPeerCount > 0,
           status: status,
           lastSeen: presence.timestamp,
-          sharedPeers: sharedPeers.length > 0,
-          directPath: sharedPeers.length > 0 ? 'gun-mesh' : 'gun-relay'
+          sharedPeers: Math.min(ourPeerCount, theirPeerCount) > 0,
+          directPath: (ourPeerCount > 0 && theirPeerCount > 0) ? 'gun-mesh' : 'gun-relay'
         });
       });
     });
