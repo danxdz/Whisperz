@@ -5,7 +5,7 @@ const ThemeToggle = memo(() => {
   const { theme, toggleTheme, colors } = useTheme();
 
   return (
-    <button 
+    <button
       onClick={toggleTheme}
       aria-label="Toggle theme"
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}

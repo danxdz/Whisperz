@@ -14,7 +14,7 @@ export function useResponsive() {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      
+
       setDimensions({
         width,
         height,

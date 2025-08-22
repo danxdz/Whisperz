@@ -20,7 +20,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
 
     const checkPresence = async () => {
       const status = {};
-      
+
       for (const friend of friends) {
         try {
           const presence = await hybridGunService.getPresence(friend.publicKey);
@@ -29,7 +29,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
           status[friend.publicKey] = { online: false };
         }
       }
-      
+
       setOnlineStatus(status);
     };
 
@@ -46,7 +46,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     try {
       await friendsService.removeFriend(friend.publicKey, false);
       alert(`${friend.nickname} has been removed from your friends.`);
-      
+
       // Refresh friends list
       if (onFriendsUpdate) {
         onFriendsUpdate();
@@ -55,7 +55,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
       // console.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
-    
+
     setShowActions(null);
   };
 
@@ -74,7 +74,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     try {
       await friendsService.removeFriend(friend.publicKey, true); // true = also block
       alert(`${friend.nickname} has been blocked.`);
-      
+
       // Refresh friends list
       if (onFriendsUpdate) {
         onFriendsUpdate();
@@ -83,7 +83,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
       // console.error('Failed to block friend:', error);
       alert('Failed to block friend: ' + error.message);
     }
-    
+
     setShowActions(null);
   };
 
@@ -92,7 +92,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     const status = onlineStatus[friend.publicKey];
     return status?.online === true;
   });
-  
+
   const offlineFriends = friends.filter(friend => {
     const status = onlineStatus[friend.publicKey];
     return !status?.online;
@@ -102,7 +102,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
     friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const displayedFriends = showOnlineOnly ? 
+  const displayedFriends = showOnlineOnly ?
     onlineFriends.filter(f => f.nickname.toLowerCase().includes(searchTerm.toLowerCase())) :
     filteredFriends;
 
@@ -119,10 +119,10 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
           alignItems: 'center',
           padding: '6px 8px',
           marginBottom: '4px',
-          background: isSelected 
+          background: isSelected
             ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3))'
             : 'rgba(255, 255, 255, 0.03)',
-          border: isSelected 
+          border: isSelected
             ? '1px solid rgba(102, 126, 234, 0.5)'
             : '1px solid transparent',
           borderRadius: '6px',
@@ -156,7 +156,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
             width: '28px',
             height: '28px',
             borderRadius: '50%',
-            background: isOnline 
+            background: isOnline
               ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
               : 'linear-gradient(135deg, #667eea, #764ba2)',
             display: 'flex',
@@ -170,7 +170,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
             position: 'relative'
           }}>
             {friend.nickname.charAt(0).toUpperCase()}
-            
+
             {/* Online dot */}
             <div style={{
               position: 'absolute',
@@ -314,7 +314,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
       transition: 'all 0.3s ease'
     }}>
       {/* Collapsible Header */}
-      <div 
+      <div
         onClick={() => setIsExpanded(!isExpanded)}
         style={{
           padding: '10px 12px',
@@ -352,7 +352,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
             {friends.length} total
           </span>
         </div>
-        
+
         <span style={{
           fontSize: '12px',
           color: 'rgba(255, 255, 255, 0.5)',
@@ -417,7 +417,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
                 outline: 'none'
               }}
             />
-            
+
             <label style={{
               display: 'flex',
               alignItems: 'center',
@@ -453,7 +453,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
                 color: 'rgba(255, 255, 255, 0.5)',
                 fontSize: '12px'
               }}>
-                {searchTerm ? 'No friends match your search' : 
+                {searchTerm ? 'No friends match your search' :
                  showOnlineOnly ? 'No friends online' : 'No friends yet'}
               </div>
             ) : (
@@ -471,8 +471,8 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
                       fontWeight: '600'
                     }}>
                       ONLINE ({displayedFriends.filter(f => {
-                        const status = onlineStatus instanceof Map ? 
-                          onlineStatus.get(f.publicKey) : 
+                        const status = onlineStatus instanceof Map ?
+                          onlineStatus.get(f.publicKey) :
                           onlineStatus[f.publicKey];
                         return status?.online;
                       }).length})
@@ -483,7 +483,7 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
                     }
                   </>
                 )}
-                
+
                 {/* Offline Friends */}
                 {!showOnlineOnly && displayedFriends.filter(f => !onlineStatus[f.publicKey]?.online).length > 0 && (
                   <>

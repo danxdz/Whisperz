@@ -8,7 +8,7 @@ export const APP_CONFIG = {
   name: 'Whisperz',
   version: '2.0.0',
   description: 'Secure decentralized P2P chat application',
-  
+
   // Authentication
   auth: {
     maxLoginAttempts: 5,
@@ -17,7 +17,7 @@ export const APP_CONFIG = {
     usernameMaxLength: 20,
     passwordMinLength: 8,
   },
-  
+
   // Messages
   messages: {
     maxLength: 5000,
@@ -26,14 +26,14 @@ export const APP_CONFIG = {
     messageRetryAttempts: 3,
     messageRetryDelay: 1000,
   },
-  
+
   // Friends & Invites
   invites: {
     expirationTime: 24 * 60 * 60 * 1000, // 24 hours
     maxActiveInvites: 10,
     inviteCodeLength: 32,
   },
-  
+
   // WebRTC
   webrtc: {
     reconnectDelay: 3000,
@@ -41,7 +41,7 @@ export const APP_CONFIG = {
     heartbeatInterval: 5000,
     connectionTimeout: 10000,
   },
-  
+
   // Gun.js
   gun: {
     peers: import.meta.env.VITE_GUN_PEERS?.split(',') || [
@@ -53,7 +53,7 @@ export const APP_CONFIG = {
     radisk: true,
     multicast: false,
   },
-  
+
   // PeerJS
   peerjs: {
     host: import.meta.env.VITE_PEERJS_HOST?.split(':')[0] || null,
@@ -61,7 +61,7 @@ export const APP_CONFIG = {
     secure: true,
     debug: import.meta.env.DEV ? 2 : 0,
   },
-  
+
   // UI/UX
   ui: {
     theme: 'unix-dark',
@@ -70,14 +70,14 @@ export const APP_CONFIG = {
     autoScrollThreshold: 100,
     mobileBreakpoint: 768,
   },
-  
+
   // Developer
   dev: {
     enableDevTools: import.meta.env.DEV || window.location.hostname === 'localhost',
     logLevel: import.meta.env.DEV ? 'debug' : 'error',
     enablePerformanceMonitoring: false,
   },
-  
+
   // Security
   security: {
     encryptionAlgorithm: 'AES',

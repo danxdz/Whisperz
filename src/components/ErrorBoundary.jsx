@@ -8,7 +8,7 @@ import React from 'react';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 
+    this.state = {
       hasError: false,
       error: null,
       errorInfo: null,
@@ -24,7 +24,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // Log error to console in development
     // console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     // Update state with error details
     this.setState(prevState => ({
       error,
@@ -37,7 +37,7 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    this.setState({ 
+    this.setState({
       hasError: false,
       error: null,
       errorInfo: null
@@ -59,7 +59,7 @@ class ErrorBoundary extends React.Component {
         }}>
           <h2 style={{ color: '#ff0000' }}>⚠️ Something went wrong</h2>
           <p>The application encountered an unexpected error.</p>
-          
+
           {/* Show error details in development */}
           {import.meta.env.DEV && this.state.error && (
             <details style={{ marginTop: '20px' }}>
@@ -82,9 +82,9 @@ class ErrorBoundary extends React.Component {
               </pre>
             </details>
           )}
-          
+
           <div style={{ marginTop: '20px' }}>
-            <button 
+            <button
               onClick={this.handleReset}
               style={{
                 padding: '10px 20px',
@@ -99,7 +99,7 @@ class ErrorBoundary extends React.Component {
             >
               Try Again
             </button>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               style={{
                 padding: '10px 20px',
@@ -113,7 +113,7 @@ class ErrorBoundary extends React.Component {
               Reload Page
             </button>
           </div>
-          
+
           {this.state.errorCount > 2 && (
             <p style={{ marginTop: '20px', color: '#ffff00' }}>
               ⚠️ Multiple errors detected. Consider refreshing the page or clearing your browser cache.

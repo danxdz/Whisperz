@@ -14,7 +14,7 @@ function MobileDevTools({ onOpenDevTools }) {
     const handleDoubleTap = (e) => {
       const currentTime = Date.now();
       const tapLength = currentTime - lastTapRef.current;
-      
+
       if (tapLength < 500 && tapLength > 0) {
         setTouchCount(prev => {
           const newCount = prev + 1;
@@ -28,9 +28,9 @@ function MobileDevTools({ onOpenDevTools }) {
       } else {
         setTouchCount(1);
       }
-      
+
       lastTapRef.current = currentTime;
-      
+
       // Reset count after timeout
       clearTimeout(touchTimeoutRef.current);
       touchTimeoutRef.current = setTimeout(() => {
@@ -43,7 +43,7 @@ function MobileDevTools({ onOpenDevTools }) {
       const x = e.touches?.[0]?.clientX || e.clientX;
       const y = e.touches?.[0]?.clientY || e.clientY;
       const cornerSize = 50;
-      
+
       // Check if tap is in bottom-right corner
       if (
         x > window.innerWidth - cornerSize &&
@@ -71,7 +71,7 @@ function MobileDevTools({ onOpenDevTools }) {
   return (
     <>
       {/* Corner indicator - subtle visual hint */}
-      <div 
+      <div
         className="mobile-devtools-corner"
         style={{
           position: 'fixed',
@@ -84,7 +84,7 @@ function MobileDevTools({ onOpenDevTools }) {
           zIndex: 9998,
         }}
       />
-      
+
       {/* Show hint only on first visit */}
       <MobileDevToolsHint />
     </>
@@ -100,7 +100,7 @@ function MobileDevToolsHint() {
 
   useEffect(() => {
     const hasSeenHint = localStorage.getItem('mobileDevToolsHintSeen');
-    
+
     if (!hasSeenHint) {
       setTimeout(() => setShowHint(true), 2000);
       setTimeout(() => {
@@ -130,14 +130,14 @@ function MobileDevToolsHint() {
       <h3 style={{ color: '#00ff00', margin: '0 0 15px 0' }}>
         📱 Mobile Dev Tools
       </h3>
-      
+
       <div style={{ color: '#00ff00', fontSize: '14px', lineHeight: '1.6' }}>
         <p style={{ margin: '0 0 10px 0' }}>Access dev tools with:</p>
-        
+
         <div style={{ textAlign: 'left', paddingLeft: '20px' }}>
           <div>• <strong>Double-tap</strong> bottom-right corner</div>
         </div>
-        
+
         <p style={{ margin: '15px 0 0 0', fontSize: '12px', opacity: 0.7 }}>
           This message won't show again
         </p>

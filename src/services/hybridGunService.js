@@ -43,7 +43,7 @@ class HybridGunService {
 
     return new Promise((resolve) => {
       const messages = [];
-      
+
       this.gun.get('offline_messages')
         .get(user.pub)
         .map()
@@ -84,7 +84,7 @@ class HybridGunService {
     if (!this.user) throw new Error('Not authenticated');
 
     const messageId = message.id || `msg_${Date.now()}_${Math.random()}`;
-    
+
     // Store in sender's history
     this.user.get('conversations')
       .get(conversationId)
@@ -116,7 +116,7 @@ class HybridGunService {
       const messages = new Map();
       let privateLoaded = false;
       let publicLoaded = false;
-      
+
       const checkResolve = () => {
         if (privateLoaded && publicLoaded) {
           const sorted = Array.from(messages.values())
@@ -213,7 +213,7 @@ class HybridGunService {
     };
 
     this.user.get('presence').put(presence);
-    
+
     // Also update in public space for friends
     const user = gunAuthService.getCurrentUser();
     if (user) {
@@ -335,10 +335,10 @@ class HybridGunService {
 
     // Clear conversations
     this.user.get('conversations').put(null);
-    
+
     // Clear friends
     this.user.get('friends').put(null);
-    
+
     // Clear presence
     this.user.get('presence').put(null);
 

@@ -6,12 +6,12 @@ import friendsService from '../services/friendsService';
  * CollapsibleSidebar Component
  * A sidebar that can be collapsed to save space but remains easily accessible
  */
-function CollapsibleSidebar({ 
-  friends, 
-  selectedFriend, 
-  onSelectFriend, 
-  currentUser, 
-  onFriendsUpdate, 
+function CollapsibleSidebar({
+  friends,
+  selectedFriend,
+  onSelectFriend,
+  currentUser,
+  onFriendsUpdate,
   onGenerateInvite,
   userNickname,
   onLogout,
@@ -24,7 +24,7 @@ function CollapsibleSidebar({
   // Use the passed onlineStatus instead of polling locally
   // The parent component should handle real-time updates
 
-  const onlineFriends = friends.filter(friend => 
+  const onlineFriends = friends.filter(friend =>
     onlineStatus[friend.publicKey]?.online
   );
 
@@ -86,9 +86,9 @@ function CollapsibleSidebar({
             width: '48px',
             height: '48px',
             borderRadius: '50%',
-            background: isSelected 
+            background: isSelected
               ? 'linear-gradient(135deg, #667eea, #764ba2)'
-              : isOnline 
+              : isOnline
                 ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
                 : 'rgba(255, 255, 255, 0.1)',
             display: 'flex',
@@ -131,7 +131,7 @@ function CollapsibleSidebar({
           display: 'flex',
           alignItems: 'center',
           padding: '8px 10px',
-          background: isSelected 
+          background: isSelected
             ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2))'
             : 'transparent',
           borderRadius: '8px',
@@ -164,7 +164,7 @@ function CollapsibleSidebar({
             width: '36px',
             height: '36px',
             borderRadius: '50%',
-            background: isOnline 
+            background: isOnline
               ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
               : 'linear-gradient(135deg, #667eea, #764ba2)',
             display: 'flex',
@@ -290,7 +290,7 @@ function CollapsibleSidebar({
   };
 
   return (
-    <div 
+    <div
       className="sidebar"
       style={{
         width: isCollapsed ? '80px' : '300px',
@@ -304,13 +304,13 @@ function CollapsibleSidebar({
       }}
     >
       {/* Header */}
-      <div className="sidebar-header" style={{ 
+      <div className="sidebar-header" style={{
         flexShrink: 0,
         padding: isCollapsed ? '15px 10px' : '15px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
       }}>
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           alignItems: 'center',
           justifyContent: isCollapsed ? 'center' : 'space-between'
         }}>
@@ -319,7 +319,7 @@ function CollapsibleSidebar({
               Friends ({onlineFriends.length}/{friends.length})
             </h2>
           )}
-          
+
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             style={{
@@ -384,8 +384,8 @@ function CollapsibleSidebar({
       </div>
 
       {/* Friends List */}
-      <div style={{ 
-        flex: 1, 
+      <div style={{
+        flex: 1,
         padding: isCollapsed ? '15px 10px' : '15px',
         overflowY: 'auto',
         overflowX: 'hidden'
@@ -419,9 +419,9 @@ function CollapsibleSidebar({
             {filteredFriends
               .filter(f => onlineStatus[f.pub || f.publicKey]?.online)
               .map(friend => renderFriend(friend))}
-            
+
             {/* Separator if both online and offline exist */}
-            {!isCollapsed && 
+            {!isCollapsed &&
              filteredFriends.some(f => onlineStatus[f.pub || f.publicKey]?.online) &&
              filteredFriends.some(f => !onlineStatus[f.pub || f.publicKey]?.online) && (
               <div style={{
@@ -435,7 +435,7 @@ function CollapsibleSidebar({
                 OFFLINE
               </div>
             )}
-            
+
             {/* Offline friends */}
             {filteredFriends
               .filter(f => !onlineStatus[f.pub || f.publicKey]?.online)
@@ -445,13 +445,13 @@ function CollapsibleSidebar({
       </div>
 
       {/* Footer */}
-      <div className="sidebar-footer" style={{ 
+      <div className="sidebar-footer" style={{
         flexShrink: 0,
         padding: isCollapsed ? '10px' : '15px',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)'
       }}>
         {isCollapsed ? (
-          <button 
+          <button
             onClick={onLogout}
             style={{
               width: '48px',
@@ -472,8 +472,8 @@ function CollapsibleSidebar({
             ⏻
           </button>
         ) : (
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
@@ -487,7 +487,7 @@ function CollapsibleSidebar({
             }}>
               {userNickname}
             </span>
-            <button 
+            <button
               onClick={onLogout}
               style={{
                 padding: '6px 12px',

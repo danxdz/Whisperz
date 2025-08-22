@@ -53,15 +53,15 @@ class MessageService {
     // Try WebRTC first
     let sentViaWebRTC = false;
     const presence = await friendsService.getFriendPresence(recipientPublicKey);
-    
+
     // console.log('👤 Friend presence:', presence);
-    
+
     if (presence.isOnline && presence.peerId) {
       try {
         // Try to connect if not already connected
         const connectionStatus = webrtcService.getConnectionStatus(presence.peerId);
         // console.log('🔌 Connection status:', connectionStatus);
-        
+
         if (!connectionStatus.connected) {
           // console.log('🔄 Attempting to connect to peer:', presence.peerId);
           await webrtcService.connectToPeer(presence.peerId, {
@@ -76,7 +76,7 @@ class MessageService {
           type: 'message',
           data: encryptedMessage
         });
-        
+
         sentViaWebRTC = true;
         message.deliveryMethod = 'webrtc';
         message.delivered = true;
@@ -90,7 +90,7 @@ class MessageService {
     // This ensures messages are delivered even if WebRTC fails
     // console.log('💾 Storing message in Gun.js');
     await hybridGunService.storeOfflineMessage(recipientPublicKey, encryptedMessage);
-    
+
     if (!sentViaWebRTC) {
       message.deliveryMethod = 'gun';
       message.delivered = false;
@@ -156,7 +156,7 @@ class MessageService {
 
     try {
       const messages = await hybridGunService.getOfflineMessages();
-      
+
       for (const msg of messages) {
         // Decrypt and process
         let decrypted;
@@ -245,7 +245,7 @@ class MessageService {
   // Clear conversation history
   async clearConversation(conversationId) {
     if (!gunAuthService.isAuthenticated()) return;
-    
+
     gunAuthService.user
       .get('conversations')
       .get(conversationId)
@@ -270,19 +270,19 @@ class MessageService {
     try {
       const MAX_OFFLINE_MESSAGES = 100; // Limit per recipient
       const MAX_MESSAGE_SIZE = 10000; // 10KB max per message
-      
+
       // Check message size
       const messageSize = JSON.stringify(message).length;
       if (messageSize > MAX_MESSAGE_SIZE) {
         // console.warn('Message too large for offline storage:', messageSize);
         throw new Error('Message exceeds maximum size limit');
       }
-      
+
       // Get existing offline messages for this recipient
       const offlineRef = hybridGunService.gun
         .get('offline_messages')
         .get(recipientPub);
-      
+
       // Count existing messages
       let messageCount = 0;
       await new Promise((resolve) => {
@@ -291,7 +291,7 @@ class MessageService {
         });
         setTimeout(resolve, 500);
       });
-      
+
       // Check queue limit
       if (messageCount >= MAX_OFFLINE_MESSAGES) {
         // console.warn(`Offline message queue full for ${recipientPub} (${messageCount} messages)`);
@@ -300,7 +300,7 @@ class MessageService {
         offlineRef.map().once((data, key) => {
           if (data) messages.push({ key, timestamp: data.timestamp });
         });
-        
+
         // Sort by timestamp and remove oldest
         setTimeout(() => {
           messages.sort((a, b) => a.timestamp - b.timestamp);
@@ -310,11 +310,11 @@ class MessageService {
           });
         }, 500);
       }
-      
+
       // Store the message
       const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       offlineRef.get(messageId).put(message);
-      
+
       // console.log(`📥 Stored offline message for ${recipientPub} (queue: ${messageCount + 1}/${MAX_OFFLINE_MESSAGES})`);
     } catch (error) {
       // console.error('Failed to store offline message:', error);

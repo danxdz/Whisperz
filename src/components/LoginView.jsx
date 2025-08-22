@@ -6,7 +6,7 @@ import ThemeToggle from './ThemeToggle';
 /**
  * LoginView Component
  * Handles user authentication with rate limiting and first-user setup guidance
- * 
+ *
  * @param {Object} props
  * @param {Function} props.onLogin - Callback when login is successful
  * @param {string} props.inviteCode - Optional invite code for new users
@@ -74,16 +74,16 @@ function LoginView({ onLogin, inviteCode }) {
           <div className="info-message" style={{ marginBottom: '20px', padding: '15px', background: 'rgba(0, 255, 0, 0.1)', border: '1px solid #00ff00', borderRadius: '4px' }}>
             <p style={{ margin: '0 0 10px 0' }}>👋 <strong>Welcome to Whisperz!</strong></p>
             <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>First time? Create your admin account:</p>
-            
+
             {/* Mobile-friendly setup */}
             <div style={{ textAlign: 'center', margin: '15px 0' }}>
-              <a 
+              <a
                 href="?setup=admin"
-                style={{ 
+                style={{
                   display: 'inline-block',
-                  padding: '12px 24px', 
-                  background: '#00ff00', 
-                  color: '#000', 
+                  padding: '12px 24px',
+                  background: '#00ff00',
+                  color: '#000',
                   textDecoration: 'none',
                   borderRadius: '4px',
                   fontWeight: 'bold',
@@ -93,7 +93,7 @@ function LoginView({ onLogin, inviteCode }) {
                 📱 Create First Account (Mobile Friendly)
               </a>
             </div>
-            
+
             <p style={{ margin: '10px 0 0 0', fontSize: '12px', opacity: '0.8', textAlign: 'center' }}>
               Or manually go to: {window.location.origin}?setup=admin
             </p>

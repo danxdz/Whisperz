@@ -14,7 +14,7 @@ class WebRTCService {
     this.connectionHandlers = new Set();
     this.peerId = null;
     this.isInitialized = false;
-    
+
     // ICE servers configuration
     this.iceConfig = {
       iceServers: [
@@ -34,7 +34,7 @@ class WebRTCService {
     this.peerId = userId;
     this.listenForSignals();
     this.isInitialized = true;
-    
+
     debugLogger.webrtc('WebRTC initialized with ID:', this.peerId);
     return true;
   }
@@ -50,7 +50,7 @@ class WebRTCService {
       .map()
       .on((signal, key) => {
         if (!signal || !signal.type) return;
-        
+
         // Ignore old signals (older than 30 seconds)
         if (Date.now() - signal.timestamp > 30000) {
           // Clean up old signal
@@ -59,7 +59,7 @@ class WebRTCService {
         }
 
         debugLogger.webrtc('Received signal:', signal.type, 'from:', signal.from);
-        
+
         switch (signal.type) {
           case 'offer':
             this.handleOffer(signal);
@@ -71,7 +71,7 @@ class WebRTCService {
             this.handleIceCandidate(signal);
             break;
         }
-        
+
         // Clean up processed signal
         gun.get('webrtc_signals').get(this.peerId).get(key).put(null);
       });
@@ -85,22 +85,22 @@ class WebRTCService {
     }
 
     debugLogger.webrtc('Creating connection to:', targetPeerId);
-    
+
     const pc = new RTCPeerConnection(this.iceConfig);
     this.connections.set(targetPeerId, pc);
-    
+
     // Create data channel
     const dc = pc.createDataChannel('messages', {
       ordered: true
     });
-    
+
     this.setupDataChannel(dc, targetPeerId);
     this.setupPeerConnection(pc, targetPeerId);
-    
+
     // Create and send offer
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    
+
     this.sendSignal(targetPeerId, {
       type: 'offer',
       offer: offer,
@@ -108,14 +108,14 @@ class WebRTCService {
       metadata: metadata,
       timestamp: Date.now()
     });
-    
+
     return pc;
   }
 
   // Handle incoming offer
   async handleOffer(signal) {
     const { from, offer, metadata } = signal;
-    
+
     // Check if we already have a connection
     const existingPc = this.connections.get(from);
     if (existingPc) {
@@ -124,7 +124,7 @@ class WebRTCService {
         debugLogger.webrtc('Already connected to:', from);
         return;
       }
-      
+
       // Handle simultaneous connection attempts (offer collision)
       // Use peer ID comparison to decide who wins
       if (existingPc.signalingState === 'have-local-offer') {
@@ -142,26 +142,26 @@ class WebRTCService {
         }
       }
     }
-    
+
     debugLogger.webrtc('Handling offer from:', from);
-    
+
     const pc = new RTCPeerConnection(this.iceConfig);
     this.connections.set(from, pc);
-    
+
     // Setup handlers
     this.setupPeerConnection(pc, from);
-    
+
     // Handle data channel
     pc.ondatachannel = (event) => {
       debugLogger.webrtc('Data channel received from:', from);
       this.setupDataChannel(event.channel, from);
     };
-    
+
     // Set remote description and create answer
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
-    
+
     // Send answer
     this.sendSignal(from, {
       type: 'answer',
@@ -169,7 +169,7 @@ class WebRTCService {
       from: this.peerId,
       timestamp: Date.now()
     });
-    
+
     // Notify handlers
     this.connectionHandlers.forEach(handler => {
       handler('incoming', from, metadata);
@@ -180,12 +180,12 @@ class WebRTCService {
   async handleAnswer(signal) {
     const { from, answer } = signal;
     const pc = this.connections.get(from);
-    
+
     if (!pc) {
       debugLogger.warn('No connection found for answer from:', from);
       return;
     }
-    
+
     debugLogger.webrtc('Handling answer from:', from);
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
   }
@@ -194,20 +194,20 @@ class WebRTCService {
   async handleIceCandidate(signal) {
     const { from, candidate } = signal;
     const pc = this.connections.get(from);
-    
+
     if (!pc) {
       debugLogger.warn('No connection found for ICE candidate from:', from);
       return;
     }
-    
+
     try {
       debugLogger.webrtc('Adding ICE candidate from:', from);
-      
+
       // Skip if no candidate (end of candidates signal)
       if (!candidate) {
         return;
       }
-      
+
       // Check if candidate is already an RTCIceCandidate object or needs to be created
       if (candidate instanceof RTCIceCandidate) {
         await pc.addIceCandidate(candidate);
@@ -218,7 +218,7 @@ class WebRTCService {
           sdpMLineIndex: candidate.sdpMLineIndex !== undefined ? candidate.sdpMLineIndex : 0,
           sdpMid: candidate.sdpMid || '0'
         };
-        
+
         // Only add if we have a valid candidate string
         if (candidateInit.candidate) {
           await pc.addIceCandidate(new RTCIceCandidate(candidateInit));
@@ -251,10 +251,10 @@ class WebRTCService {
         });
       }
     };
-    
+
     pc.onconnectionstatechange = () => {
       debugLogger.webrtc('Connection state:', pc.connectionState, 'for:', peerId);
-      
+
       if (pc.connectionState === 'connected') {
         this.connectionHandlers.forEach(handler => {
           handler('connected', peerId, {});
@@ -274,12 +274,12 @@ class WebRTCService {
       debugLogger.webrtc('Data channel opened with:', peerId);
       this.dataChannels.set(peerId, dc);
     };
-    
+
     dc.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         debugLogger.webrtc('Message received from:', peerId, 'type:', data.type);
-        
+
         this.messageHandlers.forEach(handler => {
           handler(peerId, data);
         });
@@ -287,12 +287,12 @@ class WebRTCService {
         debugLogger.error('Failed to parse message:', error);
       }
     };
-    
+
     dc.onclose = () => {
       debugLogger.webrtc('Data channel closed with:', peerId);
       this.dataChannels.delete(peerId);
     };
-    
+
     dc.onerror = (error) => {
       debugLogger.error('Data channel error with', peerId, ':', error);
     };
@@ -302,12 +302,12 @@ class WebRTCService {
   sendSignal(targetPeerId, signal) {
     const gun = gunAuthService.gun;
     const signalId = `${Date.now()}_${Math.random()}`;
-    
+
     gun.get('webrtc_signals')
       .get(targetPeerId)
       .get(signalId)
       .put(signal);
-    
+
     // Auto-cleanup after 30 seconds
     setTimeout(() => {
       gun.get('webrtc_signals')
@@ -320,11 +320,11 @@ class WebRTCService {
   // Send message to peer
   async sendMessage(peerId, data) {
     const dc = this.dataChannels.get(peerId);
-    
+
     if (!dc || dc.readyState !== 'open') {
       throw new Error(`No open data channel with ${peerId}`);
     }
-    
+
     const message = typeof data === 'string' ? data : JSON.stringify(data);
     dc.send(message);
     debugLogger.webrtc('Message sent to:', peerId);
@@ -346,7 +346,7 @@ class WebRTCService {
   getConnectionStatus(peerId) {
     const pc = this.connections.get(peerId);
     const dc = this.dataChannels.get(peerId);
-    
+
     return {
       connected: pc?.connectionState === 'connected' && dc?.readyState === 'open',
       connectionState: pc?.connectionState || 'disconnected',
@@ -379,17 +379,17 @@ class WebRTCService {
   cleanup(peerId) {
     const pc = this.connections.get(peerId);
     const dc = this.dataChannels.get(peerId);
-    
+
     if (dc) {
       dc.close();
       this.dataChannels.delete(peerId);
     }
-    
+
     if (pc) {
       pc.close();
       this.connections.delete(peerId);
     }
-    
+
     debugLogger.webrtc('Cleaned up connection with:', peerId);
   }
 
@@ -399,15 +399,15 @@ class WebRTCService {
     this.connections.forEach((pc, peerId) => {
       this.cleanup(peerId);
     });
-    
+
     // Clear handlers
     this.messageHandlers.clear();
     this.connectionHandlers.clear();
-    
+
     // Reset state
     this.isInitialized = false;
     this.peerId = null;
-    
+
     debugLogger.webrtc('WebRTC service destroyed');
   }
 }

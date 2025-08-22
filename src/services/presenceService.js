@@ -24,16 +24,16 @@ class PresenceService {
     if (!user) return;
 
     // Initializing presence service...
-    
+
     // Set online status
     this.setOnline();
-    
+
     // Start heartbeat
     this.startHeartbeat();
-    
+
     // Start cleanup interval for stale presences
     this.startCleanup();
-    
+
     // Listen for window events
     this.setupEventListeners();
   }
@@ -47,7 +47,7 @@ class PresenceService {
 
     this.isOnline = true;
     const peerId = webrtcService.getPeerId();
-    
+
     const presence = {
       status: 'online',
       lastSeen: Date.now(),
@@ -57,7 +57,7 @@ class PresenceService {
 
     // Update in Gun
     gunAuthService.gun.get('presence').get(user.pub).put(presence);
-    
+
     // Broadcast to all connected WebRTC peers
     this.broadcastToWebRTCPeers({
       type: 'presence',
@@ -77,7 +77,7 @@ class PresenceService {
     if (!user) return;
 
     this.isOnline = false;
-    
+
     const presence = {
       status: 'offline',
       lastSeen: Date.now(),
@@ -87,7 +87,7 @@ class PresenceService {
 
     // Update in Gun
     gunAuthService.gun.get('presence').get(user.pub).put(presence);
-    
+
     // Broadcast to all connected WebRTC peers BEFORE going offline
     this.broadcastToWebRTCPeers({
       type: 'presence',
@@ -129,7 +129,7 @@ class PresenceService {
     // Check for stale presences every 30 seconds (less frequent since timeout is 5 minutes)
     this.cleanupInterval = setInterval(() => {
       const now = Date.now();
-      
+
       this.friendsStatus.forEach((status, publicKey) => {
         // If friend hasn't been seen in 5 minutes, mark as offline (same as App.jsx)
         if (status.lastSeen && (now - status.lastSeen) > 300000) {
@@ -164,7 +164,7 @@ class PresenceService {
       });
 
     this.presenceListeners.set(publicKey, listener);
-    
+
     // Also check current status
     this.checkFriendPresence(publicKey);
   }
@@ -190,10 +190,10 @@ class PresenceService {
    */
   handlePresenceUpdate(publicKey, data) {
     const now = Date.now();
-    
+
     // Check if presence is fresh (within 40 seconds)
-    const isOnline = data.status === 'online' && 
-                    data.lastSeen && 
+    const isOnline = data.status === 'online' &&
+                    data.lastSeen &&
                     (now - data.lastSeen) < 40000;
 
     const status = {
@@ -205,7 +205,7 @@ class PresenceService {
     };
 
     this.friendsStatus.set(publicKey, status);
-    
+
     // Friend status updated
   }
 
@@ -214,7 +214,7 @@ class PresenceService {
    */
   updateFriendStatus(publicKey, status) {
     const currentStatus = this.friendsStatus.get(publicKey) || {};
-    
+
     const newStatus = {
       ...currentStatus,
       online: status === 'online',
@@ -224,7 +224,7 @@ class PresenceService {
     };
 
     this.friendsStatus.set(publicKey, newStatus);
-    
+
     // Updated friend status
   }
 
@@ -233,7 +233,7 @@ class PresenceService {
    */
   broadcastToWebRTCPeers(message) {
     const connectedPeers = webrtcService.getConnectedPeers();
-    
+
     connectedPeers.forEach(peerId => {
       try {
         webrtcService.sendMessage(peerId, message);
@@ -249,7 +249,7 @@ class PresenceService {
   handleWebRTCPresence(fromPeerId, message) {
     if (message.type === 'presence') {
       // Received presence via WebRTC
-      
+
       // Update friend status based on WebRTC message
       if (message.from) {
         this.updateFriendStatus(message.from, message.status);
@@ -298,11 +298,11 @@ class PresenceService {
    */
   getAllFriendsStatus() {
     const statusMap = new Map();
-    
+
     this.friendsStatus.forEach((status, publicKey) => {
       statusMap.set(publicKey, status.online);
     });
-    
+
     return statusMap;
   }
 
@@ -311,21 +311,21 @@ class PresenceService {
    */
   destroy() {
     // Destroying presence service...
-    
+
     // Set offline before destroying
     this.setOffline();
-    
+
     // Stop intervals
     this.stopHeartbeat();
     this.stopCleanup();
-    
+
     // Clear listeners
     this.presenceListeners.forEach(listener => {
       if (listener && listener.off) {
         listener.off();
       }
     });
-    
+
     this.presenceListeners.clear();
     this.friendsStatus.clear();
   }
@@ -337,15 +337,15 @@ class PresenceService {
     // Presence Service Debug:
     // Is online: this.isOnline
     debugLogger.debug('gun', 'Friends tracked:', this.friendsStatus.size);
-    
+
     let onlineCount = 0;
     this.friendsStatus.forEach((status, publicKey) => {
       if (status.online) onlineCount++;
       // Friend status
     });
-    
+
     // Summary: onlineCount online, offline count
-    
+
     return {
       isOnline: this.isOnline,
       totalFriends: this.friendsStatus.size,
@@ -368,7 +368,7 @@ if (typeof window !== 'undefined') {
     isOnline: (publicKey) => presenceService.isFriendOnline(publicKey),
     getAll: () => presenceService.getAllFriendsStatus()
   };
-  
+
   // Startup log moved to debug level
   if (localStorage.getItem('debug_gun') === 'true') {
     console.log(`

@@ -22,10 +22,10 @@ function ChatModule({ selectedFriend, currentUser }) {
     }
 
     loadMessages();
-    
+
     // Subscribe to incoming messages
     const unsubscribe = messageService.onMessage((message) => {
-      if (message.from === selectedFriend.publicKey || 
+      if (message.from === selectedFriend.publicKey ||
           message.to === selectedFriend.publicKey) {
         setMessages(prev => [...prev, message]);
         scrollToBottom();
@@ -42,7 +42,7 @@ function ChatModule({ selectedFriend, currentUser }) {
 
   const loadMessages = async () => {
     if (!selectedFriend) return;
-    
+
     try {
       const history = await messageService.getMessageHistory(selectedFriend.publicKey);
       setMessages(history || []);
@@ -54,7 +54,7 @@ function ChatModule({ selectedFriend, currentUser }) {
 
   const checkConnection = async () => {
     if (!selectedFriend) return;
-    
+
     try {
       const isConnected = await webrtcService.isConnected(selectedFriend.publicKey);
       setConnectionStatus(isConnected ? 'connected' : 'disconnected');
@@ -100,10 +100,10 @@ function ChatModule({ selectedFriend, currentUser }) {
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     });
   };
 

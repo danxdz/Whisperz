@@ -22,21 +22,21 @@ const loginRateLimiter = (() => {
   const attempts = new Map();
   const MAX_ATTEMPTS = 5;
   const WINDOW_MS = 60000; // 1 minute
-  
+
   return {
     check: (username) => {
       const now = Date.now();
       const userAttempts = attempts.get(username) || [];
       const recentAttempts = userAttempts.filter(time => now - time < WINDOW_MS);
-      
+
       if (recentAttempts.length >= MAX_ATTEMPTS) {
         const timeLeft = Math.ceil((WINDOW_MS - (now - recentAttempts[0])) / 1000);
-        return { 
-          allowed: false, 
+        return {
+          allowed: false,
           error: `Too many login attempts. Please wait ${timeLeft} seconds.`
         };
       }
-      
+
       recentAttempts.push(now);
       attempts.set(username, recentAttempts);
       return { allowed: true };
@@ -108,16 +108,16 @@ function LoginView({ onLogin, inviteCode }) {
           <div className="info-message" style={{ marginBottom: '20px', padding: '15px', background: 'rgba(0, 255, 0, 0.1)', border: '1px solid #00ff00', borderRadius: '4px' }}>
             <p style={{ margin: '0 0 10px 0' }}>👋 <strong>Welcome to Whisperz!</strong></p>
             <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>First time? Create your admin account:</p>
-            
+
             {/* Mobile-friendly setup */}
             <div style={{ textAlign: 'center', margin: '15px 0' }}>
-              <a 
+              <a
                 href="?setup=admin"
-                style={{ 
+                style={{
                   display: 'inline-block',
-                  padding: '12px 24px', 
-                  background: '#00ff00', 
-                  color: '#000', 
+                  padding: '12px 24px',
+                  background: '#00ff00',
+                  color: '#000',
                   textDecoration: 'none',
                   borderRadius: '4px',
                   fontWeight: 'bold',
@@ -127,7 +127,7 @@ function LoginView({ onLogin, inviteCode }) {
                 📱 Create First Account (Mobile Friendly)
               </a>
             </div>
-            
+
             <p style={{ margin: '10px 0 0 0', fontSize: '12px', opacity: '0.8', textAlign: 'center' }}>
               Or manually go to: {window.location.origin}?setup=admin
             </p>
@@ -297,7 +297,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // const [friendsLoading, setFriendsLoading] = useState(true); // Not used currently
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
-  
+
   // Connection state for selected friend
   const { connectionState, attemptWebRTCConnection } = useConnectionState(
     selectedFriend?.publicKey
@@ -330,7 +330,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       // console.log('📋 Loading friends...');
       const currentUser = gunAuthService.getCurrentUser();
       // console.log('👤 Current user:', currentUser);
-      
+
       const friendList = await friendsService.getFriends();
       // console.log('👥 Friends loaded:', friendList);
       setFriends(friendList);
@@ -374,34 +374,34 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           debugLogger.info('webrtc', '🔄 Re-initializing WebRTC in ChatView...');
           await webrtcService.initialize(user.pub);
           // WebRTC ready
-          
+
           // Gun P2P already initialized in main flow
         } catch (error) {
           debugLogger.error('❌ Failed to initialize WebRTC in ChatView:', error);
         }
       }
-      
+
       // Disabled - using Gun.js subscriptions instead
       // onlineStatusManager.startMonitoring();
-      
+
       // Subscribe to status changes
       // const unsubscribe = onlineStatusManager.addListener((statuses) => {
       //   setOnlineStatus(statuses);
       // });
-      
+
       // Update own presence with peer ID
       const peerId = webrtcService.getPeerId();
       debugLogger.debug('gun', '📍 Updating presence with peer ID:', peerId);
       hybridGunService.updatePresence('online', { peerId });
-      
+
       // return () => {
       //   unsubscribe();
       // };
     };
-    
+
     // Initial update
     initializeWebRTC();
-    
+
     // Update again after a short delay to ensure everything is ready
     const timeoutId = setTimeout(initializeWebRTC, 2000);
 
@@ -441,10 +441,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
     const subscriptions = [];
     // Setting up presence subscriptions for friends
-    
+
     // Don't clear existing data when re-subscribing
     // This preserves lastSeen values during re-renders
-    
+
     // Subscribe to each friend's presence via Gun
     friends.forEach(friend => {
       const sub = gunAuthService.gun
@@ -455,15 +455,15 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             // Use the most recent timestamp
             const lastSeenValue = data.lastSeen || data.timestamp || Date.now();
             // Consider online if status is 'online' AND last seen within 5 minutes
-            const isOnline = data.status === 'online' && 
-                           lastSeenValue && 
+            const isOnline = data.status === 'online' &&
+                           lastSeenValue &&
                            (Date.now() - lastSeenValue) < 300000; // Within 5 minutes
-            
+
             // Update state - this will trigger re-render
             setOnlineStatus(prev => {
               const prevStatus = prev[friend.publicKey]?.online;
               const prevLastSeen = prev[friend.publicKey]?.lastSeen;
-              
+
               // Update if status changed OR if we have a newer lastSeen value
               if (prevStatus !== isOnline || prevLastSeen !== lastSeenValue) {
                 if (prevStatus !== isOnline) {
@@ -476,11 +476,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 });
                 return {
                   ...prev,
-                  [friend.publicKey]: { 
+                  [friend.publicKey]: {
                     online: isOnline,
                     // Always keep lastSeen value for when they go offline
                     lastSeen: lastSeenValue,
-                    status: data.status 
+                    status: data.status
                   }
                 };
               }
@@ -488,10 +488,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               if (!prev[friend.publicKey]) {
                 return {
                   ...prev,
-                  [friend.publicKey]: { 
+                  [friend.publicKey]: {
                     online: isOnline,
                     lastSeen: lastSeenValue,
-                    status: data.status 
+                    status: data.status
                   }
                 };
               }
@@ -499,7 +499,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             });
           }
         });
-      
+
       subscriptions.push(sub);
     });
 
@@ -548,7 +548,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
           // Ensure prev is an array
           const currentMessages = prev || [];
           // Check if message already exists to avoid duplicates
-          const exists = currentMessages.some(m => m && (m.id === message.id || 
+          const exists = currentMessages.some(m => m && (m.id === message.id ||
             (m.timestamp === message.timestamp && m.content === message.content)));
           if (!exists) {
             return [...currentMessages, message].sort((a, b) => a.timestamp - b.timestamp);
@@ -602,7 +602,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       if (connectionState.status === 'gun' && connectionState.isOnline) {
         await attemptWebRTCConnection();
       }
-      
+
       await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
       setNewMessage('');
     } catch (error) {
@@ -694,7 +694,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       }}>
         {selectedFriend ? (
           <>
-            <div style={{ 
+            <div style={{
               padding: screen.isTiny ? '6px 8px' : screen.isMobile ? '8px 12px' : '16px 20px',
               background: colors.bgCard,
               borderBottom: `1px solid ${colors.borderColor}`,
@@ -705,10 +705,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               minHeight: screen.isTiny ? '36px' : '48px'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: screen.isTiny ? '4px' : '8px' }}>
-                <h3 style={{ 
-                  margin: 0, 
-                  fontSize: screen.isTiny ? '13px' : screen.isMobile ? '15px' : '18px', 
-                  fontWeight: '600', 
+                <h3 style={{
+                  margin: 0,
+                  fontSize: screen.isTiny ? '13px' : screen.isMobile ? '15px' : '18px',
+                  fontWeight: '600',
                   color: colors.textPrimary,
                   maxWidth: screen.isTiny ? '100px' : screen.isMobile ? '150px' : 'none',
                   overflow: 'hidden',
@@ -742,7 +742,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   >
                     🔗 P2P
                   </button>
-                  
+
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -763,7 +763,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                     display: 'inline-block',
                     animation: connectionState.status === 'connecting' ? 'pulse 1s infinite' : 'none'
                   }} />
-                  <span style={{ 
+                  <span style={{
                     color: colors.textSecondary,
                     textTransform: 'uppercase',
                     fontWeight: '500'
@@ -784,8 +784,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
             <ThemeToggle />
           </div>
 
-            <div style={{ 
-              flex: 1, 
+            <div style={{
+              flex: 1,
               overflowY: 'auto',
               padding: screen.isTiny ? '4px 6px' : screen.isMobile ? '8px' : '20px',
               display: 'flex',
@@ -804,19 +804,19 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                     maxWidth: screen.isTiny ? '90%' : screen.isMobile ? '85%' : '70%',
                     padding: screen.isTiny ? '4px 8px' : screen.isMobile ? '6px 10px' : '10px 14px',
                     borderRadius: screen.isTiny ? '8px' : '12px',
-                    background: msg?.from === user.pub 
+                    background: msg?.from === user.pub
                       ? colors.messageSent
                       : colors.messageReceived,
                     color: msg?.from === user.pub ? '#fff' : colors.textPrimary
                   }}>
-                    <div style={{ 
+                    <div style={{
                       fontSize: screen.isTiny ? '12px' : screen.isMobile ? '13px' : '14px',
                       wordBreak: 'break-word'
                     }}>
                       {escapeHtml(msg.content || '')}
                     </div>
-                    <div style={{ 
-                      fontSize: screen.isTiny ? '8px' : screen.isMobile ? '9px' : '11px', 
+                    <div style={{
+                      fontSize: screen.isTiny ? '8px' : screen.isMobile ? '9px' : '11px',
                       opacity: 0.7,
                       marginTop: '1px',
                       color: msg?.from === user.pub ? 'rgba(255,255,255,0.8)' : colors.textMuted,
@@ -899,11 +899,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                   outline: 'none'
                 }}
               />
-              <button 
+              <button
                 type="submit"
                 style={{
                   padding: screen.isTiny ? '6px 12px' : screen.isMobile ? '8px 16px' : '10px 20px',
-                  background: newMessage.trim() 
+                  background: newMessage.trim()
                     ? colors.primary
                     : colors.bgTertiary,
                   border: 'none',
@@ -951,7 +951,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       onClose={() => setShowInvite(false)}
       inviteLink={inviteLink}
     />
-    
+
     {/* Dev Tools handled by SwipeableChat */}
     </>
   );
@@ -974,14 +974,14 @@ function App() {
       consoleCapture.start();
       debugLogger.debug('info', '📹 Console capture started');
     }
-    
+
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
     const deviceType = isMobile ? '📱 Mobile' : '💻 Desktop';
     const screenSize = `${window.innerWidth}x${window.innerHeight}`;
-    
+
     // Only show minimal startup info
     debugLogger.info('🚀 Whisperz v2.1.1');
-    
+
     if (import.meta.env.DEV) {
       debugLogger.info('info', '🔧 Development Mode - Debug tools available');
       debugLogger.info('info', '💡 Type: p2pDebug.diagnose() for P2P diagnostics');
@@ -999,13 +999,13 @@ function App() {
       try {
         await hybridGunService.initialize();
         await friendsService.initialize();
-        
+
         // Start P2P monitoring in development
         if (import.meta.env.DEV) {
           p2pDebugger.startMonitoring();
           debugLogger.info('🔍 P2P debugging enabled');
         }
-        
+
         // Add test helper to window for debugging
         window.testMessage = async (message = 'Test message from console!') => {
           const friends = await friendsService.getFriends();
@@ -1018,7 +1018,7 @@ function App() {
           await messageService.sendMessage(friend.publicKey, message);
           // console.log('✅ Message sent!');
         };
-        
+
         window.getMessageHistory = async () => {
           const friends = await friendsService.getFriends();
           if (friends.length === 0) {
@@ -1030,24 +1030,24 @@ function App() {
             // console.log(`📜 Messages with ${friend.nickname}:`, messages);
           }
         };
-        
+
         window.testWebRTC = async () => {
           const friends = await friendsService.getFriends();
           if (friends.length === 0) {
             // console.log('❌ No friends to test with');
             return;
           }
-          
+
           for (const friend of friends) {
             const presence = await friendsService.getFriendPresence(friend.publicKey);
             // console.log(`👤 ${friend.nickname} presence:`, presence);
-            
+
             if (presence.isOnline && presence.peerId) {
               // console.log(`🔄 Testing WebRTC connection to ${friend.nickname}...`);
               try {
                 const conn = await webrtcService.connectToPeer(presence.peerId);
                 // console.log(`✅ Connected to ${friend.nickname}!`, conn);
-                
+
                 // Test sending a ping
                 await webrtcService.sendMessage(presence.peerId, {
                   type: 'ping',
@@ -1062,7 +1062,7 @@ function App() {
             }
           }
         };
-        
+
         // console.log('✅ Services initialized');
         // console.log('💡 Test helpers available:');
         // console.log('   - window.testMessage("Hello!") - Send test message');
@@ -1083,9 +1083,9 @@ function App() {
         // Check for invite code in URL (both hash and pathname)
         const hashPath = window.location.hash.slice(1);
         const pathParts = window.location.pathname.split('/');
-        
+
         let code = null;
-        
+
         // Check for invite in pathname format: /invite/CODE
         if (pathParts[1] === 'invite' && pathParts[2]) {
           code = pathParts[2];
@@ -1098,11 +1098,11 @@ function App() {
         else if (hashPath.startsWith('invite/')) {
           code = hashPath.replace('invite/', '');
         }
-        
+
         // Check for admin setup parameter
         const urlParams = new URLSearchParams(window.location.search);
         const setupMode = urlParams.get('setup');
-        
+
         // Enable registration for first user with ?setup=admin
         if (setupMode === 'admin' || setupMode === 'first') {
           setAuthMode('register');
@@ -1125,13 +1125,13 @@ function App() {
         const currentUser = gunAuthService.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
-          
+
           // Initialize WebRTC for private chats
           try {
             debugLogger.debug('webrtc', '🚀 Initializing WebRTC for existing session...');
             await webrtcService.initialize(currentUser.pub);
             // WebRTC initialized
-            
+
             // Also initialize Gun P2P as fallback
             await gunOnlyP2P.initialize(currentUser.pub);
             // Gun P2P initialized as fallback
@@ -1169,23 +1169,23 @@ function App() {
   const handleAuth = async (authUser, inviteCodeFromReg = null) => {
     // console.log('🔐 Authentication successful:', authUser);
     setUser(authUser);
-    
+
     // Initialize WebRTC for private chats
     try {
       debugLogger.debug('webrtc', '🚀 Initializing WebRTC after login...');
       await webrtcService.initialize(authUser.pub);
       debugLogger.info('webrtc', '✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
-      
+
       // Also initialize Gun P2P as fallback
       await gunOnlyP2P.initialize(authUser.pub);
       debugLogger.debug('gun', '✅ Gun P2P initialized as fallback');
     } catch (error) {
       debugLogger.error('❌ Failed to initialize P2P:', error);
     }
-    
+
     // Initialize presence service and set online
     presenceService.initialize();
-    
+
     // Also update with old methods for compatibility
     const peerId = webrtcService.getPeerId();
     hybridGunService.updatePresence('online', { peerId });
@@ -1200,20 +1200,20 @@ function App() {
     if (codeToUse) {
       // console.log('🎫 Processing invite after auth...');
       // console.log('📦 Invite code:', codeToUse);
-      
+
       // Small delay to ensure services are ready
       setTimeout(async () => {
         try {
           const result = await friendsService.acceptInvite(codeToUse);
           // console.log('✅ Invite acceptance result:', result);
-          
+
           if (result.alreadyFriends) {
             // console.log('Already friends with this user');
             // Don't show alert if already friends, just continue
           } else {
             alert('Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
           }
-          
+
           // Refresh friends list
           if (typeof loadFriendsRef.current === 'function') {
             loadFriendsRef.current();

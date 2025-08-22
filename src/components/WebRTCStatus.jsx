@@ -86,7 +86,7 @@ function WebRTCStatus({ compact = false }) {
       <h3 style={{ margin: '0 0 10px 0', color: getStatusColor() }}>
         📡 WebRTC Status
       </h3>
-      
+
       <div style={{ display: 'grid', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
@@ -98,7 +98,7 @@ function WebRTCStatus({ compact = false }) {
           }} />
           <strong>Status:</strong> {getStatusText()}
         </div>
-        
+
         {peerId && (
           <div>
             <strong>Peer ID:</strong>
@@ -115,19 +115,19 @@ function WebRTCStatus({ compact = false }) {
             </div>
           </div>
         )}
-        
+
         {error && (
           <div style={{ color: '#ff6666' }}>
             <strong>Error:</strong> {error}
           </div>
         )}
-        
+
         <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0, 255, 0, 0.2)' }}>
           <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>
             WebRTC enables direct peer-to-peer messaging when both users are online.
             Messages fall back to Gun.js storage when peers can't connect directly.
           </div>
-          
+
           {!isConnected && !isConnecting && (
             <button
               onClick={reconnect}
@@ -145,13 +145,13 @@ function WebRTCStatus({ compact = false }) {
               🔄 Reconnect WebRTC
             </button>
           )}
-          
+
           {isConnecting && (
             <div style={{ textAlign: 'center', color: '#ffff00' }}>
               Establishing connection...
             </div>
           )}
-          
+
           {isConnected && (
             <div style={{ textAlign: 'center', color: '#00ff00' }}>
               ✅ Ready for P2P messaging

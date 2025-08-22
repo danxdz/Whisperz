@@ -20,10 +20,10 @@ class HybridP2PService {
 
     // Broadcast our WebRTC peer ID via Gun (for signaling only)
     this.broadcastPeerId();
-    
+
     // Listen for friends' peer IDs and auto-connect
     this.listenForFriendsPeerIds();
-    
+
     // Peer ID is broadcast on initialization and connection
     // No need for periodic broadcasting
   }
@@ -34,9 +34,9 @@ class HybridP2PService {
   broadcastPeerId() {
     const user = gunAuthService.getCurrentUser();
     const peerId = webrtcService.getPeerId();
-    
+
     if (!user || !peerId) return;
-    
+
     // Store in Gun's peer_exchange space (public)
     gunAuthService.gun.get('peer_exchange').get(user.pub).put({
       peerId: peerId,
@@ -44,7 +44,7 @@ class HybridP2PService {
       nickname: user.alias || 'Anonymous',
       status: 'online'
     });
-    
+
     console.log('📡 Broadcasting peer ID for P2P discovery:', peerId, 'for user:', user.pub);
   }
 
@@ -54,10 +54,10 @@ class HybridP2PService {
   async listenForFriendsPeerIds() {
     const { default: friendsService } = await import('./friendsService');
     const friends = await friendsService.getFriends();
-    
+
     friends.forEach(friend => {
       const friendKey = friend.publicKey || friend.pub;
-      
+
       // Listen for this friend's peer ID
       gunAuthService.gun.get('peer_exchange').get(friendKey).on((data) => {
         if (data && data.peerId && data.timestamp) {
@@ -80,30 +80,30 @@ class HybridP2PService {
       // Already connected
       return;
     }
-    
+
     // Check if we recently tried to connect
     const lastAttempt = this.peerExchange.get(friendPublicKey);
     if (lastAttempt && Date.now() - lastAttempt < 10000) {
       return; // Don't retry within 10 seconds
     }
-    
+
     // Friend online, attempting P2P connection
     this.peerExchange.set(friendPublicKey, Date.now());
-    
+
     try {
       // Attempt WebRTC connection
       const connection = await webrtcService.connectToPeer(friendPeerId);
-      
+
       if (connection) {
         // P2P connection established
-        
+
         // Store connection info
         connection.metadata = {
           publicKey: friendPublicKey,
           nickname: friendNickname,
           connectedAt: Date.now()
         };
-        
+
         // Notify UI (optional)
         this.notifyConnectionEstablished(friendNickname);
       }
@@ -144,10 +144,10 @@ class HybridP2PService {
     const { default: friendsService } = await import('./friendsService');
     const friends = await friendsService.getFriends();
     const statuses = new Map();
-    
+
     for (const friend of friends) {
       const friendKey = friend.publicKey || friend.pub;
-      
+
       await new Promise((resolve) => {
         gunAuthService.gun.get('peer_exchange').get(friendKey).once((data) => {
           if (data && data.timestamp) {
@@ -165,7 +165,7 @@ class HybridP2PService {
         });
       });
     }
-    
+
     return statuses;
   }
 
@@ -188,9 +188,9 @@ class HybridP2PService {
       z-index: 10000;
       animation: slideIn 0.3s ease;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
       notification.style.opacity = '0';
       notification.style.transition = 'opacity 0.3s';
@@ -213,7 +213,7 @@ class HybridP2PService {
    */
   getConnectionMode() {
     const privateMode = localStorage.getItem('P2P_PRIVATE_MODE') === 'true';
-    
+
     return {
       mode: privateMode ? 'Hybrid P2P' : 'Standard',
       gunUsage: 'Signaling only',

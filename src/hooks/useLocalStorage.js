@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 /**
  * Custom hook for managing localStorage with React state
  * Provides automatic synchronization between localStorage and component state
- * 
+ *
  * @param {string} key - The localStorage key
  * @param {*} initialValue - The initial value if no value exists in localStorage
  * @returns {[*, Function]} - Current value and setter function
@@ -25,10 +25,10 @@ export function useLocalStorage(key, initialValue) {
     try {
       // Allow value to be a function so we have same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value;
-      
+
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      
+
       // Dispatch a custom event to sync across tabs
       window.dispatchEvent(new CustomEvent('localStorage-update', {
         detail: { key, value: valueToStore }

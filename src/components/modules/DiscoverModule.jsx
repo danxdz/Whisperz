@@ -14,15 +14,14 @@ function DiscoverModule({ currentUser, onUserSelect }) {
 
   useEffect(() => {
     discoverUsers();
-    const interval = setInterval(discoverUsers, 15000); // Refresh every 15 seconds
-    return () => clearInterval(interval);
+    // Removed polling - Gun.js subscriptions handle real-time updates
   }, [currentUser]);
 
   const discoverUsers = async () => {
     try {
       setLoading(true);
       const users = [];
-      
+
       // Scan for online users in Gun's public presence space
       await new Promise((resolve) => {
         gunAuthService.gun.get('~@').map().once((data, key) => {
@@ -40,7 +39,7 @@ function DiscoverModule({ currentUser, onUserSelect }) {
             });
           }
         });
-        
+
         // Also check presence space
         gunAuthService.gun.get('presence').map().once((data, key) => {
           if (data && key !== currentUser?.pub) {
@@ -55,15 +54,15 @@ function DiscoverModule({ currentUser, onUserSelect }) {
             }
           }
         });
-        
+
         setTimeout(resolve, 2000);
       });
 
       // Filter out existing friends
       const friends = await friendsService.getFriends();
       const friendKeys = friends.map(f => f.publicKey || f.pub);
-      
-      const filteredUsers = users.filter(user => 
+
+      const filteredUsers = users.filter(user =>
         !friendKeys.includes(user.publicKey) &&
         user.publicKey !== currentUser?.pub
       );
@@ -80,7 +79,7 @@ function DiscoverModule({ currentUser, onUserSelect }) {
     try {
       // Generate an invite and share it with the user
       const { inviteCode } = await friendsService.generateInvite();
-      
+
       // Store invite request in public space for the user to see
       gunAuthService.gun.get('friend_requests')
         .get(user.publicKey)
@@ -91,9 +90,9 @@ function DiscoverModule({ currentUser, onUserSelect }) {
           inviteCode: inviteCode,
           timestamp: Date.now()
         });
-      
+
       alert(`Friend request sent to ${user.nickname}`);
-      
+
       // Remove from list
       setOnlineUsers(prev => prev.filter(u => u.publicKey !== user.publicKey));
     } catch (error) {
@@ -125,7 +124,7 @@ function DiscoverModule({ currentUser, onUserSelect }) {
             {filteredUsers.length} users online
           </span>
         </div>
-        
+
         {/* Search */}
         <input
           type="text"
@@ -188,7 +187,7 @@ function DiscoverModule({ currentUser, onUserSelect }) {
                     </div>
                   )}
                 </div>
-                
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

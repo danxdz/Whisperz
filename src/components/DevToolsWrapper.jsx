@@ -16,16 +16,16 @@ function DevToolsWrapper() {
   useEffect(() => {
     // Check if dev tools should be enabled
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    const shouldEnable = 
-      APP_CONFIG.dev.enableDevTools || 
-      import.meta.env.DEV || 
+
+    const shouldEnable =
+      APP_CONFIG.dev.enableDevTools ||
+      import.meta.env.DEV ||
       window.location.hostname === 'localhost' ||
       localStorage.getItem('enableDevTools') === 'true' ||
       isMobileDevice; // Always enable on mobile for easier access
-    
+
     setIsEnabled(shouldEnable);
-    
+
     // Check if mobile device and screen size
     const checkDevice = () => {
       const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -34,18 +34,18 @@ function DevToolsWrapper() {
       setIsMobile(mobile);
       setIsCompactScreen(compact);
     };
-    
+
     checkDevice();
     window.addEventListener('resize', checkDevice);
-    
+
     // Secret key combination to enable dev tools in production
     const secretKeys = [];
     const secretCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-    
+
     const handleSecretCode = (e) => {
       secretKeys.push(e.key);
       secretKeys.splice(-secretCode.length - 1, secretKeys.length - secretCode.length);
-      
+
       if (JSON.stringify(secretKeys) === JSON.stringify(secretCode)) {
         // console.log('🎮 Konami Code activated! Dev tools enabled.');
         localStorage.setItem('enableDevTools', 'true');
@@ -54,7 +54,7 @@ function DevToolsWrapper() {
     };
 
     window.addEventListener('keydown', handleSecretCode);
-    
+
     return () => {
       window.removeEventListener('resize', checkDevice);
       window.removeEventListener('keydown', handleSecretCode);
@@ -74,7 +74,7 @@ function DevToolsWrapper() {
       {/* Removed floating button - DevTools are accessed from top menu */}
       {/* Use the EnhancedDevTools component */}
       {isDevToolsOpen && (
-        <EnhancedDevTools 
+        <EnhancedDevTools
           isVisible={isDevToolsOpen}
           onClose={() => setIsDevToolsOpen(false)}
         />

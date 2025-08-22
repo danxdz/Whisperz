@@ -64,7 +64,7 @@ class DebugLogger {
         - disableDebug() - Disable all debug logging
         - enableDebug('category') - Enable specific category
         - disableDebug('category') - Disable specific category
-        
+
         Categories: ${Object.keys(this.levels).join(', ')}
       `
     };

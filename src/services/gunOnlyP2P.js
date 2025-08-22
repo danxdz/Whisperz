@@ -20,13 +20,13 @@ class GunOnlyP2P {
     }
 
     this.userId = userId;
-    
+
     // Listen for direct messages via Gun
     this.listenForMessages();
-    
+
     // Start presence broadcasting
     this.startPresenceBroadcast();
-    
+
     this.isInitialized = true;
     // Only log in debug mode
     if (localStorage.getItem('debug_gun') === 'true') {
@@ -47,17 +47,17 @@ class GunOnlyP2P {
       .map()
       .on((message, key) => {
         if (!message || key === '_' || !message.from) return;
-        
+
         // Ignore old messages (older than 24 hours)
         if (message.timestamp && (Date.now() - message.timestamp) > 86400000) {
           return;
         }
 
         console.log('📨 Received P2P message from:', message.from);
-        
+
         // Decrypt message if encrypted
         this.handleMessage(message.from, message);
-        
+
         // Clean up processed message
         gun.get('p2p_messages').get(user.pub).get(key).put(null);
       });
@@ -76,7 +76,7 @@ class GunOnlyP2P {
         timestamp: Date.now(),
         gunPeers: this.getConnectedGunPeers()
       };
-      
+
       gun.get('presence').get(user.pub).put(presence);
       // Broadcasting presence
     };
@@ -90,10 +90,10 @@ class GunOnlyP2P {
   getConnectedGunPeers() {
     const gun = gunAuthService.gun;
     if (!gun || !gun._) return [];
-    
+
     const peers = gun._.opt.peers;
     if (!peers) return [];
-    
+
     // Get URLs of connected peers
     return Object.keys(peers).filter(url => {
       const peer = peers[url];
@@ -110,7 +110,7 @@ class GunOnlyP2P {
     try {
       // Encrypt message with friend's public key
       const encrypted = await this.encryptForFriend(friendPublicKey, content);
-      
+
       const message = {
         from: user.pub,
         content: encrypted,
@@ -126,7 +126,7 @@ class GunOnlyP2P {
         .put(message);
 
       console.log('📤 Sent P2P message to:', friendPublicKey);
-      
+
       // Also store in conversation for history
       const conversationId = this.getConversationId(user.pub, friendPublicKey);
       gun.get('conversations')
@@ -158,7 +158,7 @@ class GunOnlyP2P {
       const user = gunAuthService.getCurrentUser();
       const secret = await gunAuthService.gun.SEA.secret(friend.epub || friendPublicKey, user);
       const encrypted = await gunAuthService.gun.SEA.encrypt(content, secret);
-      
+
       return encrypted;
     } catch (error) {
       console.error('Failed to encrypt message:', error);
@@ -180,7 +180,7 @@ class GunOnlyP2P {
       const user = gunAuthService.getCurrentUser();
       const secret = await gunAuthService.gun.SEA.secret(friend.epub || friendPublicKey, user);
       const decrypted = await gunAuthService.gun.SEA.decrypt(encryptedContent, secret);
-      
+
       return decrypted || encryptedContent;
     } catch (error) {
       console.error('Failed to decrypt message:', error);
@@ -205,7 +205,7 @@ class GunOnlyP2P {
       };
 
       console.log('📥 Processing message from:', from);
-      
+
       // Notify all message handlers
       this.messageHandlers.forEach(handler => {
         handler(from, processedMessage);
@@ -224,7 +224,7 @@ class GunOnlyP2P {
   // Check connection to friend
   async checkConnection(friendPublicKey) {
     const gun = gunAuthService.gun;
-    
+
     return new Promise((resolve) => {
       gun.get('presence').get(friendPublicKey).once((presence) => {
         if (!presence) {
@@ -234,12 +234,12 @@ class GunOnlyP2P {
 
         const isOnline = presence.timestamp && (Date.now() - presence.timestamp) < 120000;
         const status = isOnline ? 'online' : 'offline';
-        
+
         // Check if we share Gun peers
         const ourPeers = this.getConnectedGunPeers();
         const theirPeers = presence.gunPeers || [];
         const sharedPeers = ourPeers.filter(p => theirPeers.includes(p));
-        
+
         resolve({
           connected: isOnline,
           status: status,

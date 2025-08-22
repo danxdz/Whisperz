@@ -13,7 +13,7 @@ class RateLimiter {
       },
       userCreation: {
         max: 2,        // Max 2 users
-        window: 600000, // per 10 minutes  
+        window: 600000, // per 10 minutes
         key: 'RL_USERS'
       },
       loginAttempts: {
@@ -42,16 +42,16 @@ class RateLimiter {
 
     const now = Date.now();
     const stored = this.getStoredAttempts(limit.key);
-    
+
     // Clean old attempts
-    const validAttempts = stored.filter(timestamp => 
+    const validAttempts = stored.filter(timestamp =>
       now - timestamp < limit.window
     );
 
     // Check if under limit
     const allowed = validAttempts.length < limit.max;
     const remaining = Math.max(0, limit.max - validAttempts.length);
-    
+
     // Calculate reset time
     let resetIn = 0;
     if (validAttempts.length > 0) {
@@ -63,7 +63,7 @@ class RateLimiter {
       allowed,
       remaining,
       resetIn: Math.ceil(resetIn / 1000), // Convert to seconds
-      message: allowed 
+      message: allowed
         ? `${remaining} attempts remaining`
         : `Rate limit exceeded. Try again in ${Math.ceil(resetIn / 1000)} seconds`
     };
@@ -79,13 +79,13 @@ class RateLimiter {
 
     const now = Date.now();
     const stored = this.getStoredAttempts(limit.key);
-    
+
     // Clean old attempts and add new one
-    const validAttempts = stored.filter(timestamp => 
+    const validAttempts = stored.filter(timestamp =>
       now - timestamp < limit.window
     );
     validAttempts.push(now);
-    
+
     // Store updated attempts
     try {
       localStorage.setItem(limit.key, JSON.stringify(validAttempts));

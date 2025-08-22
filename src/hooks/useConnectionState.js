@@ -14,13 +14,13 @@ export function useConnectionState(friendPublicKey) {
     latency: null,
     method: 'local' // Current delivery method
   });
-  
+
   // Keep track of subscriptions for cleanup
   const subscriptionsRef = useRef([]);
 
   useEffect(() => {
     if (!friendPublicKey) return;
-    
+
     // Ensure services are available
     if (!webrtcService || !friendsService || !gunAuthService) {
       return;
@@ -41,16 +41,16 @@ export function useConnectionState(friendPublicKey) {
         }
 
         // Check if friend is actually online (within 5 minutes)
-        const isActuallyOnline = presence.status === 'online' && 
-                                  presence.lastSeen && 
+        const isActuallyOnline = presence.status === 'online' &&
+                                  presence.lastSeen &&
                                   (Date.now() - presence.lastSeen) < 300000;
-        
+
         if (presence.peerId && isActuallyOnline) {
           // Check WebRTC connection status
-          const connStatus = webrtcService.getConnectionStatus ? 
-            webrtcService.getConnectionStatus(presence.peerId) : 
+          const connStatus = webrtcService.getConnectionStatus ?
+            webrtcService.getConnectionStatus(presence.peerId) :
             { connected: false };
-          
+
           if (connStatus && connStatus.connected) {
             setConnectionState({
               status: 'webrtc',
@@ -97,14 +97,14 @@ export function useConnectionState(friendPublicKey) {
           lastSeen: data.lastSeen,
           peerId: data.peerId
         };
-        
+
         // Only log significant changes
-        const isOnline = cleanPresence.status === 'online' && 
-                        cleanPresence.lastSeen && 
+        const isOnline = cleanPresence.status === 'online' &&
+                        cleanPresence.lastSeen &&
                         (Date.now() - cleanPresence.lastSeen) < 300000;
-        
+
         debugLogger.info(`[Presence] Friend ${friendPublicKey.substring(0, 8)}... ${isOnline ? 'online' : 'offline'}`);
-        
+
         updateConnectionState(cleanPresence);
       }
     });
@@ -161,9 +161,9 @@ export function useConnectionState(friendPublicKey) {
         debugLogger.info(`[P2P] ${message}`);
       }
     };
-    
+
     debugLogger.p2p('🚀 Attempting P2P connection');
-    
+
     // First check if our own WebRTC is ready
     if (!webrtcService.isReady()) {
       debugLogger.p2p('❌ Our WebRTC is not ready');
@@ -182,45 +182,45 @@ export function useConnectionState(friendPublicKey) {
         return false;
       }
     }
-    
+
     try {
       // Check friend's online status
       if (!connectionState.isOnline) {
         logStatus('Friend is offline', true);
         return false;
       }
-      
+
       // Check if friend has peer ID
       if (!connectionState.peerId) {
         logStatus('Friend P2P not available', true);
         return false;
       }
-      
+
       // Check if already connecting or connected
       if (connectionState.status === 'webrtc') {
         logStatus('Already connected via P2P');
         return true;
       }
-      
+
       if (connectionState.status === 'connecting') {
         logStatus('Connection already in progress');
         return false;
       }
-      
+
       // Update state to connecting
       setConnectionState(prev => ({ ...prev, status: 'connecting' }));
-      
+
       debugLogger.p2p(`📡 Connecting to peer: ${connectionState.peerId}`);
-      
+
       // Add a small random delay to avoid simultaneous connections
       await new Promise(resolve => setTimeout(resolve, Math.random() * 500));
-      
+
       // Attempt connection
       await webrtcService.connectToPeer(connectionState.peerId);
-      
+
       logStatus('P2P connection established!');
       return true;
-      
+
     } catch (error) {
       logStatus(`Connection failed: ${error.message}`, true);
       setConnectionState(prev => ({ ...prev, status: 'gun' }));

@@ -17,20 +17,20 @@ class OnlineStatusManager {
   // Start monitoring online status
   startMonitoring() {
     // Starting online status monitoring...
-    
+
     // Update own status immediately
     this.updateOwnStatus();
-    
+
     // Check friends status
     this.checkAllFriendsStatus();
-    
+
     // DISABLED - No need for periodic status updates
     // Status is updated on login, logout, and visibility change only
     // this.checkInterval = setInterval(() => {
     //   this.updateOwnStatus();
     //   this.checkAllFriendsStatus();
     // }, 5000);
-    
+
     // Update on visibility change
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
@@ -52,7 +52,7 @@ class OnlineStatusManager {
   async updateOwnStatus() {
     const user = gunAuthService.getCurrentUser();
     if (!user) return;
-    
+
     const peerId = webrtcService.getPeerId();
     const status = {
       status: 'online',
@@ -60,15 +60,15 @@ class OnlineStatusManager {
       peerId: peerId || null,
       timestamp: Date.now()
     };
-    
+
     // Update in Gun
     try {
       // Update in user space
       gunAuthService.user.get('presence').put(status);
-      
+
       // Update in public space
       gunAuthService.gun.get('presence').get(user.pub).put(status);
-      
+
       // Updated own presence
     } catch (error) {
       console.error('❌ Failed to update presence:', error);
@@ -87,22 +87,22 @@ class OnlineStatusManager {
             resolve(data);
           });
       });
-      
+
       if (!presence) {
         this.onlineUsers.set(publicKey, false);
         return false;
       }
-      
+
       // Check if online (seen in last 5 minutes)
-      const isOnline = presence.status === 'online' && 
-                      presence.lastSeen && 
+      const isOnline = presence.status === 'online' &&
+                      presence.lastSeen &&
                       (Date.now() - presence.lastSeen) < 300000; // 5 minutes, not 30 seconds
-      
+
       this.onlineUsers.set(publicKey, isOnline);
-      
+
       // Only log significant changes, not every check
       // console.log(`👤 Friend ${publicKey.substring(0, 8)}... is ${isOnline ? 'online' : 'offline'}`, presence);
-      
+
       return isOnline;
     } catch (error) {
       console.error('❌ Error checking friend status:', error);
@@ -116,12 +116,12 @@ class OnlineStatusManager {
     try {
       const { default: friendsService } = await import('../services/friendsService');
       const friends = await friendsService.getFriends();
-      
+
       for (const friend of friends) {
         const publicKey = friend.publicKey || friend.pub;
         await this.checkFriendStatus(publicKey);
       }
-      
+
       // Notify listeners
       this.notifyListeners();
     } catch (error) {
@@ -136,13 +136,13 @@ class OnlineStatusManager {
       .get(publicKey)
       .on((data) => {
         if (data) {
-          const isOnline = data.status === 'online' && 
-                          data.lastSeen && 
+          const isOnline = data.status === 'online' &&
+                          data.lastSeen &&
                           (Date.now() - data.lastSeen) < 30000;
-          
+
           const wasOnline = this.onlineUsers.get(publicKey);
           this.onlineUsers.set(publicKey, isOnline);
-          
+
           if (wasOnline !== isOnline) {
             console.log(`🔄 Friend ${publicKey.substring(0, 8)}... changed to ${isOnline ? 'online' : 'offline'}`);
             this.notifyListeners();
@@ -183,13 +183,13 @@ class OnlineStatusManager {
   debugStatus() {
     console.log('📊 Online Status Debug:');
     console.log('Total friends tracked:', this.onlineUsers.size);
-    
+
     let onlineCount = 0;
     this.onlineUsers.forEach((isOnline, publicKey) => {
       if (isOnline) onlineCount++;
       console.log(`  ${publicKey.substring(0, 16)}... : ${isOnline ? '🟢 Online' : '⚫ Offline'}`);
     });
-    
+
     console.log(`Summary: ${onlineCount} online, ${this.onlineUsers.size - onlineCount} offline`);
     return {
       total: this.onlineUsers.size,
@@ -211,7 +211,7 @@ if (typeof window !== 'undefined') {
       onlineStatusManager.startMonitoring();
     }
   }, 1000);
-  
+
   // Expose to window for debugging
   window.onlineStatus = {
     debug: () => onlineStatusManager.debugStatus(),
@@ -221,7 +221,7 @@ if (typeof window !== 'undefined') {
     isOnline: (publicKey) => onlineStatusManager.isOnline(publicKey),
     getAll: () => onlineStatusManager.getAllStatuses()
   };
-  
+
   console.log(`
 🟢 Online Status Manager Loaded!
 Commands:

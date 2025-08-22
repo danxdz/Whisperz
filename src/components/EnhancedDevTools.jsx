@@ -32,20 +32,20 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [discoverUsers, setDiscoverUsers] = useState([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
-  
+
   // P2P Tab state (removed - logs go to console)
-  
+
   // Console logs state
   const [consoleLogs, setConsoleLogs] = useState([]);
   const [logFilter, setLogFilter] = useState('all');
   const consoleEndRef = useRef(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  
+
   // Backup state
   const [backupPassword, setBackupPassword] = useState('');
   const [storageStats, setStorageStats] = useState(null);
   const [backupStatus, setBackupStatus] = useState('');
-  
+
   // Gun DB state
   const [customRelay, setCustomRelay] = useState('');
   const [currentRelays, setCurrentRelays] = useState([]);
@@ -61,11 +61,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadRelayConfig();
     loadCurrentUserInfo();
     loadOnlineUsers();
-    
+
     // Load console logs
     const logs = consoleCapture.getLogs();
     setConsoleLogs(logs);
-    
+
     // Subscribe to new console logs
     const unsubscribe = consoleCapture.subscribe((log) => {
       if (log.type === 'clear') {
@@ -74,10 +74,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         setConsoleLogs(prev => [...prev, log].slice(-200)); // Keep last 200 logs
       }
     });
-    
+
     return () => unsubscribe();
   }, [isVisible]);
-  
+
   // P2P logs now go directly to console - no need to track them
 
   // Auto-scroll console logs
@@ -93,14 +93,14 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       if (user) {
         const peerId = webrtcService.getPeerId();
         const webrtcReady = webrtcService.isReady();
-        
+
         // Also check Gun P2P status
         const gunPeers = gunAuthService.gun?._.opt?.peers || {};
         const connectedPeers = Object.keys(gunPeers).filter(url => {
           const peer = gunPeers[url];
           return peer && peer.wire && !peer.wire.closed;
         });
-        
+
         setCurrentUserInfo({
           publicKey: user.pub,
           alias: user.alias,
@@ -124,19 +124,19 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         hybridGunService.updatePresence('online', { peerId });
         // Broadcasting our presence before checking others
       }
-      
+
       const onlineList = [];
       const seenKeys = new Set();
-      
+
       // Get all online users from Gun presence space
       await new Promise((resolve) => {
         let checkCount = 0;
-        
+
         // Check presence space
         gunAuthService.gun.get('presence').map().once((data, key) => {
           checkCount++;
           // Checking presence for key
-          
+
           if (data && key && key !== '_' && !key.startsWith('~')) {
             // Clean Gun metadata
             const cleanData = Object.keys(data).reduce((acc, k) => {
@@ -145,9 +145,9 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               }
               return acc;
             }, {});
-            
+
             // Check if user is online (seen in last 2 minutes)
-            if (cleanData.status === 'online' && cleanData.lastSeen && 
+            if (cleanData.status === 'online' && cleanData.lastSeen &&
                 (Date.now() - cleanData.lastSeen) < 120000) {
               if (!seenKeys.has(key)) {
                 seenKeys.add(key);
@@ -162,7 +162,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             }
           }
         });
-        
+
         // Also check users space for presence
         gunAuthService.gun.get('~@').map().once((alias, key) => {
           if (alias && key && key !== '_') {
@@ -171,7 +171,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             if (pubKey && !seenKeys.has(pubKey)) {
               // Check this user's presence
               gunAuthService.gun.user(pubKey).get('presence').once((data) => {
-                if (data && data.status === 'online' && data.lastSeen && 
+                if (data && data.status === 'online' && data.lastSeen &&
                     (Date.now() - data.lastSeen) < 120000) {
                   seenKeys.add(pubKey);
                   onlineList.push({
@@ -187,14 +187,14 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             }
           }
         });
-        
+
         // Wait a bit for data to load
         setTimeout(() => {
           // Total presence checks: checkCount
           resolve();
         }, 2000);
       });
-      
+
       setAllOnlineUsers(onlineList);
       // Online users found: onlineList.length
     } catch (error) {
@@ -232,11 +232,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       const dbStats = await hybridGunService.getDatabaseStats();
       const gun = gunAuthService.gun;
       const peers = gun?._.opt?.peers ? Object.keys(gun._.opt.peers).length : 0;
-      
+
       // Load network stats
       const peerId = webrtcService.getPeerId();
       const webrtcPeers = webrtcService.getConnectedPeers ? webrtcService.getConnectedPeers() : [];
-      
+
       setNetworkStats({
         gunStatus: gun ? 'connected' : 'disconnected',
         webrtcStatus: peerId ? 'initialized' : 'not initialized',
@@ -245,7 +245,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         gunPeers: peers,
         actualConnections: webrtcPeers
       });
-      
+
       setStats({
         ...dbStats,
         totalUsers: users.length,
@@ -290,7 +290,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       setBackupStatus('Importing backup...');
       const password = backupPassword || prompt('Enter backup password (leave empty if not encrypted):');
       const result = await backupService.importFromFile(file, password);
-      
+
       if (result.success) {
         setBackupStatus(`✅ Restored ${result.restoredCount} items from backup`);
         loadStorageStats();
@@ -300,22 +300,22 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     } catch (error) {
       setBackupStatus(`❌ Import failed: ${error.message}`);
     }
-    
+
     // Clear file input
     event.target.value = '';
   };
 
   // Handle clear data
   const handleClearData = (category) => {
-    const confirmMsg = category === 'all' 
-      ? '⚠️ This will delete ALL data! Are you sure?' 
+    const confirmMsg = category === 'all'
+      ? '⚠️ This will delete ALL data! Are you sure?'
       : `Clear ${category} data?`;
-    
+
     if (window.confirm(confirmMsg)) {
       if (category === 'all' && !window.confirm('This action cannot be undone. Are you REALLY sure?')) {
         return;
       }
-      
+
       const result = backupService.clearData([category]);
       setBackupStatus(`Cleared ${result.count} items`);
       loadStorageStats();
@@ -325,7 +325,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const handleRemoveUser = async (userId) => {
     if (!confirm('Are you sure you want to remove this friend?')) return;
-    
+
     try {
       await friendsService.removeFriend(userId);
       loadUsers();
@@ -337,7 +337,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const handleRevokeInvite = async (inviteCode) => {
     if (!confirm('Are you sure you want to revoke this invite?')) return;
-    
+
     try {
       await friendsService.revokeInvite(inviteCode);
       loadInvites();
@@ -361,7 +361,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const handleClearAllData = async () => {
     if (!confirm('This will delete ALL data including messages, friends, and settings. Are you sure?')) return;
     if (!confirm('This action cannot be undone. Continue?')) return;
-    
+
     try {
       await hybridGunService.clearAllData();
       localStorage.clear();
@@ -376,22 +376,22 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const discoverAllUsers = async () => {
     setDiscoverLoading(true);
     const discoveredUsers = [];
-    
+
     try {
       const friends = await friendsService.getFriends();
       const friendKeys = friends.map(f => f.publicKey);
       const currentUser = gunAuthService.getCurrentUser();
-      
+
       // Check presence space
       await new Promise((resolve) => {
         setTimeout(resolve, 2000); // Give time to collect users
-        
+
         gunAuthService.gun.get('presence').map().once((data, key) => {
           if (data && key && key !== currentUser?.pub && !friendKeys.includes(key)) {
-            const isOnline = data.status === 'online' && 
-                           data.lastSeen && 
+            const isOnline = data.status === 'online' &&
+                           data.lastSeen &&
                            (Date.now() - data.lastSeen) < 300000;
-            
+
             // Try to get username if no nickname
             if (!data.nickname) {
               gunAuthService.gun.user(key).once((userData) => {
@@ -416,7 +416,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           }
         });
       });
-      
+
       setDiscoverUsers(discoveredUsers);
     } catch (error) {
       console.error('Failed to discover users:', error);
@@ -441,7 +441,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   // Missing functions for Social tab
   const generateInvite = handleGenerateInvite; // Use existing function
-  
+
   // Missing functions for Advanced tab
   const createBackup = async () => {
     if (!backupPassword) {
@@ -463,10 +463,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const handleRestoreBackup = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     const password = prompt('Enter backup password:');
     if (!password) return;
-    
+
     try {
       setBackupStatus('Restoring backup...');
       const result = await backupService.restoreBackup(file, password);
@@ -503,7 +503,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const addCustomRelay = () => {
     if (!customRelay.trim()) return;
-    
+
     // Validate URL format
     try {
       new URL(customRelay);
@@ -516,7 +516,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     const newRelays = [...savedRelays, customRelay];
     setSavedRelays(newRelays);
     localStorage.setItem('customGunRelays', JSON.stringify(newRelays));
-    
+
     // Store for next app reload
     const existingPeers = localStorage.getItem('GUN_CUSTOM_PEERS') || '';
     const peersArray = existingPeers ? existingPeers.split(',') : [];
@@ -524,7 +524,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       peersArray.push(customRelay);
       localStorage.setItem('GUN_CUSTOM_PEERS', peersArray.join(','));
     }
-    
+
     setCustomRelay('');
     alert('Relay added! Reload the app to connect to the new relay.');
   };
@@ -533,7 +533,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     const newRelays = savedRelays.filter(r => r !== relay);
     setSavedRelays(newRelays);
     localStorage.setItem('customGunRelays', JSON.stringify(newRelays));
-    
+
     // Update localStorage peers
     const existingPeers = localStorage.getItem('GUN_CUSTOM_PEERS') || '';
     const peersArray = existingPeers.split(',').filter(p => p !== relay);
@@ -555,11 +555,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   // Render Status Tab - Consolidated system information
   const renderStatusTab = () => {
     const stats = consoleCapture.getStats();
-    
+
     return (
       <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
-        <h3 style={{ 
-          fontSize: '16px', 
+        <h3 style={{
+          fontSize: '16px',
           marginBottom: '12px',
           background: 'linear-gradient(135deg, #667eea, #764ba2)',
           WebkitBackgroundClip: 'text',
@@ -567,7 +567,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         }}>
           📊 System Status
         </h3>
-        
+
         {/* Current User Info */}
         {currentUserInfo && (
           <div style={{
@@ -588,7 +588,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </div>
           </div>
         )}
-        
+
         {/* Network Status */}
         <div style={{
           background: colors.bgCard,
@@ -607,7 +607,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div>Online Users: {allOnlineUsers.length}</div>
           </div>
         </div>
-        
+
         {/* Console Stats */}
         <div style={{
           background: colors.bgCard,
@@ -629,7 +629,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </div>
           </div>
         </div>
-        
+
         {/* Quick Stats */}
         <div style={{
           background: colors.bgCard,
@@ -653,13 +653,13 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   // Render Social Tab - Friends and Invites combined
   const renderSocialTab = () => {
     return (
-      <div style={{ 
+      <div style={{
         padding: screen.isTiny ? '8px' : '12px',
         height: '100%',
         overflowY: 'auto'
       }}>
-        <h3 style={{ 
-          fontSize: '16px', 
+        <h3 style={{
+          fontSize: '16px',
           marginBottom: '12px',
           background: 'linear-gradient(135deg, #667eea, #764ba2)',
           WebkitBackgroundClip: 'text',
@@ -667,7 +667,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         }}>
           👥 Social Management
         </h3>
-        
+
         {/* Friends Section */}
         <div style={{
           background: colors.bgCard,
@@ -676,8 +676,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           marginBottom: '12px',
           border: `1px solid ${colors.borderColor}`
         }}>
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: '12px'
@@ -700,11 +700,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               Refresh
             </button>
           </div>
-          
+
           <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
             {users.length === 0 ? (
-              <div style={{ 
-                color: colors.textMuted, 
+              <div style={{
+                color: colors.textMuted,
                 fontSize: '12px',
                 textAlign: 'center',
                 padding: '20px'
@@ -755,7 +755,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             )}
           </div>
         </div>
-        
+
         {/* Invites Section */}
         <div style={{
           background: colors.bgCard,
@@ -764,8 +764,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           marginBottom: '12px',
           border: `1px solid ${colors.borderColor}`
         }}>
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: '12px'
@@ -788,11 +788,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               + New Invite
             </button>
           </div>
-          
+
           <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
             {invites.length === 0 ? (
-              <div style={{ 
-                color: colors.textMuted, 
+              <div style={{
+                color: colors.textMuted,
                 fontSize: '12px',
                 textAlign: 'center',
                 padding: '10px'
@@ -824,7 +824,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             )}
           </div>
         </div>
-        
+
         {/* Discover Users Section */}
         <div style={{
           background: colors.bgCard,
@@ -833,8 +833,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           marginBottom: '12px',
           border: `1px solid ${colors.borderColor}`
         }}>
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: '12px'
@@ -859,11 +859,11 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               {discoverLoading ? 'Searching...' : 'Search'}
             </button>
           </div>
-          
+
           <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
             {discoverUsers.length === 0 ? (
-              <div style={{ 
-                color: colors.textMuted, 
+              <div style={{
+                color: colors.textMuted,
                 fontSize: '12px',
                 textAlign: 'center',
                 padding: '10px'
@@ -955,10 +955,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   // Render Console Tab - Live console logs
   const renderConsoleTab = () => {
-    const filteredLogs = logFilter === 'all' 
-      ? consoleLogs 
+    const filteredLogs = logFilter === 'all'
+      ? consoleLogs
       : consoleLogs.filter(log => log.type === logFilter);
-    
+
     const getLogColor = (type) => {
       switch(type) {
         case 'error': return colors.danger;
@@ -972,7 +972,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         default: return colors.textSecondary;
       }
     };
-    
+
     const getLogIcon = (type) => {
       switch(type) {
         case 'error': return '❌';
@@ -986,23 +986,23 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         default: return '📝';
       }
     };
-    
+
     return (
-      <div style={{ 
+      <div style={{
         padding: screen.isTiny ? '8px' : '12px',
         height: '100%',
         display: 'flex',
         flexDirection: 'column'
       }}>
         {/* Header with filters */}
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '12px',
           flexShrink: 0
         }}>
-          <h3 style={{ 
+          <h3 style={{
             margin: 0,
             fontSize: '16px',
             background: 'linear-gradient(135deg, #667eea, #764ba2)',
@@ -1011,10 +1011,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           }}>
             🖥️ Console Logs
           </h3>
-          
+
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {/* Filter buttons */}
-            <select 
+            <select
               value={logFilter}
               onChange={(e) => setLogFilter(e.target.value)}
               style={{
@@ -1037,7 +1037,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               <option value="gun">Gun</option>
               <option value="webrtc">WebRTC</option>
             </select>
-            
+
             {/* Auto-scroll toggle */}
             <button
               onClick={() => setAutoScroll(!autoScroll)}
@@ -1053,7 +1053,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             >
               {autoScroll ? '📍 Auto' : '📌 Manual'}
             </button>
-            
+
             {/* Clear button */}
             <button
               onClick={() => {
@@ -1072,15 +1072,15 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             >
               Clear
             </button>
-            
+
             {/* Copy button */}
             <button
               onClick={() => {
-                const logsText = filteredLogs.map(log => 
+                const logsText = filteredLogs.map(log =>
                   `[${log.time}] ${getLogIcon(log.type)} ${log.message}`
                 ).join('\n');
                 navigator.clipboard.writeText(logsText);
-                
+
                 // Show feedback
                 const btn = event.target;
                 const originalText = btn.textContent;
@@ -1100,7 +1100,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             >
               📋
             </button>
-            
+
             {/* Export button */}
             <button
               onClick={() => consoleCapture.download()}
@@ -1119,7 +1119,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </button>
           </div>
         </div>
-        
+
         {/* Console output */}
         <div style={{
           flex: 1,
@@ -1132,16 +1132,16 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           border: `1px solid ${colors.borderColor}`
         }}>
           {filteredLogs.length === 0 ? (
-            <div style={{ 
-              color: colors.textMuted, 
-              textAlign: 'center', 
-              padding: '20px' 
+            <div style={{
+              color: colors.textMuted,
+              textAlign: 'center',
+              padding: '20px'
             }}>
               No logs to display
             </div>
           ) : (
             filteredLogs.map((log, index) => (
-              <div 
+              <div
                 key={index}
                 style={{
                   padding: '4px 8px',
@@ -1153,14 +1153,14 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 }}
               >
                 <span style={{ flexShrink: 0 }}>{getLogIcon(log.type)}</span>
-                <span style={{ 
-                  color: colors.textMuted, 
+                <span style={{
+                  color: colors.textMuted,
                   flexShrink: 0,
                   fontSize: '10px'
                 }}>
                   {log.time}
                 </span>
-                <span style={{ 
+                <span style={{
                   color: getLogColor(log.type),
                   flex: 1,
                   whiteSpace: 'pre-wrap'
@@ -1179,13 +1179,13 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   // Render Advanced Tab - P2P, GunDB, and Backup combined
   const renderAdvancedTab = () => {
     return (
-      <div style={{ 
+      <div style={{
         padding: screen.isTiny ? '8px' : '12px',
         height: '100%',
         overflowY: 'auto'
       }}>
-        <h3 style={{ 
-          fontSize: '16px', 
+        <h3 style={{
+          fontSize: '16px',
           marginBottom: '12px',
           background: 'linear-gradient(135deg, #667eea, #764ba2)',
           WebkitBackgroundClip: 'text',
@@ -1193,7 +1193,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         }}>
           ⚙️ Advanced Settings
         </h3>
-        
+
         {/* P2P Diagnostics */}
         <div style={{
           background: colors.bgCard,
@@ -1227,7 +1227,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </div>
           </div>
         </div>
-        
+
         {/* Gun Relay Configuration */}
         <div style={{
           background: colors.bgCard,
@@ -1286,7 +1286,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </div>
           </div>
         </div>
-        
+
         {/* Backup & Restore */}
         <div style={{
           background: colors.bgCard,
@@ -1362,19 +1362,19 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               />
             </div>
             {backupStatus && (
-              <div style={{ 
-                marginTop: '8px', 
+              <div style={{
+                marginTop: '8px',
                 padding: '4px 8px',
                 background: colors.bgSecondary,
                 borderRadius: '4px',
-                color: colors.textSecondary 
+                color: colors.textSecondary
               }}>
                 {backupStatus}
               </div>
             )}
           </div>
         </div>
-        
+
         {/* Debug Actions */}
         <div style={{
           background: colors.bgCard,
@@ -1457,7 +1457,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           }}
           style={{
             padding: '6px 12px',
-            background: activeTab === tab 
+            background: activeTab === tab
               ? colors.primary
               : colors.bgTertiary,
             border: 'none',
@@ -1470,7 +1470,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             transition: 'all 0.2s'
           }}
         >
-                      {tab === 'status' ? '📊 Status' : 
+                      {tab === 'status' ? '📊 Status' :
              tab === 'console' ? '📝 Console' :
              tab === 'social' ? '👥 Social' :
              tab === 'advanced' ? '⚙️ Advanced' : tab}
@@ -1481,9 +1481,9 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderUsersTab = () => (
     <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '12px'
       }}>
@@ -1505,17 +1505,17 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           + Invite
         </button>
       </div>
-      
-      <div style={{ 
-        maxHeight: screen.isTiny ? '200px' : '300px', 
+
+      <div style={{
+        maxHeight: screen.isTiny ? '200px' : '300px',
         overflowY: 'auto',
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '8px',
         padding: '8px'
       }}>
         {users.length === 0 ? (
-          <p style={{ 
-            textAlign: 'center', 
+          <p style={{
+            textAlign: 'center',
             color: 'rgba(255, 255, 255, 0.5)',
             fontSize: screen.isTiny ? '11px' : '12px'
           }}>
@@ -1534,7 +1534,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               fontSize: screen.isTiny ? '11px' : '12px'
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ 
+                <div style={{
                   fontWeight: 'bold',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -1542,8 +1542,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 }}>
                   {user.name}
                 </div>
-                <div style={{ 
-                  fontSize: screen.isTiny ? '9px' : '10px', 
+                <div style={{
+                  fontSize: screen.isTiny ? '9px' : '10px',
                   color: 'rgba(255, 255, 255, 0.5)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -1575,23 +1575,23 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderInvitesTab = () => (
     <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
-      <h4 style={{ 
-        margin: '0 0 12px 0', 
-        fontSize: screen.isTiny ? '14px' : '16px' 
+      <h4 style={{
+        margin: '0 0 12px 0',
+        fontSize: screen.isTiny ? '14px' : '16px'
       }}>
         Invites ({invites.length})
       </h4>
-      
-      <div style={{ 
-        maxHeight: screen.isTiny ? '200px' : '300px', 
+
+      <div style={{
+        maxHeight: screen.isTiny ? '200px' : '300px',
         overflowY: 'auto',
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '8px',
         padding: '8px'
       }}>
         {invites.length === 0 ? (
-          <p style={{ 
-            textAlign: 'center', 
+          <p style={{
+            textAlign: 'center',
             color: 'rgba(255, 255, 255, 0.5)',
             fontSize: screen.isTiny ? '11px' : '12px'
           }}>
@@ -1606,13 +1606,13 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               borderRadius: '4px',
               fontSize: screen.isTiny ? '11px' : '12px'
             }}>
-              <div style={{ 
-                display: 'flex', 
+              <div style={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '4px'
               }}>
-                <span style={{ 
+                <span style={{
                   fontWeight: 'bold',
                   color: invite.used ? '#66ff66' : invite.revoked ? '#ff6666' : '#ffff66'
                 }}>
@@ -1622,16 +1622,16 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   {new Date(invite.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              
+
               {invite.used && invite.usedBy && (
-                <div style={{ 
+                <div style={{
                   fontSize: screen.isTiny ? '9px' : '10px',
                   color: 'rgba(255, 255, 255, 0.5)'
                 }}>
                   Used by: {invite.usedBy.substring(0, 20)}...
                 </div>
               )}
-              
+
               {!invite.used && !invite.revoked && (
                 <div style={{ marginTop: '4px' }}>
                   <button
@@ -1677,13 +1677,13 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderStatsTab = () => (
     <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
-      <h4 style={{ 
-        margin: '0 0 12px 0', 
-        fontSize: screen.isTiny ? '14px' : '16px' 
+      <h4 style={{
+        margin: '0 0 12px 0',
+        fontSize: screen.isTiny ? '14px' : '16px'
       }}>
         Statistics
       </h4>
-      
+
       {/* Network Status Section */}
       <div style={{
         marginBottom: '16px',
@@ -1692,18 +1692,18 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         borderRadius: '8px',
         border: `1px solid ${colors.borderColor}`
       }}>
-        <h5 style={{ 
-          margin: '0 0 8px 0', 
+        <h5 style={{
+          margin: '0 0 8px 0',
           fontSize: '14px',
           color: colors.primary
         }}>
           🌐 Network Status
         </h5>
-        
+
         <div style={{ display: 'grid', gap: '6px', fontSize: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Gun.js:</span>
-            <span style={{ 
+            <span style={{
               color: networkStats.gunStatus === 'connected' ? '#43e97b' : '#ff6666'
             }}>
               {networkStats.gunStatus} ({networkStats.gunPeers} peers)
@@ -1711,15 +1711,15 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>WebRTC:</span>
-            <span style={{ 
+            <span style={{
               color: networkStats.webrtcStatus === 'initialized' ? colors.warning : colors.danger
             }}>
               {networkStats.webrtcStatus}
             </span>
           </div>
           {networkStats.peerId && networkStats.peerId !== 'Not initialized' && (
-            <div style={{ 
-              fontSize: '10px', 
+            <div style={{
+              fontSize: '10px',
               color: 'rgba(255, 255, 255, 0.5)',
               wordBreak: 'break-all'
             }}>
@@ -1728,16 +1728,16 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Active P2P Connections:</span>
-            <span style={{ 
-              color: networkStats.connectedPeers > 0 ? colors.success : colors.textMuted 
+            <span style={{
+              color: networkStats.connectedPeers > 0 ? colors.success : colors.textMuted
             }}>
               {networkStats.connectedPeers} {networkStats.connectedPeers > 0 ? '✓' : '(none)'}
             </span>
           </div>
           {networkStats.actualConnections && networkStats.actualConnections.length > 0 && (
-            <div style={{ 
-              marginTop: '8px', 
-              padding: '8px', 
+            <div style={{
+              marginTop: '8px',
+              padding: '8px',
               background: colors.bgTertiary,
               borderRadius: '4px',
               fontSize: '11px'
@@ -1752,14 +1752,14 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           )}
         </div>
       </div>
-      
+
       {/* General Stats */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: screen.isTiny ? '1fr' : 'repeat(2, 1fr)',
         gap: '8px'
       }}>
-        {Object.entries(stats).filter(([key]) => 
+        {Object.entries(stats).filter(([key]) =>
           !['gunPeers', 'webrtcStatus'].includes(key) // Filter out duplicate network stats
         ).map(([key, value]) => (
           <div key={key} style={{
@@ -1768,14 +1768,14 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             borderRadius: '4px',
             fontSize: screen.isTiny ? '11px' : '12px'
           }}>
-            <div style={{ 
+            <div style={{
               fontSize: screen.isTiny ? '9px' : '10px',
               color: 'rgba(255, 255, 255, 0.5)',
               marginBottom: '2px'
             }}>
               {key.replace(/([A-Z])/g, ' $1').trim()}
             </div>
-            <div style={{ 
+            <div style={{
               fontWeight: 'bold',
               color: colors.primary
             }}>
@@ -1789,8 +1789,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderBackupTab = () => (
     <div style={{ padding: '12px' }}>
-      <h3 style={{ 
-        fontSize: '16px', 
+      <h3 style={{
+        fontSize: '16px',
         marginBottom: '12px',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
         WebkitBackgroundClip: 'text',
@@ -1813,12 +1813,12 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>
             Total items: {storageStats.totalKeys}
           </div>
-          
+
           {/* Category breakdown */}
           <div style={{ marginTop: '8px', fontSize: '11px' }}>
             {Object.entries(storageStats.categories).map(([cat, data]) => (
-              <div key={cat} style={{ 
-                display: 'flex', 
+              <div key={cat} style={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 padding: '2px 0'
               }}>
@@ -1853,8 +1853,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       </div>
 
       {/* Export/Import Buttons */}
-      <div style={{ 
-        display: 'grid', 
+      <div style={{
+        display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: '8px',
         marginBottom: '12px'
@@ -1874,7 +1874,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         >
           📥 Export Backup
         </button>
-        
+
         <label style={{
           padding: '10px',
           background: 'linear-gradient(135deg, #4facfe, #00f2fe)',
@@ -1901,8 +1901,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         <div style={{ fontSize: '12px', marginBottom: '8px', color: colors.primary }}>
           ⚠️ Danger Zone
         </div>
-        <div style={{ 
-          display: 'grid', 
+        <div style={{
+          display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '6px'
         }}>
@@ -1970,7 +1970,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       {backupStatus && (
         <div style={{
           padding: '8px',
-          background: backupStatus.includes('✅') 
+          background: backupStatus.includes('✅')
             ? 'rgba(67, 233, 123, 0.1)'
             : backupStatus.includes('❌')
             ? 'rgba(250, 112, 154, 0.1)'
@@ -2004,8 +2004,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderLogsTab = () => (
     <div style={{ padding: '12px' }}>
-      <h3 style={{ 
-        fontSize: '16px', 
+      <h3 style={{
+        fontSize: '16px',
         marginBottom: '12px',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
         WebkitBackgroundClip: 'text',
@@ -2042,8 +2042,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   const renderGunDBTab = () => (
     <div style={{ padding: '12px', height: '100%', overflowY: 'auto' }}>
-      <h3 style={{ 
-        fontSize: '16px', 
+      <h3 style={{
+        fontSize: '16px',
         marginBottom: '12px',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
         WebkitBackgroundClip: 'text',
@@ -2125,7 +2125,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           <div style={{ fontSize: '11px' }}>
             {currentRelays.length > 0 ? (
               currentRelays.slice(0, 3).map((relay, i) => (
-                <div key={i} style={{ 
+                <div key={i} style={{
                   padding: '2px 0',
                   color: 'rgba(255, 255, 255, 0.6)',
                   overflow: 'hidden',
@@ -2152,7 +2152,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           <h4 style={{ fontSize: '14px', marginBottom: '8px', color: colors.textPrimary }}>
             ⚙️ Add Custom Relay
           </h4>
-        
+
         <div style={{ marginBottom: '12px' }}>
           <input
             type="text"
@@ -2294,9 +2294,9 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)' }}>
               <div>Alias: {currentUserInfo.alias}</div>
               <div style={{ marginTop: '4px' }}>
-                Public Key: 
-                <div style={{ 
-                  fontFamily: 'monospace', 
+                Public Key:
+                <div style={{
+                  fontFamily: 'monospace',
                   fontSize: '9px',
                   wordBreak: 'break-all',
                   marginTop: '2px',
@@ -2339,15 +2339,15 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                 )}
               </div>
               <div style={{ marginTop: '4px' }}>
-                Gun Network: {currentUserInfo.gunConnected ? 
-                  `🟢 Connected (${currentUserInfo.peerCount} peers)` : 
+                Gun Network: {currentUserInfo.gunConnected ?
+                  `🟢 Connected (${currentUserInfo.peerCount} peers)` :
                   '🔴 Disconnected'}
               </div>
               {currentUserInfo.peerId && (
                 <div style={{ marginTop: '4px' }}>
-                  Peer ID: 
-                  <div style={{ 
-                    fontFamily: 'monospace', 
+                  Peer ID:
+                  <div style={{
+                    fontFamily: 'monospace',
                     fontSize: '9px',
                     wordBreak: 'break-all',
                     marginTop: '2px'
@@ -2397,25 +2397,25 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   padding: '6px',
                   background: 'rgba(0, 0, 0, 0.2)',
                   borderRadius: '4px',
-                  border: user.publicKey === currentUserInfo?.publicKey ? 
+                  border: user.publicKey === currentUserInfo?.publicKey ?
                     '1px solid #00ff00' : '1px solid transparent'
                 }}>
-                  <div style={{ 
-                    color: user.publicKey === currentUserInfo?.publicKey ? 
+                  <div style={{
+                    color: user.publicKey === currentUserInfo?.publicKey ?
                       '#00ff00' : 'rgba(255, 255, 255, 0.8)'
                   }}>
-                    {user.publicKey === currentUserInfo?.publicKey ? 
-                      '👤 You' : 
+                    {user.publicKey === currentUserInfo?.publicKey ?
+                      '👤 You' :
                       (user.alias ? `👤 ${user.alias}` : `User ${i + 1}`)}
                   </div>
-                  <div style={{ 
-                    fontFamily: 'monospace', 
+                  <div style={{
+                    fontFamily: 'monospace',
                     fontSize: '9px',
                     marginTop: '2px'
                   }}>
                     {user.publicKey.substring(0, 20)}...
                   </div>
-                  <div style={{ 
+                  <div style={{
                     color: '#666',
                     marginTop: '2px'
                   }}>
@@ -2438,7 +2438,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const renderP2PTab = () => {
     const systemInfo = p2pDebugger.systemInfo;
     const logs = p2pLogs; // Use state logs
-    
+
     return (
       <div style={{ padding: '12px' }}>
         {/* System Info */}
@@ -2595,9 +2595,9 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             fontFamily: 'monospace'
           }}>
             {logs.length > 0 ? logs.map((log, i) => {
-              const logColor = log.level === 'error' ? '#ff4444' : 
+              const logColor = log.level === 'error' ? '#ff4444' :
                               log.level === 'success' ? '#00ff00' :
-                              log.level === 'warning' ? '#ffaa00' : 
+                              log.level === 'warning' ? '#ffaa00' :
                               'rgba(255, 255, 255, 0.8)';
               return (
                 <div key={i} style={{ marginBottom: '4px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
@@ -2673,8 +2673,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         borderBottom: `1px solid ${colors.borderColor}`,
         background: colors.bgCard
       }}>
-        <h3 style={{ 
-          margin: 0, 
+        <h3 style={{
+          margin: 0,
           fontSize: screen.isTiny ? '14px' : '16px',
           background: 'linear-gradient(135deg, #667eea, #764ba2)',
           WebkitBackgroundClip: 'text',
@@ -2703,8 +2703,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       {renderCompactTabs()}
 
       {/* Content */}
-      <div style={{ 
-        flex: 1, 
+      <div style={{
+        flex: 1,
         overflowY: 'auto',
         WebkitOverflowScrolling: 'touch'
       }}>
@@ -2722,17 +2722,17 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             opacity: 1;
           }
         }
-        
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
           width: 4px;
           height: 4px;
         }
-        
+
         ::-webkit-scrollbar-track {
           background: rgba(255, 255, 255, 0.05);
         }
-        
+
         ::-webkit-scrollbar-thumb {
           background: linear-gradient(135deg, #667eea, #764ba2);
           border-radius: 2px;

@@ -15,7 +15,7 @@ class GunAuthService {
   initialize(peers = []) {
     // Your private Gun relay server - FIXED, no switching needed
     const gunRelay = 'https://gun-relay-nchb.onrender.com/gun';
-    
+
     // Initialization logs moved to debug level
     if (localStorage.getItem('debug_gun') === 'true') {
       console.log('🔫 Initializing Gun.js');
@@ -24,7 +24,7 @@ class GunAuthService {
 
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
-    
+
     this.gun = Gun({
       peers: [gunRelay], // Only use our private relay
       localStorage: true,
@@ -52,7 +52,7 @@ class GunAuthService {
     }, 2000);
 
     this.user = this.gun.user().recall({ sessionStorage: true });
-    
+
     // Listen for auth changes
     this.user.on('auth', () => {
       this.currentUser = this.user.is;
@@ -86,9 +86,9 @@ class GunAuthService {
               createdAt: Date.now(),
               publicKey: this.user.is.pub
             };
-            
+
             // console.log('📝 Setting user profile:', profileData);
-            
+
             // Store profile with callback to ensure it's saved
             await new Promise((profileResolve) => {
               this.user.get('profile').put(profileData, (ack) => {
@@ -100,10 +100,10 @@ class GunAuthService {
                 profileResolve();
               });
             });
-            
+
             // Also store nickname in a simpler location for quick access
             this.user.get('nickname').put(nickname || username);
-            
+
             resolve({ success: true, user: this.user.is });
           })
           .catch(reject);
@@ -157,7 +157,7 @@ class GunAuthService {
 
     return new Promise((resolve) => {
       let profileFound = false;
-      
+
       // First try to get the full profile
       this.gun.user(key).get('profile').once((data) => {
         if (data && !profileFound) {
@@ -166,7 +166,7 @@ class GunAuthService {
           resolve(data);
         }
       });
-      
+
       // Also check for standalone nickname
       this.gun.user(key).get('nickname').once((nickname) => {
         if (nickname && !profileFound) {
@@ -179,7 +179,7 @@ class GunAuthService {
           }, 500);
         }
       });
-      
+
       // Timeout fallback
       setTimeout(() => {
         if (!profileFound) {

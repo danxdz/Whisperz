@@ -16,7 +16,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
     const handleResize = () => {
       setIsCompact(window.innerWidth <= 375);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -28,7 +28,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
   const filteredFriends = friends.filter(friend => {
     const isOnline = onlineStatus[friend.publicKey]?.online;
     const matchesSearch = friend.nickname.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     if (showOnlineOnly) {
       return isOnline && matchesSearch;
     }
@@ -39,7 +39,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
   const sortedFriends = [...filteredFriends].sort((a, b) => {
     const aOnline = onlineStatus[a.pub || a.publicKey]?.online || false;
     const bOnline = onlineStatus[b.pub || b.publicKey]?.online || false;
-    
+
     if (aOnline && !bOnline) return -1;
     if (!aOnline && bOnline) return 1;
     return a.nickname.localeCompare(b.nickname);
@@ -197,10 +197,10 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
             const isOnline = onlineStatus[friend.publicKey]?.online;
             const presence = onlineStatus[friend.publicKey];
             const isSelected = selectedFriend?.publicKey === friend.publicKey;
-            const lastSeen = presence?.lastActive 
-              ? new Date(presence.lastActive).toLocaleTimeString([], { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
+            const lastSeen = presence?.lastActive
+              ? new Date(presence.lastActive).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit'
                 })
               : 'Unknown';
 
@@ -213,10 +213,10 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
                   alignItems: 'center',
                   padding: isCompact ? '8px 6px' : '10px 8px',
                   marginBottom: '4px',
-                  background: isSelected 
+                  background: isSelected
                     ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%)'
                     : 'rgba(255, 255, 255, 0.05)',
-                  border: isSelected 
+                  border: isSelected
                     ? '1px solid rgba(102, 126, 234, 0.5)'
                     : '1px solid transparent',
                   borderRadius: '8px',
@@ -248,7 +248,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
                     width: isCompact ? '32px' : '36px',
                     height: isCompact ? '32px' : '36px',
                     borderRadius: '50%',
-                    background: isOnline 
+                    background: isOnline
                       ? 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
                       : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     display: 'flex',
@@ -257,13 +257,13 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
                     fontSize: isCompact ? '14px' : '16px',
                     fontWeight: '600',
                     color: '#fff',
-                    boxShadow: isOnline 
+                    boxShadow: isOnline
                       ? '0 0 0 2px rgba(67, 233, 123, 0.3)'
                       : 'none'
                   }}>
                     {friend.nickname.charAt(0).toUpperCase()}
                   </div>
-                  
+
                   {/* Online indicator */}
                   <div style={{
                     position: 'absolute',
@@ -274,15 +274,15 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
                     borderRadius: '50%',
                     background: isOnline ? '#43e97b' : '#666',
                     border: '2px solid #1a1a2e',
-                    boxShadow: isOnline 
+                    boxShadow: isOnline
                       ? '0 0 6px rgba(67, 233, 123, 0.5)'
                       : 'none'
                   }} />
                 </div>
 
                 {/* Friend Info */}
-                <div style={{ 
-                  flex: 1, 
+                <div style={{
+                  flex: 1,
                   minWidth: 0,
                   overflow: 'hidden'
                 }}>
@@ -299,7 +299,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
                   </div>
                   <div style={{
                     fontSize: isCompact ? '10px' : '11px',
-                    color: isOnline 
+                    color: isOnline
                       ? '#43e97b'
                       : 'rgba(255, 255, 255, 0.5)',
                     overflow: 'hidden',

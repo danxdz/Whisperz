@@ -11,7 +11,7 @@ const ENV_SCHEMA = {
     default: 'https://gun-manhattan.herokuapp.com/gun,https://gun-us.herokuapp.com/gun',
     description: 'Comma-separated list of Gun.js relay servers',
   },
-  
+
   // PeerJS configuration
   VITE_PEERJS_HOST: {
     required: false,
@@ -24,7 +24,7 @@ const ENV_SCHEMA = {
       return pattern.test(value) || 'Invalid host:port format';
     },
   },
-  
+
   // Security
   VITE_INVITE_SECRET: {
     required: false,

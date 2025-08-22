@@ -9,16 +9,16 @@ const themes = {
     bgTertiary: 'rgba(255, 255, 255, 0.05)',
     bgCard: 'rgba(255, 255, 255, 0.03)',
     bgHover: 'rgba(255, 255, 255, 0.1)',
-    
+
     // Text colors
     textPrimary: '#ffffff',
     textSecondary: 'rgba(255, 255, 255, 0.8)',
     textMuted: 'rgba(255, 255, 255, 0.5)',
-    
+
     // Border colors
     borderColor: 'rgba(255, 255, 255, 0.1)',
     borderHover: 'rgba(255, 255, 255, 0.2)',
-    
+
     // Accent colors
     primary: 'linear-gradient(135deg, #667eea, #764ba2)',
     primaryBg: 'rgba(102, 126, 234, 0.2)',
@@ -26,15 +26,15 @@ const themes = {
     successBg: 'rgba(67, 233, 123, 0.2)',
     error: '#ff6666',
     errorBg: 'rgba(255, 0, 0, 0.1)',
-    
+
     // Message bubbles
     messageSent: 'linear-gradient(135deg, #667eea, #764ba2)',
     messageReceived: 'rgba(255, 255, 255, 0.1)',
-    
+
     // Status colors
     online: '#43e97b',
     offline: '#666',
-    
+
     // Shadows
     shadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
     shadowLight: '0 4px 12px rgba(0, 0, 0, 0.2)'
@@ -46,16 +46,16 @@ const themes = {
     bgTertiary: 'rgba(0, 0, 0, 0.05)',
     bgCard: 'rgba(255, 255, 255, 0.9)',
     bgHover: 'rgba(0, 0, 0, 0.05)',
-    
+
     // Text colors
     textPrimary: '#212529',
     textSecondary: '#495057',
     textMuted: '#6c757d',
-    
+
     // Border colors
     borderColor: 'rgba(0, 0, 0, 0.1)',
     borderHover: 'rgba(0, 0, 0, 0.2)',
-    
+
     // Accent colors
     primary: 'linear-gradient(135deg, #667eea, #764ba2)',
     primaryBg: 'rgba(102, 126, 234, 0.1)',
@@ -63,15 +63,15 @@ const themes = {
     successBg: 'rgba(40, 167, 69, 0.1)',
     error: '#dc3545',
     errorBg: 'rgba(220, 53, 69, 0.1)',
-    
+
     // Message bubbles
     messageSent: 'linear-gradient(135deg, #667eea, #764ba2)',
     messageReceived: 'rgba(0, 0, 0, 0.08)',
-    
+
     // Status colors
     online: '#28a745',
     offline: '#adb5bd',
-    
+
     // Shadows
     shadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
     shadowLight: '0 4px 12px rgba(0, 0, 0, 0.05)'

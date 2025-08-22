@@ -5,7 +5,7 @@ class EncryptionService {
   constructor() {
     this.derivedKeys = new Map();
     this.ITERATIONS = 100000; // Increased from 1000 to 100000 for better security
-    
+
     // Initialize configuration with better error handling
     try {
       this.validateConfiguration();
@@ -23,7 +23,7 @@ class EncryptionService {
   // Validate security configuration
   validateConfiguration() {
     const secret = import.meta.env.VITE_INVITE_SECRET;
-    
+
     // In development, warn but don't crash
     if (import.meta.env.DEV) {
       if (!secret || secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
@@ -31,14 +31,14 @@ class EncryptionService {
       }
       return;
     }
-    
+
     // In production, use fallback if not configured (with warning)
     if (!secret) {
       // console.error('SECURITY WARNING: VITE_INVITE_SECRET not configured. Using fallback (NOT SECURE!)');
       // Don't throw error to allow app to run
       return;
     }
-    
+
     // Check for default values
     if (secret === 'default-invite-secret' || secret === 'your-secret-key-here') {
       // console.error('SECURITY WARNING: Default secret detected. Please configure a proper secret.');
@@ -87,7 +87,7 @@ class EncryptionService {
 
       const { key, salt } = this.deriveKey(password);
       const iv = CryptoJS.lib.WordArray.random(128/8);
-      
+
       // Encrypt with AES-CBC
       const encrypted = CryptoJS.AES.encrypt(message, key, {
         iv: iv,
@@ -128,22 +128,22 @@ class EncryptionService {
       }
 
       const combined = JSON.parse(atob(encryptedData));
-      
+
       // Check version for backward compatibility
       if (combined.version !== 2) {
         throw new Error('Unsupported encryption version');
       }
 
       const { key } = this.deriveKey(password, combined.salt);
-      
+
       // Verify HMAC first (authentication)
       const authData = combined.salt + combined.iv + combined.data;
       const calculatedHmac = CryptoJS.HmacSHA256(authData, key).toString();
-      
+
       if (calculatedHmac !== combined.hmac) {
         throw new Error('Authentication failed: Message may have been tampered with');
       }
-      
+
       // Decrypt if authentication passes
       const decrypted = CryptoJS.AES.decrypt(combined.data, key, {
         iv: CryptoJS.enc.Hex.parse(combined.iv),
@@ -152,7 +152,7 @@ class EncryptionService {
       });
 
       const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-      
+
       if (!plaintext) {
         throw new Error('Decryption failed');
       }
@@ -167,36 +167,36 @@ class EncryptionService {
   // Generate HMAC for invite links with secure secret
   generateHMAC(data, secret = null) {
     const actualSecret = secret || import.meta.env.VITE_INVITE_SECRET;
-    
+
     // Validate secret
     if (!actualSecret || actualSecret === 'default-invite-secret') {
       throw new Error('SECURITY ERROR: Invalid HMAC secret');
     }
-    
+
     return CryptoJS.HmacSHA256(data, actualSecret).toString();
   }
 
   // Verify HMAC with timing-safe comparison
   verifyHMAC(data, hmac, secret = null) {
     const actualSecret = secret || import.meta.env.VITE_INVITE_SECRET;
-    
+
     // Validate secret
     if (!actualSecret || actualSecret === 'default-invite-secret') {
       throw new Error('SECURITY ERROR: Invalid HMAC secret');
     }
-    
+
     const calculatedHmac = this.generateHMAC(data, actualSecret);
-    
+
     // Timing-safe comparison
     if (calculatedHmac.length !== hmac.length) {
       return false;
     }
-    
+
     let result = 0;
     for (let i = 0; i < calculatedHmac.length; i++) {
       result |= calculatedHmac.charCodeAt(i) ^ hmac.charCodeAt(i);
     }
-    
+
     return result === 0;
   }
 
@@ -225,19 +225,19 @@ class EncryptionService {
       if (!str || typeof str !== 'string') {
         throw new Error('Invalid input');
       }
-      
+
       // Replace URL-safe characters
       let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-      
+
       // Add proper padding
       const padding = (4 - (base64.length % 4)) % 4;
       if (padding) {
         base64 += '='.repeat(padding);
       }
-      
+
       // Decode from base64
       const decoded = atob(base64);
-      
+
       // Handle UTF-8 decoding
       return decodeURIComponent(escape(decoded));
     } catch (error) {
@@ -267,7 +267,7 @@ class EncryptionService {
           true,
           ['encrypt', 'decrypt']
         );
-        
+
         const exported = await window.crypto.subtle.exportKey('raw', key);
         return btoa(String.fromCharCode(...new Uint8Array(exported)));
       } catch (error) {

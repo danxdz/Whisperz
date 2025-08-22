@@ -11,15 +11,14 @@ function DiscoverUsers({ currentUser, existingFriends = [], pendingRequests = []
 
   useEffect(() => {
     loadOnlineUsers();
-    const interval = setInterval(loadOnlineUsers, 10000); // Refresh every 10 seconds
-    return () => clearInterval(interval);
+    // Removed polling - Gun.js subscriptions handle real-time updates
   }, [existingFriends]);
 
   const loadOnlineUsers = async () => {
     try {
       setLoading(true);
       const users = [];
-      
+
       // Get all users from Gun's public space
       await new Promise((resolve) => {
         gunAuthService.gun.get('presence').map().once((data, key) => {
@@ -43,9 +42,9 @@ function DiscoverUsers({ currentUser, existingFriends = [], pendingRequests = []
       // Filter out existing friends and pending requests
       const friendKeys = existingFriends.map(f => f.publicKey || f.pub);
       const pendingKeys = pendingRequests.map(r => r.to || r.from);
-      
-      const filteredUsers = users.filter(user => 
-        !friendKeys.includes(user.publicKey) && 
+
+      const filteredUsers = users.filter(user =>
+        !friendKeys.includes(user.publicKey) &&
         !pendingKeys.includes(user.publicKey) &&
         user.publicKey !== currentUser?.pub
       );
@@ -61,15 +60,15 @@ function DiscoverUsers({ currentUser, existingFriends = [], pendingRequests = []
   const sendFriendRequest = async (user) => {
     try {
       setSendingRequest(prev => ({ ...prev, [user.publicKey]: true }));
-      
+
       await friendRequestService.sendFriendRequest(
         user.publicKey,
         `Hi ${user.nickname}, I'd like to connect with you!`
       );
-      
+
       // Remove from online users list
       setOnlineUsers(prev => prev.filter(u => u.publicKey !== user.publicKey));
-      
+
       // Show success
       alert(`Friend request sent to ${user.nickname}!`);
     } catch (error) {
@@ -103,7 +102,7 @@ function DiscoverUsers({ currentUser, existingFriends = [], pendingRequests = []
         <p style={{ margin: '5px 0 15px', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>
           Find and connect with online users
         </p>
-        
+
         {/* Search Bar */}
         <input
           type="text"
@@ -175,7 +174,7 @@ function DiscoverUsers({ currentUser, existingFriends = [], pendingRequests = []
                 }}>
                   {user.nickname[0].toUpperCase()}
                 </div>
-                
+
                 {/* User Info */}
                 <div>
                   <div style={{ fontWeight: '600', fontSize: '16px', color: '#333' }}>
@@ -202,8 +201,8 @@ function DiscoverUsers({ currentUser, existingFriends = [], pendingRequests = []
                   padding: '8px 20px',
                   borderRadius: '20px',
                   border: 'none',
-                  background: sendingRequest[user.publicKey] 
-                    ? '#ccc' 
+                  background: sendingRequest[user.publicKey]
+                    ? '#ccc'
                     : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   color: 'white',
                   fontSize: '14px',

@@ -19,7 +19,7 @@ class SecurityUtils {
   initializeSecrets() {
     // Force requirement of custom secrets - no defaults allowed
     const inviteSecret = import.meta.env.VITE_INVITE_SECRET;
-    
+
     // In development, warn but don't crash
     if (import.meta.env.DEV) {
       if (!inviteSecret || inviteSecret === 'default-invite-secret' || inviteSecret === 'your-secret-key-here') {
@@ -27,7 +27,7 @@ class SecurityUtils {
       }
       return;
     }
-    
+
     // In production, enforce strict security
     if (!inviteSecret || inviteSecret === 'default-invite-secret' || inviteSecret === 'your-secret-key-here') {
       // console.error('SECURITY ERROR: Invalid or default invite secret detected');
@@ -55,7 +55,7 @@ class SecurityUtils {
   // Sanitize user input to prevent XSS
   sanitizeInput(input) {
     if (typeof input !== 'string') return '';
-    
+
     // Remove any HTML tags and scripts
     return input
       .replace(/[<>]/g, '') // Remove < and >
@@ -70,18 +70,18 @@ class SecurityUtils {
     if (!username || typeof username !== 'string') {
       return { valid: false, error: 'Username is required' };
     }
-    
+
     // Allow only alphanumeric, underscore, and dash
     const sanitized = username.replace(/[^a-zA-Z0-9_-]/g, '');
-    
+
     if (sanitized !== username) {
       return { valid: false, error: 'Username contains invalid characters' };
     }
-    
+
     if (username.length < 3 || username.length > 20) {
       return { valid: false, error: 'Username must be 3-20 characters' };
     }
-    
+
     return { valid: true, sanitized };
   }
 
@@ -90,51 +90,51 @@ class SecurityUtils {
     if (!password || typeof password !== 'string') {
       return { valid: false, error: 'Password is required' };
     }
-    
+
     if (password.length < 8) {
       return { valid: false, error: 'Password must be at least 8 characters' };
     }
-    
+
     // Check for at least one number, one letter, and one special character
     const hasNumber = /\d/.test(password);
     const hasLetter = /[a-zA-Z]/.test(password);
     const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
+
     if (!hasNumber || !hasLetter) {
       return { valid: false, error: 'Password must contain letters and numbers' };
     }
-    
+
     return { valid: true, strength: hasSpecial ? 'strong' : 'medium' };
   }
 
   // Rate limiting tracker
   createRateLimiter(maxAttempts = 5, windowMs = 60000) {
     const attempts = new Map();
-    
+
     return {
       check: (identifier) => {
         const now = Date.now();
         const userAttempts = attempts.get(identifier) || [];
-        
+
         // Clean old attempts
         const recentAttempts = userAttempts.filter(time => now - time < windowMs);
-        
+
         if (recentAttempts.length >= maxAttempts) {
           const oldestAttempt = recentAttempts[0];
           const timeLeft = Math.ceil((windowMs - (now - oldestAttempt)) / 1000);
-          return { 
-            allowed: false, 
+          return {
+            allowed: false,
             error: `Too many attempts. Please wait ${timeLeft} seconds.`,
-            timeLeft 
+            timeLeft
           };
         }
-        
+
         recentAttempts.push(now);
         attempts.set(identifier, recentAttempts);
-        
+
         return { allowed: true, remaining: maxAttempts - recentAttempts.length };
       },
-      
+
       reset: (identifier) => {
         attempts.delete(identifier);
       }
@@ -145,42 +145,42 @@ class SecurityUtils {
   createSessionManager() {
     const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
     const WARNING_TIME = 5 * 60 * 1000; // 5 minutes before timeout
-    
+
     let sessionTimer = null;
     let warningTimer = null;
     let lastActivity = Date.now();
-    
+
     return {
       startSession: (onTimeout, onWarning) => {
         lastActivity = Date.now();
-        
+
         // Clear existing timers
         if (sessionTimer) clearTimeout(sessionTimer);
         if (warningTimer) clearTimeout(warningTimer);
-        
+
         // Set warning timer
         warningTimer = setTimeout(() => {
           if (onWarning) onWarning();
         }, SESSION_TIMEOUT - WARNING_TIME);
-        
+
         // Set timeout timer
         sessionTimer = setTimeout(() => {
           if (onTimeout) onTimeout();
         }, SESSION_TIMEOUT);
       },
-      
+
       updateActivity: () => {
         lastActivity = Date.now();
         // Restart timers on activity
         this.startSession();
       },
-      
+
       endSession: () => {
         if (sessionTimer) clearTimeout(sessionTimer);
         if (warningTimer) clearTimeout(warningTimer);
         sessionTimer = null;
         warningTimer = null;
-        
+
         // Clear sensitive data from memory
         if (typeof window !== 'undefined') {
           // Clear session storage
@@ -189,7 +189,7 @@ class SecurityUtils {
           window.crypto?.subtle?.generateKey?.({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
         }
       },
-      
+
       getTimeRemaining: () => {
         const elapsed = Date.now() - lastActivity;
         const remaining = SESSION_TIMEOUT - elapsed;

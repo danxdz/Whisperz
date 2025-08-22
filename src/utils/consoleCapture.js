@@ -65,7 +65,7 @@ class ConsoleCapture {
     // Determine the actual type from the message content
     let actualType = type;
     const message = this.formatArgs(args);
-    
+
     // Check for debugLogger prefixes
     if (message.includes('[DEBUG]')) actualType = 'debug';
     else if (message.includes('[P2P]')) actualType = 'p2p';
@@ -76,7 +76,7 @@ class ConsoleCapture {
     else if (message.includes('✅') || message.includes('Success')) actualType = 'success';
     else if (message.includes('🔧') || message.includes('Debug')) actualType = 'debug';
     else if (message.includes('📹') || message.includes('🚀') || message.includes('💡')) actualType = 'info';
-    
+
     const log = {
       type: actualType,
       timestamp: new Date().toISOString(),
@@ -119,15 +119,15 @@ class ConsoleCapture {
 
   getLogs(filter = null) {
     if (!filter) return this.logs;
-    
+
     if (typeof filter === 'string') {
       return this.logs.filter(log => log.type === filter);
     }
-    
+
     if (Array.isArray(filter)) {
       return this.logs.filter(log => filter.includes(log.type));
     }
-    
+
     return this.logs;
   }
 
@@ -170,9 +170,9 @@ class ConsoleCapture {
   download() {
     const dataStr = this.export();
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    
+
     const exportFileDefaultName = `console-logs-${new Date().toISOString()}.json`;
-    
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);

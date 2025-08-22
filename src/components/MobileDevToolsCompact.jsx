@@ -19,12 +19,12 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
     const handleTap = (e) => {
       const now = Date.now();
       const timeSinceLastTap = now - lastTap;
-      
+
       // Check if tapping in corner (smaller target for small screens)
       const x = e.touches?.[0]?.clientX || e.clientX;
       const y = e.touches?.[0]?.clientY || e.clientY;
       const cornerSize = 40; // Smaller corner area
-      
+
       if (
         x > window.innerWidth - cornerSize &&
         y > window.innerHeight - cornerSize
@@ -67,9 +67,9 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
       case 'console':
         return (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ 
-              flex: 1, 
-              overflowY: 'auto', 
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
               fontSize: '10px',
               lineHeight: '1.3',
               padding: '5px'
@@ -92,7 +92,7 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
             </button>
           </div>
         );
-      
+
       case 'network':
         return (
           <div style={{ padding: '5px', fontSize: '10px' }}>
@@ -120,11 +120,11 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
             </div>
           </div>
         );
-      
+
       case 'actions':
         return (
-          <div style={{ 
-            display: 'grid', 
+          <div style={{
+            display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '5px',
             padding: '5px'
@@ -179,7 +179,7 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
             </button>
           </div>
         );
-      
+
       default:
         return null;
     }
@@ -215,7 +215,7 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
         }}>
           🛠️ Dev
         </div>
-        
+
         {/* Tab buttons - icon only for space */}
         <div style={{ display: 'flex', gap: '5px' }}>
           <button
@@ -258,7 +258,7 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
             ⚡
           </button>
         </div>
-        
+
         <button
           onClick={() => setIsOpen(false)}
           style={{
@@ -276,8 +276,8 @@ function MobileDevToolsCompact({ onOpenDevTools }) {
       </div>
 
       {/* Content Area */}
-      <div style={{ 
-        flex: 1, 
+      <div style={{
+        flex: 1,
         overflow: 'hidden',
         color: '#00ff00',
       }}>

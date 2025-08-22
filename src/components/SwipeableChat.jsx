@@ -7,7 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
  * SwipeableChat Component
  * Allows swiping between chat, friends panel, and dev tools on mobile devices
  */
-function SwipeableChat({ 
+function SwipeableChat({
   children,
   friends,
   selectedFriend,
@@ -36,15 +36,15 @@ function SwipeableChat({
   const getTimeAgo = useMemo(() => {
     return (timestamp) => {
       if (!timestamp) return 'unknown';
-      
+
       const now = Date.now();
       const diff = now - timestamp;
-      
+
       if (diff < 60000) return 'just now';
       if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
       if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
       if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-      
+
       return new Date(timestamp).toLocaleDateString();
     };
   }, []);
@@ -77,7 +77,7 @@ function SwipeableChat({
     // Only update when friends list or actual status values change
     // Use JSON.stringify to create a stable dependency
     JSON.stringify(friends.map(f => f.publicKey)),
-    JSON.stringify(Object.entries(onlineStatus).map(([key, val]) => 
+    JSON.stringify(Object.entries(onlineStatus).map(([key, val]) =>
       [key, val.online, val.lastSeen]
     ))
   ]);
@@ -89,7 +89,7 @@ function SwipeableChat({
       setIsMobile(mobile);
       // console.log('Mobile mode:', mobile, 'Width:', window.innerWidth);
     };
-    
+
     handleResize(); // Check on mount
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -103,7 +103,7 @@ function SwipeableChat({
         setShowDevTools(!showDevTools);
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [isMobile, showDevTools]);
@@ -122,15 +122,15 @@ function SwipeableChat({
 
   const onTouchMove = (e) => {
     if (!touchStart) return;
-    
+
     const currentTouch = e.targetTouches[0].clientX;
     const diff = currentTouch - touchStart;
-    
+
     // Update swipe offset for visual feedback
     if (Math.abs(diff) > 10) {
       setSwipeOffset(diff);
     }
-    
+
     setTouchEnd(currentTouch);
   };
 
@@ -140,7 +140,7 @@ function SwipeableChat({
       setSwipeOffset(0);
       return;
     }
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -156,7 +156,7 @@ function SwipeableChat({
       // console.log('Moving to panel:', currentPanel - 1);
       setCurrentPanel(currentPanel - 1);
     }
-    
+
     setIsSwiping(false);
     setSwipeOffset(0);
   };
@@ -164,7 +164,7 @@ function SwipeableChat({
   // Desktop layout - side by side
   if (!isMobile) {
     return (
-      <div style={{ 
+      <div style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -187,7 +187,7 @@ function SwipeableChat({
           onlineStatus={onlineStatus}
         />
         {children}
-        
+
         {/* DevTools Button for Desktop */}
         <button
           onClick={() => setShowDevTools(!showDevTools)}
@@ -211,7 +211,7 @@ function SwipeableChat({
         >
           🔧
         </button>
-        
+
         {/* DevTools Panel for Desktop */}
         {showDevTools && (
           <div style={{
@@ -225,7 +225,7 @@ function SwipeableChat({
             zIndex: 999,
             overflowY: 'auto'
           }}>
-            <EnhancedDevTools 
+            <EnhancedDevTools
               isVisible={true}
               onClose={() => setShowDevTools(false)}
               isMobilePanel={false}
@@ -238,9 +238,9 @@ function SwipeableChat({
 
   // Mobile layout - swipeable
   return (
-    <div 
+    <div
       ref={containerRef}
-      style={{ 
+      style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -401,7 +401,7 @@ function SwipeableChat({
             }}>
               {friends.map(friend => {
                 const statusInfo = formattedStatuses[friend.publicKey];
-                
+
                 return (
                 <div
                   key={friend.publicKey}
@@ -519,7 +519,7 @@ function SwipeableChat({
           display: 'flex',
           flexDirection: 'column'
         }}>
-          <EnhancedDevTools 
+          <EnhancedDevTools
             isVisible={true}
             onClose={() => setCurrentPanel(0)}
             isMobilePanel={true}

@@ -8,7 +8,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
   const screen = useResponsive();
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
-  
+
   if (!isOpen) return null;
 
   const handleCopy = async () => {
@@ -61,7 +61,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
   const isMobile = window.innerWidth <= 480;
 
   return (
-    <div 
+    <div
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -78,7 +78,7 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
         padding: screen.isTiny ? '8px' : '16px'
       }}
     >
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
         style={{
           background: colors.bgSecondary,
@@ -291,8 +291,8 @@ function InviteModal({ isOpen, onClose, inviteLink }) {
             display: 'flex',
             justifyContent: 'center'
           }}>
-            <QRCodeSVG 
-              value={inviteLink} 
+            <QRCodeSVG
+              value={inviteLink}
               size={screen.isTiny ? 120 : screen.isMobile ? 140 : 160}
               level="H"
               includeMargin={false}

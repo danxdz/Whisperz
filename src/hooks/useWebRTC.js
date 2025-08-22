@@ -26,24 +26,24 @@ export function useWebRTC() {
       try {
         setWebrtcStatus('connecting');
         // console.log('🚀 Initializing WebRTC for user:', user.pub);
-        
+
         // Initialize WebRTC
         const id = await webrtcService.initialize(user.pub);
-        
+
         if (!mounted) return;
-        
+
         // console.log('✅ WebRTC initialized with peer ID:', id);
         setPeerId(id);
         setWebrtcStatus('connected');
         setError(null);
-        
+
         // Update presence with peer ID
         hybridGunService.updatePresence('online', {
           peerId: id,
           webrtcEnabled: true,
           timestamp: Date.now()
         });
-        
+
         // Keep presence updated
         presenceInterval = setInterval(() => {
           if (webrtcService.peer?.open) {
@@ -54,14 +54,14 @@ export function useWebRTC() {
             });
           }
         }, 30000); // Update every 30 seconds
-        
+
       } catch (err) {
         if (!mounted) return;
-        
+
         // console.error('❌ WebRTC initialization failed:', err);
         setWebrtcStatus('error');
         setError(err.message);
-        
+
         // Update presence without peer ID
         hybridGunService.updatePresence('online', {
           peerId: null,
@@ -92,7 +92,7 @@ export function useWebRTC() {
       mounted = false;
       clearInterval(checkStatus);
       clearInterval(presenceInterval);
-      
+
       // Update presence to offline
       hybridGunService.updatePresence('offline', {
         peerId: null,
@@ -114,7 +114,7 @@ export function useWebRTC() {
       setPeerId(id);
       setWebrtcStatus('connected');
       setError(null);
-      
+
       // Update presence with new peer ID
       hybridGunService.updatePresence('online', {
         peerId: id,

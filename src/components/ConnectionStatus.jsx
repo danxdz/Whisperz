@@ -12,7 +12,7 @@ const ConnectionStatus = memo(() => {
   const [peerStatus, setPeerStatus] = useState('connecting');
   const [relayStatus, setRelayStatus] = useState('checking...');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
+
   useEffect(() => {
     // Monitor Gun.js connection
     const checkGunConnection = () => {
@@ -32,7 +32,7 @@ const ConnectionStatus = memo(() => {
         setRelayStatus('error');
       }
     };
-    
+
     // Monitor PeerJS connection
     const checkPeerConnection = () => {
       try {
@@ -53,7 +53,7 @@ const ConnectionStatus = memo(() => {
         setPeerStatus('error');
       }
     };
-    
+
     // Check connections periodically
     checkGunConnection();
     checkPeerConnection();
@@ -61,10 +61,10 @@ const ConnectionStatus = memo(() => {
       checkGunConnection();
       checkPeerConnection();
     }, 2000);
-    
+
     return () => clearInterval(interval);
   }, []);
-  
+
   const getStatusColor = (status) => {
     switch(status) {
       case 'connected': return '#00ff00';
@@ -73,7 +73,7 @@ const ConnectionStatus = memo(() => {
       default: return '#808080';
     }
   };
-  
+
   if (isCollapsed) {
     return (
       <div style={{
@@ -92,7 +92,7 @@ const ConnectionStatus = memo(() => {
       </div>
     );
   }
-  
+
   return (
     <div style={{
       position: 'fixed',
@@ -106,14 +106,14 @@ const ConnectionStatus = memo(() => {
       zIndex: 999,
       minWidth: '200px'
     }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '5px'
       }}>
         <span style={{ fontWeight: 'bold' }}>Connection Status</span>
-        <button 
+        <button
           onClick={() => setIsCollapsed(true)}
           style={{
             background: 'none',

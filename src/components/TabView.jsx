@@ -6,10 +6,10 @@ import React, { useState } from 'react';
  */
 function TabView({ children, defaultTab = 0 }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
-  
+
   // Filter out null/undefined children
   const tabs = React.Children.toArray(children).filter(child => child);
-  
+
   return (
     <div style={{
       height: '100%',
@@ -70,7 +70,7 @@ function TabView({ children, defaultTab = 0 }) {
           </button>
         ))}
       </div>
-      
+
       {/* Tab Content */}
       <div style={{
         flex: 1,

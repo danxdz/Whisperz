@@ -53,7 +53,7 @@ function SettingsModule({ currentUser, onLogout }) {
       bio: bio,
       exportedAt: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -110,7 +110,7 @@ function SettingsModule({ currentUser, onLogout }) {
         {activeSection === 'profile' && (
           <div>
             <h3 style={{ color: '#00ff00', marginBottom: '20px' }}>[PROFILE SETTINGS]</h3>
-            
+
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '5px', color: '#808080', fontSize: '12px' }}>
                 NICKNAME
@@ -196,7 +196,7 @@ function SettingsModule({ currentUser, onLogout }) {
         {activeSection === 'appearance' && (
           <div>
             <h3 style={{ color: '#00ff00', marginBottom: '20px' }}>[APPEARANCE]</h3>
-            
+
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '10px', color: '#808080', fontSize: '12px' }}>
                 THEME
@@ -244,7 +244,7 @@ function SettingsModule({ currentUser, onLogout }) {
         {activeSection === 'privacy' && (
           <div>
             <h3 style={{ color: '#00ff00', marginBottom: '20px' }}>[PRIVACY & SECURITY]</h3>
-            
+
             <div style={{ marginBottom: '30px' }}>
               <h4 style={{ color: '#e0e0e0', marginBottom: '10px' }}>Data Export</h4>
               <p style={{ color: '#808080', fontSize: '14px', marginBottom: '10px' }}>
@@ -299,7 +299,7 @@ function SettingsModule({ currentUser, onLogout }) {
         {activeSection === 'about' && (
           <div>
             <h3 style={{ color: '#00ff00', marginBottom: '20px' }}>[ABOUT WHISPERZ]</h3>
-            
+
             <div style={{ color: '#808080', fontSize: '14px', lineHeight: '1.6' }}>
               <p style={{ marginBottom: '15px' }}>
                 <strong style={{ color: '#e0e0e0' }}>Whisperz v2.1.0</strong>

@@ -7,7 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
  */
 function SimpleDevToolsButton({ onClick, isOpen }) {
   const { colors } = useTheme();
-  
+
   // Keyboard shortcut
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -32,7 +32,7 @@ function SimpleDevToolsButton({ onClick, isOpen }) {
         width: '36px',
         height: '36px',
         borderRadius: '8px',
-        background: isOpen 
+        background: isOpen
           ? colors.danger
           : colors.bgCard,
         border: `1px solid ${isOpen ? colors.danger : colors.borderColor}`,

@@ -11,7 +11,7 @@ class FriendRequestService {
   initialize() {
     this.gun = gunAuthService.gun;
     this.user = gunAuthService.user;
-    
+
     // Listen for incoming friend requests
     this.listenForRequests();
   }
@@ -92,10 +92,10 @@ class FriendRequestService {
 
     // Add as friends (both ways)
     const conversationId = `conv_${Date.now()}_${Math.random()}`;
-    
+
     // Add friend for current user
     await friendsService.addFriendDirectly(request.from, request.senderNickname, conversationId);
-    
+
     // Add friend for sender (they add us)
     const myNickname = await friendsService.getUserNickname();
     this.gun.get('users')
@@ -110,10 +110,10 @@ class FriendRequestService {
       });
 
     // console.log('✅ Friend request accepted:', requestId);
-    
+
     // Notify handlers
     this.notifyHandlers('accepted', request);
-    
+
     return request;
   }
 
@@ -146,10 +146,10 @@ class FriendRequestService {
       .put(request);
 
     // console.log('❌ Friend request rejected:', requestId);
-    
+
     // Notify handlers
     this.notifyHandlers('rejected', request);
-    
+
     return request;
   }
 
@@ -166,7 +166,7 @@ class FriendRequestService {
 
       const checkResolve = () => {
         if (sentLoaded && receivedLoaded) {
-          resolve({ 
+          resolve({
             sent: sent.filter(r => r.status === 'pending'),
             received: received.filter(r => r.status === 'pending')
           });
@@ -210,7 +210,7 @@ class FriendRequestService {
   async getRequest(from, to) {
     return new Promise((resolve) => {
       let found = false;
-      
+
       this.gun.get('friend_requests')
         .get(to)
         .get('received')
@@ -235,7 +235,7 @@ class FriendRequestService {
 
     return new Promise((resolve) => {
       let found = false;
-      
+
       // Check received requests
       this.gun.get('friend_requests')
         .get(currentUser.pub)
@@ -332,7 +332,7 @@ class FriendRequestService {
   // Get request statistics
   async getRequestStats() {
     const { sent, received } = await this.getPendingRequests();
-    
+
     return {
       pendingSent: sent.length,
       pendingReceived: received.length,

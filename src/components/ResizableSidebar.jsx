@@ -7,10 +7,10 @@ import debugLogger from '../utils/debugLogger';
  * ResizableSidebar Component
  * A sidebar that can be resized, minimized, and maximized
  */
-function ResizableSidebar({ 
-  friends, 
-  selectedFriend, 
-  onSelectFriend, 
+function ResizableSidebar({
+  friends,
+  selectedFriend,
+  onSelectFriend,
   currentUser,
   onFriendsUpdate,
   onGenerateInvite,
@@ -36,22 +36,22 @@ function ResizableSidebar({
   const getTimeAgo = useMemo(() => {
     return (timestamp) => {
       if (!timestamp) return 'unknown';
-      
+
       const now = Date.now();
       const diff = now - timestamp;
-      
+
       if (diff < 60000) return 'just now';
       if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
       if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
       if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-      
+
       return new Date(timestamp).toLocaleDateString();
     };
   }, []);
 
   // Use the passed onlineStatus instead of polling locally
   // The parent component (App.jsx) already handles real-time updates
-  
+
   // Memoize formatted status for each friend to prevent re-renders
   const formattedStatuses = useMemo(() => {
     const statuses = {};
@@ -75,11 +75,11 @@ function ResizableSidebar({
   }, [
     // Only update when friends list or actual status values change
     JSON.stringify(friends.map(f => f.publicKey)),
-    JSON.stringify(Object.entries(onlineStatus || {}).map(([key, val]) => 
+    JSON.stringify(Object.entries(onlineStatus || {}).map(([key, val]) =>
       [key, val?.online, val?.lastSeen]
     ))
   ]);
-  
+
   // Debug logs removed to prevent re-renders
 
   // Load pending invites
@@ -92,18 +92,16 @@ function ResizableSidebar({
         debugLogger.error('Failed to load pending invites:', error);
       }
     };
-    
+
     loadPendingInvites();
-    // Refresh every 30 seconds
-    const interval = setInterval(loadPendingInvites, 30000);
-    return () => clearInterval(interval);
+    // Removed polling - Gun.js subscriptions handle real-time updates
   }, []);
 
   // Handle resize
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isResizing) return;
-      
+
       const newWidth = e.clientX;
       if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
         setWidth(newWidth);
@@ -130,7 +128,7 @@ function ResizableSidebar({
     };
   }, [isResizing]);
 
-  const onlineFriends = friends.filter(friend => 
+  const onlineFriends = friends.filter(friend =>
     onlineStatus[friend.publicKey]?.online
   );
 
@@ -191,7 +189,7 @@ function ResizableSidebar({
     const isOnline = statusData?.online === true;
     const isSelected = selectedFriend?.publicKey === friendKey;
     const showingActions = showActions === friendKey;
-    
+
     // Use memoized status for this friend
     const memoizedStatus = formattedStatuses[friendKey];
 
@@ -205,9 +203,9 @@ function ResizableSidebar({
             width: '36px',
             height: '36px',
             borderRadius: '50%',
-            background: isSelected 
+            background: isSelected
               ? 'linear-gradient(135deg, #667eea, #764ba2)'
-              : isOnline 
+              : isOnline
                 ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
                 : 'rgba(255, 255, 255, 0.1)',
             display: 'flex',
@@ -250,7 +248,7 @@ function ResizableSidebar({
           display: 'flex',
           alignItems: 'center',
           padding: '6px 8px',
-          background: isSelected 
+          background: isSelected
             ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2))'
             : 'transparent',
           borderRadius: '6px',
@@ -284,7 +282,7 @@ function ResizableSidebar({
             width: '32px',
             height: '32px',
             borderRadius: '50%',
-            background: isOnline 
+            background: isOnline
               ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
               : 'linear-gradient(135deg, #667eea, #764ba2)',
             display: 'flex',
@@ -418,7 +416,7 @@ function ResizableSidebar({
 
   return (
     <>
-      <div 
+      <div
         ref={sidebarRef}
         style={{
           width: `${currentWidth}px`,
@@ -433,28 +431,28 @@ function ResizableSidebar({
         }}
       >
         {/* Header */}
-        <div style={{ 
+        <div style={{
           padding: isMinimized ? '10px 5px' : '12px',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           background: 'rgba(0, 0, 0, 0.2)'
         }}>
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             alignItems: 'center',
             justifyContent: isMinimized ? 'center' : 'space-between',
             marginBottom: isMinimized ? 0 : '10px'
           }}>
             {!isMinimized && (
-              <h3 style={{ 
-                margin: 0, 
-                fontSize: '14px', 
+              <h3 style={{
+                margin: 0,
+                fontSize: '14px',
                 color: '#fff',
                 fontWeight: '600'
               }}>
                 Friends ({onlineFriends.length}/{friends.length})
               </h3>
             )}
-            
+
             <div style={{ display: 'flex', gap: '4px' }}>
               <button
                 onClick={toggleMinimize}
@@ -502,8 +500,8 @@ function ResizableSidebar({
           {!isMinimized && (
             <>
               {/* Tabs */}
-              <div style={{ 
-                display: 'flex', 
+              <div style={{
+                display: 'flex',
                 gap: '4px',
                 marginBottom: '8px',
                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -552,7 +550,7 @@ function ResizableSidebar({
                   )}
                 </button>
               </div>
-              
+
               {/* Search and Invite */}
               <div style={{ display: 'flex', gap: '6px' }}>
                 <input
@@ -596,8 +594,8 @@ function ResizableSidebar({
         </div>
 
         {/* Content Area */}
-        <div style={{ 
-          flex: 1, 
+        <div style={{
+          flex: 1,
           padding: isMinimized ? '10px 5px' : '10px',
           overflowY: 'auto',
           overflowX: 'hidden'
@@ -687,9 +685,9 @@ function ResizableSidebar({
               {filteredFriends
                 .filter(f => onlineStatus[f.publicKey]?.online)
                 .map(friend => renderFriend(friend))}
-              
+
               {/* Separator */}
-              {!isMinimized && 
+              {!isMinimized &&
                filteredFriends.some(f => onlineStatus[f.publicKey]?.online) &&
                filteredFriends.some(f => !onlineStatus[f.publicKey]?.online) && (
                 <div style={{
@@ -703,7 +701,7 @@ function ResizableSidebar({
                   OFFLINE
                 </div>
               )}
-              
+
               {/* Offline friends */}
               {filteredFriends
                 .filter(f => !onlineStatus[f.publicKey]?.online)
@@ -713,13 +711,13 @@ function ResizableSidebar({
         </div>
 
         {/* Footer */}
-        <div style={{ 
+        <div style={{
           padding: isMinimized ? '8px 5px' : '10px',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           background: 'rgba(0, 0, 0, 0.2)'
         }}>
           {isMinimized ? (
-            <button 
+            <button
               onClick={onLogout}
               style={{
                 width: '36px',
@@ -740,8 +738,8 @@ function ResizableSidebar({
               ⏻
             </button>
           ) : (
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '8px'
@@ -757,7 +755,7 @@ function ResizableSidebar({
               }}>
                 {userNickname}
               </span>
-              <button 
+              <button
                 onClick={onLogout}
                 style={{
                   padding: '4px 8px',

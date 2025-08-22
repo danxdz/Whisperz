@@ -17,18 +17,17 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
 
   useEffect(() => {
     loadFriendsData();
-    const interval = setInterval(loadFriendsData, 10000); // Refresh every 10 seconds
-    return () => clearInterval(interval);
+    // Removed polling - Gun.js subscriptions handle real-time updates
   }, [currentUser]);
 
   const loadFriendsData = async () => {
     try {
       setLoading(true);
-      
+
       // Load friends
       const friendsList = await friendsService.getFriends();
       setFriends(friendsList);
-      
+
       // Load pending invites (invites we sent)
       const invites = [];
       await new Promise((resolve) => {
@@ -40,7 +39,7 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
         setTimeout(resolve, 1000);
       });
       setPendingInvites(invites);
-      
+
       // Load friend requests (invites sent to us)
       const requests = [];
       await new Promise((resolve) => {
@@ -55,7 +54,7 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
         setTimeout(resolve, 1000);
       });
       setFriendRequests(requests);
-      
+
     } catch (error) {
       console.error('Failed to load friends data:', error);
     } finally {
@@ -66,16 +65,16 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
   const acceptRequest = async (request) => {
     try {
       await friendsService.acceptInvite(request.inviteCode);
-      
+
       // Remove from requests
       gunAuthService.gun.get('friend_requests')
         .get(currentUser.pub)
         .get(request.key)
         .put(null);
-      
+
       setFriendRequests(prev => prev.filter(r => r.key !== request.key));
       alert(`You are now friends with ${request.fromNickname}!`);
-      
+
       // Reload friends
       loadFriendsData();
     } catch (error) {
@@ -85,7 +84,7 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
 
   const removeFriend = async (friend) => {
     if (!confirm(`Remove ${friend.nickname} from friends?`)) return;
-    
+
     try {
       await friendsService.removeFriend(friend.publicKey);
       setFriends(prev => prev.filter(f => f.publicKey !== friend.publicKey));
@@ -99,7 +98,7 @@ function FriendsModule({ currentUser, onFriendSelect, selectedFriend }) {
     try {
       const { inviteLink } = await friendsService.generateInvite();
       setInviteLink(inviteLink);
-      
+
       // Copy to clipboard
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(inviteLink);

@@ -60,10 +60,10 @@ class BackupService {
   createBackup(password = null) {
     try {
       const backupData = this.collectAllData();
-      
+
       // Add sensitive data markers
       const sensitiveKeys = ['gun/', 'user', 'auth', 'key', 'priv', 'pub', 'soul'];
-      backupData.metadata.hasSensitiveData = Object.keys(backupData.data).some(key => 
+      backupData.metadata.hasSensitiveData = Object.keys(backupData.data).some(key =>
         sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))
       );
 
@@ -107,11 +107,11 @@ class BackupService {
       const backup = this.createBackup(password);
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const defaultFilename = `whisperz-backup-${timestamp}.json`;
-      
+
       const blob = new Blob([JSON.stringify(backup, null, 2)], {
         type: 'application/json'
       });
-      
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -139,7 +139,7 @@ class BackupService {
   async importFromFile(file, password = null) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = async (e) => {
         try {
           const backup = JSON.parse(e.target.result);
@@ -149,11 +149,11 @@ class BackupService {
           reject(new Error('Invalid backup file: ' + error.message));
         }
       };
-      
+
       reader.onerror = () => {
         reject(new Error('Failed to read file'));
       };
-      
+
       reader.readAsText(file);
     });
   }
@@ -197,7 +197,7 @@ class BackupService {
       // Ask for confirmation before restoring
       const totalKeys = Object.keys(backupData.data).length;
       const confirmMessage = `This will restore ${totalKeys} items from backup dated ${backupData.timestamp}. Continue?`;
-      
+
       if (!window.confirm(confirmMessage)) {
         return { success: false, cancelled: true };
       }
@@ -271,7 +271,7 @@ class BackupService {
     // Collect keys to delete based on categories
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      
+
       for (const category of categories) {
         const patterns = defaultCategories[category] || [];
         if (patterns.some(pattern => key.includes(pattern))) {
@@ -321,9 +321,9 @@ class BackupService {
       const key = localStorage.key(i);
       const value = localStorage.getItem(key);
       const size = new Blob([value]).size;
-      
+
       stats.totalSize += size;
-      
+
       // Categorize
       let categorized = false;
       for (const [category, patterns] of Object.entries(categoryPatterns)) {
@@ -338,7 +338,7 @@ class BackupService {
           break;
         }
       }
-      
+
       if (!categorized) {
         if (!stats.categories.other) {
           stats.categories.other = { count: 0, size: 0 };

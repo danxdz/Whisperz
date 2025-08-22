@@ -10,7 +10,7 @@ class SimpleWebRTC {
     this.messageHandlers = new Set();
     this.isInitialized = false;
     this.userId = null;
-    
+
     // Use minimal STUN for NAT traversal (optional)
     // Can work without it on same network or with good NAT
     this.iceServers = {
@@ -29,10 +29,10 @@ class SimpleWebRTC {
     }
 
     this.userId = userId;
-    
+
     // Listen for WebRTC signals via Gun
     this.listenForSignals();
-    
+
     this.isInitialized = true;
     console.log('🎉 Simple WebRTC initialized for user:', userId);
     return true;
@@ -50,7 +50,7 @@ class SimpleWebRTC {
       .map()
       .on(async (signal, key) => {
         if (!signal || key === '_' || !signal.type) return;
-        
+
         // Ignore old signals (older than 1 minute)
         if (signal.timestamp && (Date.now() - signal.timestamp) > 60000) {
           return;
@@ -65,7 +65,7 @@ class SimpleWebRTC {
         } else if (signal.type === 'ice-candidate') {
           await this.handleIceCandidate(signal);
         }
-        
+
         // Clean up processed signal
         gun.get('webrtc_signals').get(user.pub).get(key).put(null);
       });
@@ -74,7 +74,7 @@ class SimpleWebRTC {
   // Create connection to a friend
   async connectToPeer(friendPublicKey) {
     console.log('🔗 Attempting WebRTC connection to:', friendPublicKey);
-    
+
     // Check if connection already exists
     if (this.connections.has(friendPublicKey)) {
       const conn = this.connections.get(friendPublicKey);
@@ -226,7 +226,7 @@ class SimpleWebRTC {
   // Handle ICE candidate
   async handleIceCandidate(signal) {
     const { from, candidate } = signal;
-    
+
     try {
       const pc = this.connections.get(from);
       if (pc && candidate) {
@@ -260,7 +260,7 @@ class SimpleWebRTC {
   // Send message via WebRTC
   sendMessage(friendPublicKey, message) {
     const dataChannel = this.dataChannels.get(friendPublicKey);
-    
+
     if (dataChannel && dataChannel.readyState === 'open') {
       try {
         dataChannel.send(JSON.stringify(message));
@@ -271,7 +271,7 @@ class SimpleWebRTC {
         return false;
       }
     }
-    
+
     console.log('⚠️ No open WebRTC channel to:', friendPublicKey);
     return false;
   }
@@ -281,7 +281,7 @@ class SimpleWebRTC {
     try {
       const message = JSON.parse(data);
       console.log('📥 Received via WebRTC from:', from);
-      
+
       // Notify all message handlers
       this.messageHandlers.forEach(handler => {
         handler(from, message);
@@ -308,7 +308,7 @@ class SimpleWebRTC {
   getConnectionStatus(friendPublicKey) {
     const pc = this.connections.get(friendPublicKey);
     const dc = this.dataChannels.get(friendPublicKey);
-    
+
     return {
       webrtc: pc?.connectionState || 'disconnected',
       dataChannel: dc?.readyState || 'closed',
@@ -320,17 +320,17 @@ class SimpleWebRTC {
   cleanup(friendPublicKey) {
     const pc = this.connections.get(friendPublicKey);
     const dc = this.dataChannels.get(friendPublicKey);
-    
+
     if (dc) {
       dc.close();
       this.dataChannels.delete(friendPublicKey);
     }
-    
+
     if (pc) {
       pc.close();
       this.connections.delete(friendPublicKey);
     }
-    
+
     console.log('🧹 Cleaned up connection to:', friendPublicKey);
   }
 
