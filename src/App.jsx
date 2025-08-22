@@ -13,6 +13,7 @@ import debugLogger from './utils/debugLogger';
 import './index.css';
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
+import ChatSecurityStatus from './components/ChatSecurityStatus';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
 import { useConnectionState } from './hooks/useConnectionState';
@@ -717,72 +718,14 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 }}>
                   {escapeHtml(selectedFriend.nickname || 'Unknown')}
                 </h3>
-                {/* Connection Status & P2P Button */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {/* P2P Connect Button */}
-                  <button
-                    onClick={() => attemptWebRTCConnection()}
-                    style={{
-                      padding: screen.isTiny ? '4px 8px' : '6px 10px',
-                      background: 'rgba(67, 231, 123, 0.2)',
-                      border: '1px solid #43e97b',
-                      borderRadius: '6px',
-                      color: '#43e97b',
-                      fontSize: screen.isTiny ? '10px' : '11px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                    title="Establish direct P2P connection"
-                  >
-                    🔗 P2P
-                  </button>
-
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: screen.isTiny ? '2px 4px' : '2px 6px',
-                    background: colors.bgTertiary,
-                    borderRadius: '10px',
-                    fontSize: screen.isTiny ? '9px' : '10px'
-                  }}>
-                    <span style={{
-                      width: screen.isTiny ? '6px' : '7px',
-                      height: screen.isTiny ? '6px' : '7px',
-                      borderRadius: '50%',
-                    background: connectionState.status === 'webrtc' ? colors.success :
-                               connectionState.status === 'gun' ? colors.warning :
-                               connectionState.status === 'connecting' ? colors.primary :
-                               colors.textMuted,
-                    display: 'inline-block',
-                    animation: connectionState.status === 'connecting' ? 'pulse 1s infinite' : 'none'
-                  }} />
-                  <span style={{
-                    color: colors.textSecondary,
-                    textTransform: 'uppercase',
-                    fontWeight: '500'
-                  }}>
-                    {connectionState.status === 'webrtc' ? 'P2P' :
-                     connectionState.status === 'gun' ? 'GUN' :
-                     connectionState.status === 'connecting' ? '...' :
-                     'OFF'}
-                  </span>
-                  {connectionState.latency && (
-                    <span style={{ color: colors.textMuted }}>
-                      {connectionState.latency}ms
-                    </span>
-                  )}
-                </div>
+                {/* Comprehensive Security Status */}
+                <ChatSecurityStatus 
+                  friend={selectedFriend}
+                  connectionState={connectionState}
+                />
               </div>
+              <ThemeToggle />
             </div>
-            <ThemeToggle />
-          </div>
 
             <div style={{
               flex: 1,
