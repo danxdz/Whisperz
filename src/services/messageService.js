@@ -135,11 +135,12 @@ class MessageService {
         return;
       }
 
-      // Store in history
+      // Store in history with delivery method
       await hybridGunService.storeMessageHistory(friend.conversationId, {
         ...message,
         received: true,
-        receivedAt: Date.now()
+        receivedAt: Date.now(),
+        deliveryMethod: 'webrtc' // Message came via WebRTC
       });
 
       // Notify handlers
@@ -175,7 +176,8 @@ class MessageService {
             ...decrypted,
             received: true,
             receivedAt: Date.now(),
-            wasOffline: true
+            wasOffline: true,
+            deliveryMethod: 'gun' // Message came via Gun relay
           });
 
           // Notify handlers

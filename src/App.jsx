@@ -769,24 +769,29 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                       justifyContent: msg?.from === user.pub ? 'flex-end' : 'flex-start'
                     }}>
                       <span>{msg?.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : 'Unknown'}</span>
-                      {msg.deliveryMethod && (
-                        <span style={{
-                          padding: '1px 3px',
-                          background: msg.deliveryMethod === 'webrtc' ? 'rgba(67, 233, 123, 0.2)' :
-                                     msg.deliveryMethod === 'gun' ? 'rgba(255, 193, 7, 0.2)' :
-                                     'transparent',
-                          borderRadius: '3px',
-                          fontSize: screen.isTiny ? '7px' : '8px',
-                          fontWeight: 'bold',
-                          color: msg.deliveryMethod === 'webrtc' ? colors.success :
-                                msg.deliveryMethod === 'gun' ? colors.warning :
-                                colors.textMuted
-                        }}>
-                          {msg.deliveryMethod === 'webrtc' ? 'P2P' :
-                           msg.deliveryMethod === 'gun' ? 'GUN' :
-                           'LOCAL'}
-                        </span>
-                      )}
+                      {/* Delivery method indicator with encryption status */}
+                      <span 
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          fontSize: screen.isTiny ? '9px' : '10px'
+                        }}
+                        title={
+                          msg.deliveryMethod === 'webrtc' ? '🔐 Direct P2P (Encrypted)' :
+                          msg.deliveryMethod === 'gun' ? 
+                            (selectedFriend?.epub ? '🔒 Via Relay (Encrypted)' : '⚠️ Via Relay (Not Encrypted)') :
+                          '📱 Local'
+                        }
+                      >
+                        {msg.deliveryMethod === 'webrtc' ? (
+                          <span style={{ color: '#00ff00' }}>●</span>
+                        ) : msg.deliveryMethod === 'gun' ? (
+                          <span style={{ color: selectedFriend?.epub ? '#43e97b' : '#ff6b6b' }}>
+                            {selectedFriend?.epub ? '●' : '○'}
+                          </span>
+                        ) : null}
+                      </span>
                       {msg?.from === user.pub && (
                         <span style={{ marginLeft: '2px' }}>
                           {msg.delivered ? '✓✓' : '✓'}
@@ -822,8 +827,31 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               background: colors.bgCard,
               borderTop: `1px solid ${colors.borderColor}`,
               display: 'flex',
-              gap: screen.isTiny ? '4px' : '8px'
+              gap: screen.isTiny ? '4px' : '8px',
+              flexDirection: 'column'
             }}>
+              {/* Message delivery indicator legend */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '10px',
+                color: colors.textMuted,
+                paddingBottom: '4px',
+                borderBottom: `1px solid ${colors.borderColor}`,
+                marginBottom: '4px'
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: '#00ff00' }}>●</span> P2P Direct
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: '#43e97b' }}>●</span> Relay (Encrypted)
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: '#ff6b6b' }}>○</span> Relay (Not Encrypted)
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: screen.isTiny ? '4px' : '8px' }}>
               <input
                 type="text"
                 value={newMessage}
@@ -861,6 +889,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               >
                 {screen.isTiny ? '➤' : 'Send'}
               </button>
+              </div>
             </form>
           </>
         ) : (
