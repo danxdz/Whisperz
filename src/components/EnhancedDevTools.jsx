@@ -2462,6 +2462,77 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               >
                 🚪 Logout
               </button>
+              
+              {/* Instance Switcher */}
+              <div style={{
+                marginTop: '12px',
+                paddingTop: '12px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <div style={{
+                  fontSize: '10px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  marginBottom: '4px'
+                }}>
+                  Database Instance:
+                </div>
+                <input
+                  type="text"
+                  placeholder="default"
+                  value={localStorage.getItem('gun_instance') || ''}
+                  onChange={(e) => {
+                    const newInstance = e.target.value.trim();
+                    if (newInstance) {
+                      localStorage.setItem('gun_instance', newInstance);
+                    } else {
+                      localStorage.removeItem('gun_instance');
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '6px',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '11px',
+                    marginBottom: '4px'
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const currentInstance = localStorage.getItem('gun_instance') || 'default';
+                    const confirmSwitch = window.confirm(
+                      `Switch to instance: "${currentInstance}"?\n\n` +
+                      'This will reload the app and connect to a different database.\n' +
+                      'You will need to login again.'
+                    );
+                    if (confirmSwitch) {
+                      window.location.reload();
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '6px',
+                    background: 'rgba(0, 255, 255, 0.2)',
+                    border: '1px solid #00ffff',
+                    borderRadius: '4px',
+                    color: '#00ffff',
+                    fontSize: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔄 Switch Instance
+                </button>
+                <div style={{
+                  fontSize: '9px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginTop: '4px',
+                  fontStyle: 'italic'
+                }}>
+                  Use different instances for separate chat rooms or testing
+                </div>
+              </div>
             </div>
           </div>
         )}

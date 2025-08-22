@@ -34,7 +34,7 @@ class GunAuthService {
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
 
     this.gun = Gun({
-      peers: [gunRelay], // Only use our private relay
+      peers: [finalRelay], // Use configured relay with optional instance
       localStorage: true,
       radisk: true,
       multicast: false,  // Disabled for battery saving
