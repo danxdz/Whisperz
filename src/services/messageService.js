@@ -68,6 +68,9 @@ class MessageService {
             publicKey: user.pub,
             nickname: await friendsService.getUserNickname()
           });
+          
+          // Wait a bit for connection to establish
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         // Send via WebRTC
@@ -82,7 +85,7 @@ class MessageService {
         message.delivered = true;
         // console.log('✅ Message sent via WebRTC');
       } catch (error) {
-        // console.warn('❌ WebRTC send failed, will use Gun:', error);
+        console.warn('❌ WebRTC send failed, will use Gun:', error.message);
       }
     }
 

@@ -319,15 +319,37 @@ class WebRTCService {
 
   // Send message to peer
   async sendMessage(peerId, data) {
-    const dc = this.dataChannels.get(peerId);
+    let dc = this.dataChannels.get(peerId);
 
+    // If no data channel or not open, wait a bit for it to open
     if (!dc || dc.readyState !== 'open') {
-      throw new Error(`No open data channel with ${peerId}`);
+      debugLogger.webrtc('Data channel not ready, waiting...');
+      
+      // Wait up to 2 seconds for data channel to open
+      const maxWaitTime = 2000;
+      const checkInterval = 100;
+      let waited = 0;
+      
+      while (waited < maxWaitTime) {
+        dc = this.dataChannels.get(peerId);
+        if (dc && dc.readyState === 'open') {
+          debugLogger.webrtc('Data channel now ready!');
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, checkInterval));
+        waited += checkInterval;
+      }
+      
+      // Final check
+      if (!dc || dc.readyState !== 'open') {
+        debugLogger.webrtc(`Data channel still not open after ${maxWaitTime}ms`);
+        throw new Error(`No open data channel with ${peerId}`);
+      }
     }
 
     const message = typeof data === 'string' ? data : JSON.stringify(data);
     dc.send(message);
-    debugLogger.webrtc('Message sent to:', peerId);
+    debugLogger.webrtc('Message sent via P2P to:', peerId);
   }
 
   // Register message handler
