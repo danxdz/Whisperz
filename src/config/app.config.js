@@ -82,7 +82,7 @@ export const APP_CONFIG = {
   security: {
     encryptionAlgorithm: 'AES',
     keyDerivationIterations: 100000,
-    inviteHmacSecret: import.meta.env.VITE_INVITE_SECRET || 'default-invite-secret',
+    inviteHmacSecret: import.meta.env.VITE_INVITE_SECRET || crypto.randomUUID(),
     csrfTokenLength: 32,
   },
 };
