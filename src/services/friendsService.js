@@ -21,12 +21,14 @@ class FriendsService {
     this.user = gunAuthService.user;
   }
 
-  // Generate a secure invite code
+  // Generate a cryptographically secure invite code
   generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
     let code = '';
     for (let i = 0; i < 32; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+      code += chars.charAt(array[i] % chars.length);
     }
     return code;
   }
