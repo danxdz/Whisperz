@@ -193,6 +193,32 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
         </button>
       )}
       
+      {/* P2P Only Mode Toggle */}
+      <button
+        onClick={() => {
+          const newMode = !p2pOnlyMode;
+          setP2pOnlyMode(newMode);
+          localStorage.setItem('p2p_only_mode', newMode.toString());
+        }}
+        style={{
+          padding: '6px 10px',
+          background: p2pOnlyMode ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+          border: `1px solid ${p2pOnlyMode ? '#ff0000' : '#666'}`,
+          borderRadius: '6px',
+          color: p2pOnlyMode ? '#ff0000' : '#999',
+          fontSize: '11px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'all 0.2s',
+          fontWeight: p2pOnlyMode ? '600' : '400'
+        }}
+        title={p2pOnlyMode ? 'P2P-Only Mode: Messages only send via P2P' : 'Normal Mode: Messages use P2P or relay'}
+      >
+        {p2pOnlyMode ? '🔒 P2P Only' : '🔓 P2P/Relay'}
+      </button>
+      
       {/* Main Security Indicator */}
       <div
         onClick={() => setShowDetails(!showDetails)}

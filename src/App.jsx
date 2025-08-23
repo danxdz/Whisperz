@@ -597,10 +597,30 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
     // Sanitize input
     const sanitizedMessage = newMessage.trim().slice(0, 1000);
-
+    
+    // Check P2P-only mode
+    const p2pOnlyMode = localStorage.getItem('p2p_only_mode') === 'true';
+    
     try {
-      // Attempt WebRTC connection if not connected
-      if (connectionState.status === 'gun' && connectionState.isOnline) {
+      // In P2P-only mode, check connection first
+      if (p2pOnlyMode && connectionState.status !== 'webrtc') {
+        // Try to connect if friend is online
+        if (connectionState.isOnline) {
+          await attemptWebRTCConnection();
+          // Wait a bit for connection
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Check again
+          if (connectionState.status !== 'webrtc') {
+            alert('P2P-Only Mode: Cannot send message without P2P connection.\nTry clicking the P2P button first.');
+            return;
+          }
+        } else {
+          alert('P2P-Only Mode: Friend is offline. Message not sent.');
+          return;
+        }
+      } else if (!p2pOnlyMode && connectionState.status === 'gun' && connectionState.isOnline) {
+        // Normal mode - try WebRTC if available
         await attemptWebRTCConnection();
       }
 
@@ -608,7 +628,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       setNewMessage('');
     } catch (error) {
       // console.error('Failed to send message:', error);
-      alert('Failed to send message: ' + error.message);
+      if (error.message.includes('P2P-only')) {
+        alert('🔒 ' + error.message);
+      } else {
+        alert('Failed to send message: ' + error.message);
+      }
     }
   };
 
