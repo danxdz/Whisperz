@@ -175,17 +175,27 @@ class WebRTCService {
     };
 
     // Set remote description and create answer
-    await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      debugLogger.webrtc('✅ Remote description set, creating answer...');
+      
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      debugLogger.webrtc('✅ Local description set, sending answer...');
 
-    // Send answer
-    this.sendSignal(from, {
-      type: 'answer',
-      answer: answer,
-      from: this.peerId,
-      timestamp: Date.now()
-    });
+      // Send answer back to the offerer
+      this.sendSignal(from, {
+        type: 'answer',
+        answer: answer,
+        from: this.peerId,
+        timestamp: Date.now()
+      });
+      
+      debugLogger.webrtc('📤 Answer sent back to:', from);
+    } catch (error) {
+      debugLogger.error('Failed to create/send answer:', error);
+      throw error;
+    }
 
     // Notify handlers
     this.connectionHandlers.forEach(handler => {
@@ -198,15 +208,27 @@ class WebRTCService {
     const { answer } = signal;
     // Normalize the sender's peer ID
     const from = signal.from.split('.')[0];
+    
+    debugLogger.webrtc('📥 Received answer from:', from);
+    
     const pc = this.connections.get(from);
-
     if (!pc) {
-      debugLogger.warn('No connection found for answer from:', from);
+      debugLogger.error('❌ No connection found for answer from:', from);
+      debugLogger.error('Active connections:', Array.from(this.connections.keys()));
       return;
     }
 
-    debugLogger.webrtc('Handling answer from:', from);
-    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    try {
+      debugLogger.webrtc('Setting remote description with answer from:', from);
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      debugLogger.webrtc('✅ Answer processed successfully, connection should be established');
+      
+      // Log connection state
+      debugLogger.webrtc('Connection state:', pc.connectionState);
+      debugLogger.webrtc('ICE connection state:', pc.iceConnectionState);
+    } catch (error) {
+      debugLogger.error('Failed to set remote description:', error);
+    }
   }
 
   // Handle ICE candidate
@@ -255,6 +277,21 @@ class WebRTCService {
 
   // Setup peer connection handlers
   setupPeerConnection(pc, peerId) {
+    // Monitor connection state changes
+    pc.onconnectionstatechange = () => {
+      debugLogger.webrtc(`📊 Connection state changed for ${peerId}:`, pc.connectionState);
+      
+      if (pc.connectionState === 'connected') {
+        debugLogger.webrtc(`✅ P2P CONNECTED with ${peerId}!`);
+      } else if (pc.connectionState === 'failed') {
+        debugLogger.error(`❌ P2P connection FAILED with ${peerId}`);
+      }
+    };
+    
+    pc.oniceconnectionstatechange = () => {
+      debugLogger.webrtc(`🧊 ICE state changed for ${peerId}:`, pc.iceConnectionState);
+    };
+    
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         debugLogger.webrtc('Sending ICE candidate to:', peerId);
