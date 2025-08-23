@@ -18,6 +18,9 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
     details: []
   });
   const [showDetails, setShowDetails] = useState(false);
+  const [p2pOnlyMode, setP2pOnlyMode] = useState(
+    localStorage.getItem('p2p_only_mode') === 'true'
+  );
 
   useEffect(() => {
     if (!friend) {

@@ -28,6 +28,9 @@ class MessageService {
 
     const friend = await friendsService.getFriend(recipientPublicKey);
     if (!friend) throw new Error('Not a friend');
+    
+    // Check if P2P-only mode is enabled
+    const p2pOnlyMode = localStorage.getItem('p2p_only_mode') === 'true';
 
     const message = {
       id: `msg_${Date.now()}_${Math.random()}`,
@@ -86,15 +89,24 @@ class MessageService {
         // console.log('✅ Message sent via WebRTC');
       } catch (error) {
         console.warn('❌ WebRTC send failed, will use Gun:', error.message);
+        
+        // If P2P-only mode, throw error instead of falling back
+        if (p2pOnlyMode) {
+          throw new Error('P2P-only mode: Message not sent (no P2P connection)');
+        }
       }
     }
 
-    // ALWAYS store in Gun for persistence and fallback
-    // This ensures messages are delivered even if WebRTC fails
-    // console.log('💾 Storing message in Gun.js');
-    await hybridGunService.storeOfflineMessage(recipientPublicKey, encryptedMessage);
+    // Only store in Gun if not P2P-only mode OR if sent via WebRTC (for history)
+    if (!p2pOnlyMode || sentViaWebRTC) {
+      // console.log('💾 Storing message in Gun.js');
+      await hybridGunService.storeOfflineMessage(recipientPublicKey, encryptedMessage);
+    }
 
     if (!sentViaWebRTC) {
+      if (p2pOnlyMode) {
+        throw new Error('P2P-only mode: Cannot send message without P2P connection');
+      }
       message.deliveryMethod = 'gun';
       message.delivered = false;
       // console.log('📦 Message stored in Gun for offline delivery');
