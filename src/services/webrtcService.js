@@ -42,7 +42,12 @@ class WebRTCService {
   // Listen for WebRTC signals via Gun
   listenForSignals() {
     const gun = gunAuthService.gun;
-    if (!this.peerId) return;
+    if (!this.peerId) {
+      debugLogger.error('Cannot listen for signals - no peer ID');
+      return;
+    }
+
+    debugLogger.webrtc('👂 Listening for signals at:', this.peerId);
 
     // Listen for incoming signals
     gun.get('webrtc_signals')
@@ -53,12 +58,13 @@ class WebRTCService {
 
         // Ignore old signals (older than 30 seconds)
         if (Date.now() - signal.timestamp > 30000) {
+          debugLogger.webrtc('Ignoring old signal:', signal.type);
           // Clean up old signal
           gun.get('webrtc_signals').get(this.peerId).get(key).put(null);
           return;
         }
 
-        debugLogger.webrtc('Received signal:', signal.type, 'from:', signal.from);
+        debugLogger.webrtc('📨 Received signal:', signal.type, 'from:', signal.from);
 
         switch (signal.type) {
           case 'offer':
@@ -307,10 +313,18 @@ class WebRTCService {
     const gun = gunAuthService.gun;
     const signalId = `${Date.now()}_${Math.random()}`;
 
+    debugLogger.webrtc(`📤 Sending ${signal.type} to:`, targetPeerId);
+    
     gun.get('webrtc_signals')
       .get(targetPeerId)
       .get(signalId)
-      .put(signal);
+      .put(signal, (ack) => {
+        if (ack.err) {
+          debugLogger.error('Failed to send signal:', ack.err);
+        } else {
+          debugLogger.webrtc(`✅ ${signal.type} sent successfully`);
+        }
+      });
 
     // Auto-cleanup after 30 seconds
     setTimeout(() => {
