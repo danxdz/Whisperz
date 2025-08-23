@@ -153,8 +153,12 @@ class WebRTCService {
 
     // Handle data channel
     pc.ondatachannel = (event) => {
-      debugLogger.webrtc('Data channel received from:', from);
-      this.setupDataChannel(event.channel, from);
+      debugLogger.webrtc('📦 Data channel received from:', from);
+      const dc = event.channel;
+      this.setupDataChannel(dc, from);
+      // Store the data channel immediately
+      this.dataChannels.set(from, dc);
+      debugLogger.webrtc('✅ Data channel stored for:', from);
     };
 
     // Set remote description and create answer
@@ -368,11 +372,21 @@ class WebRTCService {
   getConnectionStatus(peerId) {
     const pc = this.connections.get(peerId);
     const dc = this.dataChannels.get(peerId);
+    
+    // Log current state for debugging
+    if (pc || dc) {
+      debugLogger.webrtc(`Connection status for ${peerId}:`, {
+        pcState: pc?.connectionState,
+        dcState: dc?.readyState,
+        iceState: pc?.iceConnectionState
+      });
+    }
 
     return {
       connected: pc?.connectionState === 'connected' && dc?.readyState === 'open',
       connectionState: pc?.connectionState || 'disconnected',
-      dataChannelState: dc?.readyState || 'closed'
+      dataChannelState: dc?.readyState || 'closed',
+      iceConnectionState: pc?.iceConnectionState || 'disconnected'
     };
   }
 
