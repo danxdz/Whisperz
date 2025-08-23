@@ -31,7 +31,9 @@ class WebRTCService {
       return true;
     }
 
-    this.peerId = userId;
+    // Extract just the public key part (before the dot if it exists)
+    // Gun.js sometimes adds .epub to the user ID
+    this.peerId = userId.split('.')[0];
     this.listenForSignals();
     this.isInitialized = true;
 
@@ -85,29 +87,32 @@ class WebRTCService {
 
   // Create a connection to a peer
   async connectToPeer(targetPeerId, metadata = {}) {
-    if (this.connections.has(targetPeerId)) {
-      debugLogger.webrtc('Already connected to:', targetPeerId);
-      return this.connections.get(targetPeerId);
+    // Normalize peer ID (remove .epub if present)
+    const normalizedPeerId = targetPeerId.split('.')[0];
+    
+    if (this.connections.has(normalizedPeerId)) {
+      debugLogger.webrtc('Already connected to:', normalizedPeerId);
+      return this.connections.get(normalizedPeerId);
     }
 
-    debugLogger.webrtc('Creating connection to:', targetPeerId);
+    debugLogger.webrtc('Creating connection to:', normalizedPeerId);
 
     const pc = new RTCPeerConnection(this.iceConfig);
-    this.connections.set(targetPeerId, pc);
+    this.connections.set(normalizedPeerId, pc);
 
     // Create data channel
     const dc = pc.createDataChannel('messages', {
       ordered: true
     });
 
-    this.setupDataChannel(dc, targetPeerId);
-    this.setupPeerConnection(pc, targetPeerId);
+    this.setupDataChannel(dc, normalizedPeerId);
+    this.setupPeerConnection(pc, normalizedPeerId);
 
     // Create and send offer
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    this.sendSignal(targetPeerId, {
+    this.sendSignal(normalizedPeerId, {
       type: 'offer',
       offer: offer,
       from: this.peerId,
@@ -120,7 +125,9 @@ class WebRTCService {
 
   // Handle incoming offer
   async handleOffer(signal) {
-    const { from, offer, metadata } = signal;
+    const { offer, metadata } = signal;
+    // Normalize the sender's peer ID
+    const from = signal.from.split('.')[0];
 
     // Check if we already have a connection
     const existingPc = this.connections.get(from);
@@ -188,7 +195,9 @@ class WebRTCService {
 
   // Handle incoming answer
   async handleAnswer(signal) {
-    const { from, answer } = signal;
+    const { answer } = signal;
+    // Normalize the sender's peer ID
+    const from = signal.from.split('.')[0];
     const pc = this.connections.get(from);
 
     if (!pc) {
@@ -202,7 +211,9 @@ class WebRTCService {
 
   // Handle ICE candidate
   async handleIceCandidate(signal) {
-    const { from, candidate } = signal;
+    const { candidate } = signal;
+    // Normalize the sender's peer ID
+    const from = signal.from.split('.')[0];
     const pc = this.connections.get(from);
 
     if (!pc) {
@@ -337,7 +348,9 @@ class WebRTCService {
 
   // Send message to peer
   async sendMessage(peerId, data) {
-    let dc = this.dataChannels.get(peerId);
+    // Normalize peer ID
+    const normalizedPeerId = peerId.split('.')[0];
+    let dc = this.dataChannels.get(normalizedPeerId);
 
     // If no data channel or not open, wait a bit for it to open
     if (!dc || dc.readyState !== 'open') {
@@ -349,7 +362,7 @@ class WebRTCService {
       let waited = 0;
       
       while (waited < maxWaitTime) {
-        dc = this.dataChannels.get(peerId);
+        dc = this.dataChannels.get(normalizedPeerId);
         if (dc && dc.readyState === 'open') {
           debugLogger.webrtc('Data channel now ready!');
           break;
@@ -361,7 +374,7 @@ class WebRTCService {
       // Final check
       if (!dc || dc.readyState !== 'open') {
         debugLogger.webrtc(`Data channel still not open after ${maxWaitTime}ms`);
-        throw new Error(`No open data channel with ${peerId}`);
+        throw new Error(`No open data channel with ${normalizedPeerId}`);
       }
     }
 
@@ -384,8 +397,10 @@ class WebRTCService {
 
   // Get connection status
   getConnectionStatus(peerId) {
-    const pc = this.connections.get(peerId);
-    const dc = this.dataChannels.get(peerId);
+    // Normalize peer ID
+    const normalizedPeerId = peerId.split('.')[0];
+    const pc = this.connections.get(normalizedPeerId);
+    const dc = this.dataChannels.get(normalizedPeerId);
     
     // Log current state for debugging
     if (pc || dc) {
