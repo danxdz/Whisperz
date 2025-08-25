@@ -74,10 +74,8 @@ function ResizableSidebar({
     return statuses;
   }, [
     // Only update when friends list or actual status values change
-    JSON.stringify(friends.map(f => f.publicKey)),
-    JSON.stringify(Object.entries(onlineStatus || {}).map(([key, val]) =>
-      [key, val?.online, val?.lastSeen]
-    ))
+    friends,
+    onlineStatus
   ]);
 
   // Debug logs removed to prevent re-renders

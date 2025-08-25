@@ -39,7 +39,12 @@ function main() {
   if (fs.existsSync(envPath)) {
     console.log('⚠️  Warning: .env file already exists!');
     console.log('   To prevent accidental overwrite, please rename or backup your existing .env file.\n');
-    process.exit(1);
+    // Exit gracefully in both Node.js and browser environments
+    if (typeof process !== 'undefined' && process.exit) {
+      process.exit(1);
+    } else {
+      throw new Error('Environment file already exists');
+    }
   }
 
   // Generate secure configuration

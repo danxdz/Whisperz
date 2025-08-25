@@ -126,11 +126,8 @@ function SwipeableChat({
     return statuses;
   }, [
     // Only update when friends list or actual status values change
-    // Use JSON.stringify to create a stable dependency
-    JSON.stringify(friends.map(f => f.publicKey)),
-    JSON.stringify(Object.entries(onlineStatus).map(([key, val]) =>
-      [key, val.online, val.lastSeen]
-    ))
+    friends,
+    onlineStatus
   ]);
 
   // Update mobile detection on resize

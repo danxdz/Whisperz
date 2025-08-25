@@ -369,15 +369,20 @@ class BackupService {
     const keyHex = Array.from(keyArray, byte => byte.toString(16).padStart(2, '0')).join('');
 
     // Fallback to CryptoJS for legacy decryption
-    const CryptoJS = (await import('crypto-js')).default;
-    const decrypted = CryptoJS.AES.decrypt(backup.data, keyHex);
-    const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
+    try {
+      const CryptoJS = (await import('crypto-js')).default;
+      const decrypted = CryptoJS.AES.decrypt(backup.data, keyHex);
+      const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
 
-    if (!decryptedText) {
-      throw new Error('Invalid password');
+      if (!decryptedText) {
+        throw new Error('Invalid password');
+      }
+
+      return JSON.parse(decryptedText);
+    } catch (importError) {
+      // If crypto-js is not available (which is expected), throw a helpful error
+      throw new Error('Legacy backup decryption not supported. Please re-export your backup with the current version.');
     }
-
-    return JSON.parse(decryptedText);
   }
 
   /**

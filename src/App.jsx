@@ -288,7 +288,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const screen = useResponsive();
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [_messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [onlineStatus, setOnlineStatus] = useState({});
   const [typingStatus, setTypingStatus] = useState(new Map());
@@ -327,8 +327,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         } else {
           setUserNickname('User');
         }
-      } catch (error) {
-        // console.error('Error loading user nickname:', error);
+      } catch (_error) {
+        // console.error('Error loading user nickname:', _error);
         setUserNickname(user?.alias || 'User');
       }
     };
@@ -340,8 +340,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     try {
       // setFriendsLoading(true);
       // console.log('📋 Loading friends...');
-      const currentUser = gunAuthService.getCurrentUser();
-      // console.log('👤 Current user:', currentUser);
+      const _currentUser = gunAuthService.getCurrentUser();
+      // console.log('👤 Current user:', _currentUser);
 
       const friendList = await friendsService.getFriends();
       // console.log('👥 Friends loaded:', friendList);
@@ -361,8 +361,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       });
 
       // Initial presence check will be handled by the useEffect subscription
-    } catch (error) {
-      // console.error('❌ Failed to load friends:', error);
+    } catch (_error) {
+      // console.error('❌ Failed to load friends:', _error);
     } finally {
       // setFriendsLoading(false);
     }
@@ -445,7 +445,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       window.removeEventListener('beforeunload', handleUnload);
       // clearInterval(refreshInterval); // Removed - no longer needed
     };
-  }, []);
+  }, [user?.pub]);
 
   // Subscribe to friends' presence updates in real-time
   useEffect(() => {
@@ -462,7 +462,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
       const sub = gunAuthService.gun
         .get('presence')
         .get(friend.publicKey)
-        .on((data, key) => {
+        .on((data, _key) => {
           if (data && typeof data === 'object' && data.status) {
             // Use the most recent timestamp
             const lastSeenValue = data.lastSeen || data.timestamp || Date.now();
@@ -522,7 +522,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
         if (sub && sub.off) sub.off();
       });
     };
-  }, [JSON.stringify(friends.map(f => f.publicKey).sort())]); // Only re-subscribe when friend list actually changes
+  }, [friends]); // Re-subscribe when friends array changes
 
   // Load messages when friend is selected
   useEffect(() => {
@@ -552,7 +552,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     // const refreshInterval = setInterval(loadMessages, 5000);
 
     // Subscribe to new messages
-    const unsubscribe = selectedFriend.conversationId ? messageService.subscribeToConversation(
+    const _unsubscribe = selectedFriend.conversationId ? messageService.subscribeToConversation(
       selectedFriend.conversationId,
       (message) => {
         // console.log('📨 New message received:', message);
@@ -984,8 +984,8 @@ function App() {
     }
 
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
-    const deviceType = isMobile ? '📱 Mobile' : '💻 Desktop';
-    const screenSize = `${window.innerWidth}x${window.innerHeight}`;
+    const _deviceType = isMobile ? '📱 Mobile' : '💻 Desktop';
+    const _screenSize = `${window.innerWidth}x${window.innerHeight}`;
 
     // Only show minimal startup info
     debugLogger.info('🚀 Whisperz v2.1.1');
@@ -1034,8 +1034,8 @@ function App() {
             return;
           }
           for (const friend of friends) {
-            const messages = await messageService.getMessages(friend.conversationId);
-            // console.log(`📜 Messages with ${friend.nickname}:`, messages);
+            const _messages = await messageService.getMessages(friend.conversationId);
+            // console.log(`📜 Messages with ${friend.nickname}:`, _messages);
           }
         };
 
@@ -1053,8 +1053,8 @@ function App() {
             if (presence.isOnline && presence.peerId) {
               // console.log(`🔄 Testing WebRTC connection to ${friend.nickname}...`);
               try {
-                const conn = await webrtcService.connectToPeer(presence.peerId);
-                // console.log(`✅ Connected to ${friend.nickname}!`, conn);
+                const CONNECTION = await webrtcService.connectToPeer(presence.peerId);
+                // console.log(`✅ Connected to ${friend.nickname}!`, CONNECTION);
 
                 // Test sending a ping
                 await webrtcService.sendMessage(presence.peerId, {

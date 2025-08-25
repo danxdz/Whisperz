@@ -12,7 +12,7 @@ function DiscoverUsers({ currentUser, existingFriends = [], pendingRequests = []
   useEffect(() => {
     loadOnlineUsers();
     // Removed polling - Gun.js subscriptions handle real-time updates
-  }, [existingFriends]);
+  }, [existingFriends, loadOnlineUsers]);
 
   const loadOnlineUsers = async () => {
     try {

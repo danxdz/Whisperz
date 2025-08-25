@@ -76,7 +76,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     });
 
     return () => unsubscribe();
-  }, [isVisible]);
+  }, [isVisible, loadStats]);
 
   // P2P logs now go directly to console - no need to track them
 

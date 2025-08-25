@@ -61,7 +61,7 @@ function MobileDevTools({ onOpenDevTools }) {
       window.removeEventListener('click', handleCornerTap);
       clearTimeout(touchTimeoutRef.current);
     };
-  }, []);
+  }, [onOpenDevTools]);
 
   // Removed long press detection - only using corner double-tap
 
