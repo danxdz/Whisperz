@@ -599,7 +599,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [_messages]);
 
   // Handle message send with sanitization
   const handleSendMessage = async (e) => {
@@ -770,7 +770,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               display: 'flex',
               flexDirection: 'column'
             }}>
-              {(messages || []).map((msg, index) => msg && (
+              {(_messages || []).map((msg, index) => msg && (
                 <div
                   key={index}
                   style={{
