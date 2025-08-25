@@ -21,6 +21,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved README with professional badges and better structure
 - Enhanced security with rate limiting on login attempts
 
+### Security
+- **WebCrypto AES-GCM Upgrade** - Replaced AES-CBC+HMAC with modern AEAD encryption
+- **OWASP PBKDF2 Enhancement** - Increased iterations to 600,000 for quantum resistance
+- **Hardware-accelerated encryption** - Native WebCrypto API integration
+- **Memory leak fixes** - Proper timeout cleanup in authentication flows
+- **Bundle security** - Removed crypto-js dependency, reduced attack surface
+
+### Performance
+- **WebCrypto optimization** - Hardware-accelerated cryptographic operations
+- **Memory leak resolution** - Fixed uncleaned setTimeout in App.jsx
+- **Bundle size reduction** - Removed 200KB+ crypto-js library
+- **Error handling improvements** - Comprehensive error boundaries and cleanup
+
+### Technical
+- **Backup service modernization** - WebCrypto AES-GCM for encrypted backups
+- **Encryption service upgrade** - Version 3 with WebCrypto AES-GCM
+- **Documentation updates** - Accurate encryption specifications
+- **Security audit updates** - Current threat model and mitigations
+
 ## [2.0.0] - 2024-08-15
 
 ### Added

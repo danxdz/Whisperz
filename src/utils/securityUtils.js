@@ -1,5 +1,4 @@
 // Security utilities for Whisperz
-import CryptoJS from 'crypto-js';
 
 class SecurityUtils {
   constructor() {

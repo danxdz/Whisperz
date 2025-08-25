@@ -1,24 +1,48 @@
-import CryptoJS from 'crypto-js';
-
 /**
  * Secure Backup Service
  * Handles encrypted backup and restore of all application data
  */
 class BackupService {
   constructor() {
-    this.version = '1.0.0';
+    this.version = '2.0.0'; // Updated for WebCrypto
     this.encryptionEnabled = true;
+    this.ITERATIONS = 600000; // OWASP recommended for PBKDF2
+
+    // Check WebCrypto support
+    if (!window.crypto || !window.crypto.subtle) {
+      throw new Error('WebCrypto API not supported in this browser');
+    }
   }
 
   /**
-   * Generate a secure backup key from user password
+   * Generate a secure backup key from user password using WebCrypto
    */
-  generateBackupKey(password) {
-    // Use PBKDF2 to derive a key from password
-    return CryptoJS.PBKDF2(password, 'whisperz-backup-salt', {
-      keySize: 256/32,
-      iterations: 1000
-    }).toString();
+  async generateBackupKey(password) {
+    const encoder = new TextEncoder();
+    const salt = encoder.encode('whisperz-backup-salt-v2'); // Updated salt for v2
+
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+
+    const keyBits = await window.crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: this.ITERATIONS,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      256
+    );
+
+    // Convert to hex string for consistency with old format
+    const keyArray = new Uint8Array(keyBits);
+    return Array.from(keyArray, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   /**
@@ -55,9 +79,9 @@ class BackupService {
   }
 
   /**
-   * Create an encrypted backup
+   * Create an encrypted backup using WebCrypto AES-GCM
    */
-  createBackup(password = null) {
+  async createBackup(password = null) {
     try {
       const backupData = this.collectAllData();
 
@@ -68,21 +92,47 @@ class BackupService {
       );
 
       if (password && this.encryptionEnabled) {
-        // Encrypt the backup
-        const key = this.generateBackupKey(password);
-        const encrypted = CryptoJS.AES.encrypt(
-          JSON.stringify(backupData),
-          key
-        ).toString();
+        // Generate key and encrypt using WebCrypto
+        const keyHex = await this.generateBackupKey(password);
+        const keyArray = new Uint8Array(keyHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
+        // Import key for WebCrypto
+        const cryptoKey = await window.crypto.subtle.importKey(
+          'raw',
+          keyArray,
+          'AES-GCM',
+          false,
+          ['encrypt']
+        );
+
+        // Generate random IV and encrypt
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const encoder = new TextEncoder();
+        const plaintext = encoder.encode(JSON.stringify(backupData));
+
+        const encrypted = await window.crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv: iv },
+          cryptoKey,
+          plaintext
+        );
+
+        // WebCrypto returns ciphertext + tag concatenated
+        const encryptedArray = new Uint8Array(encrypted);
+        const ciphertext = encryptedArray.slice(0, -16); // All but last 16 bytes (tag)
+        const tag = encryptedArray.slice(-16); // Last 16 bytes (authentication tag)
 
         return {
           encrypted: true,
-          data: encrypted,
+          version: this.version,
+          iv: btoa(String.fromCharCode(...iv)),
+          tag: btoa(String.fromCharCode(...tag)),
+          data: btoa(String.fromCharCode(...ciphertext)),
           metadata: {
             version: this.version,
             timestamp: backupData.timestamp,
             encrypted: true,
-            totalKeys: backupData.metadata.totalKeys
+            totalKeys: backupData.metadata.totalKeys,
+            hasSensitiveData: backupData.metadata.hasSensitiveData
           }
         };
       }
@@ -159,7 +209,7 @@ class BackupService {
   }
 
   /**
-   * Restore backup to localStorage
+   * Restore backup to localStorage (with backward compatibility)
    */
   async restoreBackup(backup, password = null) {
     try {
@@ -171,16 +221,13 @@ class BackupService {
           throw new Error('Password required for encrypted backup');
         }
 
-        const key = this.generateBackupKey(password);
-        try {
-          const decrypted = CryptoJS.AES.decrypt(backup.data, key);
-          const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
-          if (!decryptedText) {
-            throw new Error('Invalid password');
-          }
-          backupData = JSON.parse(decryptedText);
-        } catch (error) {
-          throw new Error('Failed to decrypt backup. Invalid password or corrupted data.');
+        // Handle different backup versions
+        if (backup.version === this.version) {
+          // Version 2.0.0: WebCrypto AES-GCM
+          backupData = await this.decryptBackupV2(backup, password);
+        } else {
+          // Legacy version: CryptoJS AES
+          backupData = await this.decryptBackupLegacy(backup, password);
         }
       } else {
         backupData = backup.data;
@@ -245,6 +292,92 @@ class BackupService {
       // console.error('Restore failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Decrypt backup using WebCrypto AES-GCM (Version 2.0.0)
+   */
+  async decryptBackupV2(backup, password) {
+    const keyHex = await this.generateBackupKey(password);
+    const keyArray = new Uint8Array(keyHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
+    // Import key for WebCrypto
+    const cryptoKey = await window.crypto.subtle.importKey(
+      'raw',
+      keyArray,
+      'AES-GCM',
+      false,
+      ['decrypt']
+    );
+
+    // Decode components from base64
+    const iv = new Uint8Array(atob(backup.iv).split('').map(c => c.charCodeAt(0)));
+    const ciphertext = new Uint8Array(atob(backup.data).split('').map(c => c.charCodeAt(0)));
+    const tag = new Uint8Array(atob(backup.tag).split('').map(c => c.charCodeAt(0)));
+
+    // Reconstruct the encrypted data (ciphertext + tag)
+    const encrypted = new Uint8Array(ciphertext.length + tag.length);
+    encrypted.set(ciphertext);
+    encrypted.set(tag, ciphertext.length);
+
+    // Decrypt
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv },
+      cryptoKey,
+      encrypted
+    );
+
+    const decoder = new TextDecoder();
+    const decryptedText = decoder.decode(decrypted);
+
+    if (!decryptedText) {
+      throw new Error('Invalid password');
+    }
+
+    return JSON.parse(decryptedText);
+  }
+
+  /**
+   * Decrypt backup using legacy CryptoJS (backward compatibility)
+   */
+  async decryptBackupLegacy(backup, password) {
+    // Use legacy salt and iterations for compatibility
+    const encoder = new TextEncoder();
+    const salt = encoder.encode('whisperz-backup-salt'); // Original salt
+
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+
+    const keyBits = await window.crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 1000, // Original iteration count
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      256
+    );
+
+    // Convert to hex string for CryptoJS compatibility
+    const keyArray = new Uint8Array(keyBits);
+    const keyHex = Array.from(keyArray, byte => byte.toString(16).padStart(2, '0')).join('');
+
+    // Fallback to CryptoJS for legacy decryption
+    const CryptoJS = (await import('crypto-js')).default;
+    const decrypted = CryptoJS.AES.decrypt(backup.data, keyHex);
+    const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
+
+    if (!decryptedText) {
+      throw new Error('Invalid password');
+    }
+
+    return JSON.parse(decryptedText);
   }
 
   /**

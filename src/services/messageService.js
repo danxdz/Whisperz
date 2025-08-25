@@ -44,12 +44,15 @@ class MessageService {
 
     // console.log('📤 Sending message:', message);
 
-    // Try to encrypt message
+    // Try to encrypt message using epub (encryption public key)
     let encryptedMessage;
     try {
-      encryptedMessage = await gunAuthService.encryptFor(message, recipientPublicKey);
+      // Use epub from friend data for proper Gun.SEA encryption
+      const friendData = await friendsService.getFriend(recipientPublicKey);
+      const encryptionKey = friendData?.epub || recipientPublicKey; // Fallback to pub if epub not available
+      encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);
     } catch (error) {
-      // console.error('Failed to encrypt message:', error);
+      debugLogger.error('Failed to encrypt message:', error);
       encryptedMessage = message; // Fallback to unencrypted
     }
 
@@ -127,13 +130,16 @@ class MessageService {
     if (data.type !== 'message') return;
 
     try {
-      // Decrypt message
+      // Decrypt message using epub (encryption public key)
       let message = data.data;
       if (message.from) {
         try {
-          message = await gunAuthService.decryptFrom(data.data, message.from);
+          // Use epub from friend data for proper Gun.SEA decryption
+          const friendData = await friendsService.getFriend(message.from);
+          const encryptionKey = friendData?.epub || message.from; // Fallback to pub if epub not available
+          message = await gunAuthService.decryptFrom(data.data, encryptionKey);
         } catch (error) {
-          // console.error('Failed to decrypt message:', error);
+          debugLogger.error('Failed to decrypt message:', error);
         }
       }
 
@@ -174,12 +180,15 @@ class MessageService {
       const messages = await hybridGunService.getOfflineMessages();
 
       for (const msg of messages) {
-        // Decrypt and process
+        // Decrypt and process using epub (encryption public key)
         let decrypted;
         try {
-          decrypted = await gunAuthService.decryptFrom(msg, msg.from);
+          // Use epub from friend data for proper Gun.SEA decryption
+          const friendData = await friendsService.getFriend(msg.from);
+          const encryptionKey = friendData?.epub || msg.from; // Fallback to pub if epub not available
+          decrypted = await gunAuthService.decryptFrom(msg, encryptionKey);
         } catch (error) {
-          // console.error('Failed to decrypt offline message:', error);
+          debugLogger.error('Failed to decrypt offline message:', error);
           decrypted = msg;
         }
 

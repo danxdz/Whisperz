@@ -10,7 +10,7 @@
 ## 🌟 Why Whisperz?
 
 In a world of surveillance and data breaches, Whisperz offers **genuine privacy**:
-- 🔐 **Military-grade encryption** (dual-layer: Gun.SEA + AES-256)
+- 🔐 **Military-grade encryption** (WebCrypto AES-GCM + Gun.SEA ECC)
 - 🌐 **Fully decentralized** - No central servers to hack or shut down
 - 🎭 **Complete anonymity** - No phone, email, or personal data required
 - 🚀 **Instant messaging** - Real-time P2P communication
@@ -19,10 +19,10 @@ In a world of surveillance and data breaches, Whisperz offers **genuine privacy*
 ## ✨ Features
 
 ### Security & Privacy
-- **End-to-End Encryption** - Dual-layer encryption (ECC + AES-256-CBC)
-- **100,000 PBKDF2 iterations** - Quantum-resistant key derivation
-- **Perfect message authentication** - HMAC-SHA256 prevents tampering
-- **Cryptographically secure** - All randomness via `crypto.getRandomValues()`
+- **End-to-End Encryption** - WebCrypto AES-GCM + Gun.SEA ECC
+- **600,000 PBKDF2 iterations** - OWASP recommended for key derivation
+- **Authenticated encryption** - AES-GCM provides confidentiality & integrity
+- **Hardware-accelerated crypto** - Native WebCrypto API performance
 - **No metadata leaks** - Even presence is encrypted
 
 ### Communication
@@ -71,10 +71,11 @@ npm run preview
    - Unique shared secrets per user pair
    - Cryptographically unbreakable
 
-2. **Layer 2: AES-256-CBC + HMAC**
-   - 100,000 PBKDF2 iterations
-   - Random IV per message
-   - Timing-safe HMAC verification
+2. **Layer 2: WebCrypto AES-GCM**
+   - 600,000 PBKDF2 iterations (OWASP recommended)
+   - Authenticated encryption (confidentiality + integrity)
+   - Hardware-accelerated via WebCrypto API
+   - 12-byte IV with automatic authentication tag
 
 ### Security Audit Results
 - **Message Security:** 10/10 - Military grade
@@ -199,22 +200,26 @@ We welcome contributions! Please read our [Contributing Guidelines](./CONTRIBUTI
 ## 📈 Recent Improvements (v2.1.1)
 
 ### Security Enhancements
-- ✅ Fixed cryptographic randomness for invite codes
-- ✅ Implemented timing-safe comparisons
-- ✅ Enhanced PBKDF2 iterations to 100,000
-- ✅ Removed all default secrets
+- ✅ **WebCrypto AES-GCM Upgrade** - Replaced AES-CBC+HMAC with modern AEAD
+- ✅ **OWASP PBKDF2** - Increased iterations to 600k for quantum resistance
+- ✅ **Hardware-accelerated encryption** - Native WebCrypto API performance
+- ✅ **Fixed cryptographic randomness** for invite codes
+- ✅ **Timing-safe comparisons** implemented
+- ✅ **Removed all default secrets**
 
 ### Performance Optimizations
-- ✅ Fixed memory leaks
-- ✅ Added React.memo optimization
-- ✅ Removed polling intervals
-- ✅ Implemented error boundaries
+- ✅ **Fixed memory leaks** - Proper timeout cleanup in App.jsx
+- ✅ **ErrorBoundary implementation** - Graceful error handling
+- ✅ **React.memo optimization** for expensive components
+- ✅ **Removed polling intervals** - Event-driven updates
+- ✅ **Bundle size reduction** - Removed crypto-js dependency
 
 ### Code Quality
-- ✅ Replaced console.log with debug logger
-- ✅ Cleaned trailing whitespace
-- ✅ Removed duplicate files
-- ✅ Enhanced error handling
+- ✅ **WebCrypto integration** - Modern browser crypto API
+- ✅ **Enhanced error handling** - Comprehensive try-catch blocks
+- ✅ **Debug logger consistency** - Professional logging system
+- ✅ **Trailing whitespace cleanup** - Consistent formatting
+- ✅ **Backup service modernization** - WebCrypto AES-GCM
 
 ## 🔍 Security Audits
 
@@ -233,7 +238,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 - [Gun.js](https://gun.eco/) - Decentralized database
-- [CryptoJS](https://cryptojs.gitbook.io/) - Cryptographic library
+- [WebCrypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) - Modern browser cryptography
 - [PeerJS](https://peerjs.com/) - WebRTC abstraction
 - [React](https://react.dev/) - UI framework
 

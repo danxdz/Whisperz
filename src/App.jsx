@@ -298,11 +298,22 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // const [friendsLoading, setFriendsLoading] = useState(true); // Not used currently
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const authTimeoutRef = useRef(null);
 
   // Connection state for selected friend
   const { connectionState, attemptWebRTCConnection } = useConnectionState(
     selectedFriend?.publicKey
   );
+
+  // Cleanup auth timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
+        authTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Load user nickname on mount
   useEffect(() => {
@@ -1165,6 +1176,13 @@ function App() {
   // Handle login/register
   const handleAuth = async (authUser, inviteCodeFromReg = null) => {
     // console.log('🔐 Authentication successful:', authUser);
+
+    // Clear any existing auth-related timeouts to prevent memory leaks
+    if (authTimeoutRef.current) {
+      clearTimeout(authTimeoutRef.current);
+      authTimeoutRef.current = null;
+    }
+
     setUser(authUser);
 
     // Initialize WebRTC for private chats
@@ -1199,7 +1217,7 @@ function App() {
       // console.log('📦 Invite code:', codeToUse);
 
       // Small delay to ensure services are ready
-      setTimeout(async () => {
+      authTimeoutRef.current = setTimeout(async () => {
         try {
           const result = await friendsService.acceptInvite(codeToUse);
           // console.log('✅ Invite acceptance result:', result);
@@ -1221,16 +1239,25 @@ function App() {
           if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
             alert('Note: ' + error.message);
           }
+        } finally {
+          // Always clear the timeout reference and invite code
+          authTimeoutRef.current = null;
+          setInviteCode(null);
+          // Clear the invite from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
-        setInviteCode(null);
-        // Clear the invite from URL
-        window.history.replaceState({}, document.title, window.location.pathname);
       }, 4000); // 4 second delay to ensure Gun.js is ready for new users
     }
   };
 
   // Handle logout
   const handleLogout = () => {
+    // Clear any pending auth timeouts to prevent memory leaks
+    if (authTimeoutRef.current) {
+      clearTimeout(authTimeoutRef.current);
+      authTimeoutRef.current = null;
+    }
+
     gunAuthService.logout();
     webrtcService.destroy();
     hybridGunService.cleanup();

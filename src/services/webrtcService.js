@@ -105,6 +105,9 @@ class WebRTCService {
       ordered: true
     });
 
+    // Store data channel immediately to avoid race conditions
+    this.dataChannels.set(normalizedPeerId, dc);
+
     this.setupDataChannel(dc, normalizedPeerId);
     this.setupPeerConnection(pc, normalizedPeerId);
 
@@ -348,6 +351,7 @@ class WebRTCService {
 
     dc.onclose = () => {
       debugLogger.webrtc('Data channel closed with:', peerId);
+      // Remove from map to prevent stale references
       this.dataChannels.delete(peerId);
     };
 
@@ -438,13 +442,13 @@ class WebRTCService {
     const normalizedPeerId = peerId.split('.')[0];
     const pc = this.connections.get(normalizedPeerId);
     const dc = this.dataChannels.get(normalizedPeerId);
-    
-    // Log current state for debugging
-    if (pc || dc) {
+
+    // Log current state for debugging (only if there's an active connection)
+    if (pc) {
       debugLogger.webrtc(`Connection status for ${peerId}:`, {
-        pcState: pc?.connectionState,
+        pcState: pc.connectionState,
         dcState: dc?.readyState,
-        iceState: pc?.iceConnectionState
+        iceState: pc.iceConnectionState
       });
     }
 

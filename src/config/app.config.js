@@ -80,10 +80,11 @@ export const APP_CONFIG = {
 
   // Security
   security: {
-    encryptionAlgorithm: 'AES',
-    keyDerivationIterations: 100000,
+    encryptionAlgorithm: 'AES-GCM', // Updated to WebCrypto AES-GCM
+    keyDerivationIterations: 600000, // OWASP recommended for PBKDF2
     inviteHmacSecret: import.meta.env.VITE_INVITE_SECRET || crypto.randomUUID(),
     csrfTokenLength: 32,
+    webcryptoRequired: true, // Requires WebCrypto API support
   },
 };
 
