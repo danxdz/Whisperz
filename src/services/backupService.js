@@ -221,13 +221,13 @@ class BackupService {
           throw new Error('Password required for encrypted backup');
         }
 
-        // Handle different backup versions
+        // Only support current WebCrypto version
         if (backup.version === this.version) {
           // Version 2.0.0: WebCrypto AES-GCM
           backupData = await this.decryptBackupV2(backup, password);
         } else {
-          // Legacy version: CryptoJS AES
-          backupData = await this.decryptBackupLegacy(backup, password);
+          // Legacy versions not supported without crypto-js
+          throw new Error(`Backup version ${backup.version} is not supported. Please create a new backup with the current version.`);
         }
       } else {
         backupData = backup.data;
@@ -337,53 +337,7 @@ class BackupService {
     return JSON.parse(decryptedText);
   }
 
-  /**
-   * Decrypt backup using legacy CryptoJS (backward compatibility)
-   */
-  async decryptBackupLegacy(backup, password) {
-    // Use legacy salt and iterations for compatibility
-    const encoder = new TextEncoder();
-    const salt = encoder.encode('whisperz-backup-salt'); // Original salt
 
-    const keyMaterial = await window.crypto.subtle.importKey(
-      'raw',
-      encoder.encode(password),
-      'PBKDF2',
-      false,
-      ['deriveBits']
-    );
-
-    const keyBits = await window.crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        salt: salt,
-        iterations: 1000, // Original iteration count
-        hash: 'SHA-256'
-      },
-      keyMaterial,
-      256
-    );
-
-    // Convert to hex string for CryptoJS compatibility
-    const keyArray = new Uint8Array(keyBits);
-    const keyHex = Array.from(keyArray, byte => byte.toString(16).padStart(2, '0')).join('');
-
-    // Fallback to CryptoJS for legacy decryption
-    try {
-      const CryptoJS = (await import('crypto-js')).default;
-      const decrypted = CryptoJS.AES.decrypt(backup.data, keyHex);
-      const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
-
-      if (!decryptedText) {
-        throw new Error('Invalid password');
-      }
-
-      return JSON.parse(decryptedText);
-    } catch (importError) {
-      // If crypto-js is not available (which is expected), throw a helpful error
-      throw new Error('Legacy backup decryption not supported. Please re-export your backup with the current version.');
-    }
-  }
 
   /**
    * Clear specific data categories
