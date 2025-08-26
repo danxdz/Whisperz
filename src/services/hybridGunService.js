@@ -16,6 +16,26 @@ class HybridGunService {
     return this.gun;
   }
 
+  // Store message in conversation
+  async storeMessage(conversationId, message) {
+    if (!this.gun) throw new Error('Gun not initialized');
+
+    const messageId = message.id || securityUtils.generateMessageId();
+
+    // Store in public conversation space
+    this.gun.get('conversations')
+      .get(conversationId)
+      .get('messages')
+      .get(messageId)
+      .put({
+        ...message,
+        id: messageId,
+        storedAt: Date.now()
+      });
+
+    return messageId;
+  }
+
   // Store offline message
   async storeOfflineMessage(recipientPub, message) {
     if (!this.gun) throw new Error('Gun not initialized');
