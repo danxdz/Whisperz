@@ -35,6 +35,126 @@ class FriendsService {
     return code;
   }
 
+  // Encrypt invite metadata for privacy (hides social connections)
+  async encryptInviteMetadata(metadata) {
+    try {
+      // Use a derive key from the invite code itself for encryption
+      // This way only people with the invite code can decrypt the metadata
+      const encoder = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(metadata.inviteCode),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+      );
+
+      // Derive encryption key
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: salt,
+          iterations: 10000, // Lighter for metadata encryption
+          hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt']
+      );
+
+      // Encrypt the metadata
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encodedData = encoder.encode(JSON.stringify({
+        createdAt: metadata.createdAt,
+        expiresAt: metadata.expiresAt,
+        used: metadata.used
+      }));
+
+      const encryptedData = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        encodedData
+      );
+
+      // Return encrypted metadata with salt and IV
+      return {
+        encrypted: true,
+        salt: Array.from(salt),
+        iv: Array.from(iv),
+        data: Array.from(new Uint8Array(encryptedData)),
+        version: 1
+      };
+    } catch (error) {
+      console.error('Failed to encrypt invite metadata:', error);
+      // Fallback to minimal unencrypted data if encryption fails
+      return {
+        encrypted: false,
+        createdAt: metadata.createdAt,
+        expiresAt: metadata.expiresAt,
+        used: metadata.used
+      };
+    }
+  }
+
+  // Decrypt invite metadata
+  async decryptInviteMetadata(encryptedMetadata, inviteCode) {
+    if (!encryptedMetadata.encrypted) {
+      // Return as-is if not encrypted (backward compatibility)
+      return encryptedMetadata;
+    }
+
+    try {
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      // Recreate the same key derivation process
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(inviteCode),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+      );
+
+      const salt = new Uint8Array(encryptedMetadata.salt);
+      const key = await crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: salt,
+          iterations: 10000,
+          hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+      );
+
+      // Decrypt the data
+      const iv = new Uint8Array(encryptedMetadata.iv);
+      const encryptedData = new Uint8Array(encryptedMetadata.data);
+
+      const decryptedData = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        encryptedData
+      );
+
+      const decryptedText = decoder.decode(decryptedData);
+      return JSON.parse(decryptedText);
+    } catch (error) {
+      console.error('Failed to decrypt invite metadata:', error);
+      // Return minimal fallback data
+      return {
+        createdAt: null,
+        expiresAt: null,
+        used: true // Assume used if we can't decrypt
+      };
+    }
+  }
+
   // Sign invite data
   async signInvite(inviteData) {
     const user = gunAuthService.getCurrentUser();
@@ -139,7 +259,7 @@ class FriendsService {
     // No need for peer exchange - everyone uses the same relay
     const inviteData = {
       from: user.pub,
-      epub: user.epub,  // CRITICAL: Encryption public key for Gun.SEA.secret()
+      epub: user.epub || user.is?.epub,  // CRITICAL: Encryption public key for Gun.SEA.secret()
       nickname: nickname || 'Anonymous',
       createdAt: Date.now(),
       expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
@@ -160,11 +280,16 @@ class FriendsService {
       });
     });
 
-    // Also store in a global invites registry for lookup
-    this.gun.get('invites').get(inviteCode).put({
-      ...inviteData,
-      inviteCode // Include the code for reference
+    // Store encrypted metadata in global registry for lookup
+    // Only store minimal encrypted data to preserve privacy
+    const publicMetadata = await this.encryptInviteMetadata({
+      inviteCode,
+      createdAt: inviteData.createdAt,
+      expiresAt: inviteData.expiresAt,
+      used: inviteData.used
     });
+    
+    this.gun.get('invites').get(inviteCode).put(publicMetadata);
 
     // Store as pending friend for the inviter
     const pendingFriend = {
@@ -339,7 +464,7 @@ class FriendsService {
             fromPublicKey: inviteData.from,
             fromEpub: inviteData.epub,  // Inviter's encryption key
             toPublicKey: user.pub,
-            toEpub: user.epub,  // Our encryption key for inviter to use
+            toEpub: user.epub || user.is?.epub,  // Our encryption key for inviter to use (try both formats)
             fromNickname: inviteData.nickname,
             toNickname: currentUserNickname,
             addedAt: Date.now(),

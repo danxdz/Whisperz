@@ -51,8 +51,18 @@ class MessageService {
       // Use epub from friend data for proper Gun.SEA encryption
       const friendData = await friendsService.getFriend(recipientPublicKey);
       const encryptionKey = friendData?.epub || recipientPublicKey; // Fallback to pub if epub not available
+      
+      // Debug logging
+      console.log('🔐 Encryption Debug:');
+      console.log('  Friend data:', friendData);
+      console.log('  Friend epub:', friendData?.epub);
+      console.log('  Using encryption key:', encryptionKey);
+      console.log('  Current user epub:', gunAuthService.getCurrentUser()?.epub);
+      
       encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);
+      console.log('✅ Message encrypted successfully');
     } catch (error) {
+      console.error('❌ Failed to encrypt message:', error);
       debugLogger.error('Failed to encrypt message:', error);
       encryptedMessage = message; // Fallback to unencrypted
     }
