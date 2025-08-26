@@ -13,6 +13,7 @@ class WebRTCService {
     this.dataChannels = new Map(); // peerId -> RTCDataChannel
     this.messageHandlers = new Set();
     this.connectionHandlers = new Set();
+    this.queuedIceCandidates = new Map(); // peerId -> ICE candidates array
     this.peerId = null;
     this.isInitialized = false;
 
@@ -188,6 +189,9 @@ class WebRTCService {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       debugLogger.webrtc('✅ Remote description set, creating answer...');
       
+      // Process any queued ICE candidates now that the connection is established
+      await this.processQueuedIceCandidates(from);
+      
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       debugLogger.webrtc('✅ Local description set, sending answer...');
@@ -237,6 +241,9 @@ class WebRTCService {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
       debugLogger.webrtc('✅ Answer processed successfully, connection should be established');
       
+      // Process any queued ICE candidates now that the connection is established
+      await this.processQueuedIceCandidates(from);
+      
       // Log connection state
       debugLogger.webrtc('Connection state:', pc.connectionState);
       debugLogger.webrtc('ICE connection state:', pc.iceConnectionState);
@@ -253,7 +260,12 @@ class WebRTCService {
     const pc = this.connections.get(from);
 
     if (!pc) {
-      debugLogger.warn('No connection found for ICE candidate from:', from);
+      // Queue the ICE candidate for when the connection is established
+      if (!this.queuedIceCandidates.has(from)) {
+        this.queuedIceCandidates.set(from, []);
+      }
+      this.queuedIceCandidates.get(from).push(candidate);
+      debugLogger.webrtc('Queued ICE candidate from:', from);
       return;
     }
 
@@ -338,6 +350,35 @@ class WebRTCService {
         });
       }
     };
+  }
+
+  // Process queued ICE candidates for a peer
+  async processQueuedIceCandidates(peerId) {
+    const candidates = this.queuedIceCandidates.get(peerId);
+    if (!candidates || candidates.length === 0) {
+      return;
+    }
+
+    const pc = this.connections.get(peerId);
+    if (!pc) {
+      return;
+    }
+
+    debugLogger.webrtc(`Processing ${candidates.length} queued ICE candidates for:`, peerId);
+    
+    for (const candidate of candidates) {
+      try {
+        if (candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          debugLogger.webrtc('✅ Added queued ICE candidate for:', peerId);
+        }
+      } catch (error) {
+        debugLogger.error('Failed to add queued ICE candidate:', error);
+      }
+    }
+
+    // Clear the queue
+    this.queuedIceCandidates.delete(peerId);
   }
 
   // Setup data channel handlers

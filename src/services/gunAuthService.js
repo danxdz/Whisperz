@@ -222,26 +222,27 @@ class GunAuthService {
   }
 
   // Generate encrypted pair for secure communication
-  async generateEncryptedPair(recipientPub) {
+  async generateEncryptedPair(recipientEpub) {
     if (!this.isAuthenticated()) {
       throw new Error('Not authenticated');
     }
 
     const user = this.getCurrentUser();
-    const secret = await Gun.SEA.secret(recipientPub, user);
+    // Use recipientEpub (encryption public key) instead of pub for proper Gun.SEA secret generation
+    const secret = await Gun.SEA.secret(recipientEpub, user);
     return secret;
   }
 
-  // Encrypt data for a specific user
-  async encryptFor(data, recipientPub) {
-    const secret = await this.generateEncryptedPair(recipientPub);
+  // Encrypt data for a specific user using their encryption public key
+  async encryptFor(data, recipientEpub) {
+    const secret = await this.generateEncryptedPair(recipientEpub);
     const encrypted = await Gun.SEA.encrypt(data, secret);
     return encrypted;
   }
 
-  // Decrypt data from a specific user
-  async decryptFrom(encryptedData, senderPub) {
-    const secret = await this.generateEncryptedPair(senderPub);
+  // Decrypt data from a specific user using their encryption public key
+  async decryptFrom(encryptedData, senderEpub) {
+    const secret = await this.generateEncryptedPair(senderEpub);
     const decrypted = await Gun.SEA.decrypt(encryptedData, secret);
     return decrypted;
   }
