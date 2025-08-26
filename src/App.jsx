@@ -1217,7 +1217,7 @@ function App() {
       // console.log('📦 Invite code:', codeToUse);
 
       // Small delay to ensure services are ready
-      if (authTimeoutRef) {
+      if (authTimeoutRef?.current !== undefined) {
         authTimeoutRef.current = setTimeout(async () => {
           try {
             const result = await friendsService.acceptInvite(codeToUse);
@@ -1242,7 +1242,7 @@ function App() {
             }
           } finally {
             // Always clear the timeout reference and invite code
-            if (authTimeoutRef) {
+            if (authTimeoutRef?.current) {
               authTimeoutRef.current = null;
             }
             setInviteCode(null);
