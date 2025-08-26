@@ -12,26 +12,23 @@ import consoleCapture from './utils/consoleCapture';
 import debugLogger from './utils/debugLogger';
 import './index.css';
 
-// Module-level timeout manager to avoid React ref issues in production
-class TimeoutManager {
-  constructor() {
-    this.authTimeout = null;
-  }
-  
-  setAuthTimeout(callback, delay) {
-    this.clearAuthTimeout();
-    this.authTimeout = setTimeout(callback, delay);
-  }
-  
-  clearAuthTimeout() {
-    if (this.authTimeout) {
-      clearTimeout(this.authTimeout);
-      this.authTimeout = null;
-    }
-  }
-}
+// Production-safe timeout manager using closure
+const createTimeoutManager = () => {
+  let authTimeout = null;
 
-const timeoutManager = new TimeoutManager();
+  return {
+    setAuthTimeout: (callback, delay) => {
+      if (authTimeout) clearTimeout(authTimeout);
+      authTimeout = setTimeout(callback, delay);
+    },
+    clearAuthTimeout: () => {
+      if (authTimeout) {
+        clearTimeout(authTimeout);
+        authTimeout = null;
+      }
+    }
+  };
+};
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
 import ChatSecurityStatus from './components/ChatSecurityStatus';
@@ -40,32 +37,6 @@ import { useResponsive } from './hooks/useResponsive';
 import { useConnectionState } from './hooks/useConnectionState';
 
 // Create rate limiter for login attempts
-const loginRateLimiter = (() => {
-  const attempts = new Map();
-  const MAX_ATTEMPTS = 5;
-  const WINDOW_MS = 60000; // 1 minute
-
-  return {
-    check: (username) => {
-      const now = Date.now();
-      const userAttempts = attempts.get(username) || [];
-      const recentAttempts = userAttempts.filter(time => now - time < WINDOW_MS);
-
-      if (recentAttempts.length >= MAX_ATTEMPTS) {
-        const timeLeft = Math.ceil((WINDOW_MS - (now - recentAttempts[0])) / 1000);
-        return {
-          allowed: false,
-          error: `Too many login attempts. Please wait ${timeLeft} seconds.`
-        };
-      }
-
-      recentAttempts.push(now);
-      attempts.set(username, recentAttempts);
-      return { allowed: true };
-    }
-  };
-})();
-
 // Login Component - No registration option
 function LoginView({ onLogin, inviteCode }) {
   const [username, setUsername] = useState('');
@@ -73,6 +44,33 @@ function LoginView({ onLogin, inviteCode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showFirstUserSetup, setShowFirstUserSetup] = useState(false);
+
+  // Rate limiter for login attempts
+  const loginRateLimiter = useRef((() => {
+    const attempts = new Map();
+    const MAX_ATTEMPTS = 5;
+    const WINDOW_MS = 60000; // 1 minute
+
+    return {
+      check: (username) => {
+        const now = Date.now();
+        const userAttempts = attempts.get(username) || [];
+        const recentAttempts = userAttempts.filter(time => now - time < WINDOW_MS);
+
+        if (recentAttempts.length >= MAX_ATTEMPTS) {
+          const timeLeft = Math.ceil((WINDOW_MS - (now - recentAttempts[0])) / 1000);
+          return {
+            allowed: false,
+            error: `Too many login attempts. Please wait ${timeLeft} seconds.`
+          };
+        }
+
+        recentAttempts.push(now);
+        attempts.set(username, recentAttempts);
+        return { allowed: true };
+      }
+    };
+  })()).current;
 
   // Check if this might be the first user (no accounts exist)
   useEffect(() => {
@@ -992,6 +990,9 @@ function App() {
   const [initError, setInitError] = useState(null);
   const [isAdminSetup, setIsAdminSetup] = useState(false);
   const loadFriendsRef = useRef(null);
+
+  // Production-safe timeout manager
+  const timeoutManager = useRef(createTimeoutManager()).current;
 
   // Version indicator for deployment verification
   useEffect(() => {

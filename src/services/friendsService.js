@@ -78,12 +78,12 @@ class FriendsService {
         encodedData
       );
 
-      // Return encrypted metadata with salt and IV
+      // Return encrypted metadata with salt and IV (converted to base64 for Gun.js compatibility)
       return {
         encrypted: true,
-        salt: Array.from(salt),
-        iv: Array.from(iv),
-        data: Array.from(new Uint8Array(encryptedData)),
+        salt: btoa(String.fromCharCode(...salt)),
+        iv: btoa(String.fromCharCode(...iv)),
+        data: btoa(String.fromCharCode(...new Uint8Array(encryptedData))),
         version: 1
       };
     } catch (error) {
@@ -118,7 +118,8 @@ class FriendsService {
         ['deriveKey']
       );
 
-      const salt = new Uint8Array(encryptedMetadata.salt);
+      // Convert base64 back to Uint8Array for decryption
+      const salt = new Uint8Array(atob(encryptedMetadata.salt).split('').map(c => c.charCodeAt(0)));
       const key = await crypto.subtle.deriveKey(
         {
           name: 'PBKDF2',
@@ -133,8 +134,8 @@ class FriendsService {
       );
 
       // Decrypt the data
-      const iv = new Uint8Array(encryptedMetadata.iv);
-      const encryptedData = new Uint8Array(encryptedMetadata.data);
+      const iv = new Uint8Array(atob(encryptedMetadata.iv).split('').map(c => c.charCodeAt(0)));
+      const encryptedData = new Uint8Array(atob(encryptedMetadata.data).split('').map(c => c.charCodeAt(0)));
 
       const decryptedData = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv: iv },
