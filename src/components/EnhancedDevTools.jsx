@@ -4,7 +4,7 @@ import friendsService from '../services/friendsService';
 import hybridGunService from '../services/hybridGunService';
 // WebRTC removed - using Gun.js only
 import backupService from '../services/backupService';
-import p2pDebugger from '../utils/p2pDebugger';
+// p2pDebugger removed - using Gun.js only
 import consoleCapture from '../utils/consoleCapture';
 import { useTheme } from '../contexts/ThemeContext';
 import { useResponsive } from '../hooks/useResponsive';
@@ -1208,7 +1208,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div>Connected Peers: {networkStats.connectedPeers}</div>
             <div style={{ marginTop: '8px' }}>
               <button
-                onClick={() => p2pDebugger.runFullDiagnostic()}
+                onClick={() => console.log('P2P diagnostics removed - using Gun.js only')}
                 style={{
                   padding: '4px 8px',
                   background: colors.primary,
@@ -2610,7 +2610,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   // P2P Tab Content
   const renderP2PTab = () => {
-    const systemInfo = p2pDebugger.systemInfo;
+    const systemInfo = { status: 'Gun.js only' };
     const logs = p2pLogs; // Use state logs
 
     return (
@@ -2662,7 +2662,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={async () => {
-                const result = await p2pDebugger.runFullDiagnostic();
+                const result = { status: 'P2P diagnostics removed' };
                 console.log('📊 Diagnostic Result:', result);
               }}
               style={{
@@ -2679,7 +2679,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </button>
             <button
               onClick={() => {
-                p2pDebugger.startMonitoring();
+                console.log('P2P monitoring removed - using Gun.js only');
                 console.log('👁️ P2P Monitoring active');
               }}
               style={{
@@ -2696,7 +2696,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             </button>
             <button
               onClick={() => {
-                const stats = p2pDebugger.getStats();
+                const stats = { status: 'P2P stats removed' };
                 console.log('📈 P2P Stats:', stats);
               }}
               style={{
@@ -2727,7 +2727,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => {
-                  setP2PLogs([...p2pDebugger.logs]);
+                  setP2PLogs(['P2P debugging removed - using Gun.js only']);
                 }}
                 style={{
                   padding: '4px 8px',
@@ -2743,7 +2743,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               </button>
               <button
                 onClick={() => {
-                  p2pDebugger.clearLogs();
+                  console.log('P2P logs cleared');
                   setP2PLogs([]);
                   console.log('🧹 P2P logs cleared');
                 }}

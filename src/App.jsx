@@ -5,7 +5,7 @@ import gunOnlyP2P from './services/gunOnlyP2P';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
-import p2pDebugger from './utils/p2pDebugger';
+// p2pDebugger removed - using Gun.js only
 import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
@@ -400,25 +400,15 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     debugLogger.debug('gun', '📍 Updating presence...');
     hybridGunService.updatePresence('online');
 
-      // return () => {
-      //   unsubscribe();
-      // };
-    };
-
-    // Initial update
-    initializeWebRTC();
-
-    // Update again after a short delay to ensure everything is ready
-    const timeoutId = setTimeout(initializeWebRTC, 2000);
-
     // Handle page visibility
     const handleVisibility = () => {
       if (document.hidden) {
         hybridGunService.updatePresence('away');
       } else {
-        hybridGunService.updatePresence('online', { peerId: webrtcService.getPeerId() });
+        hybridGunService.updatePresence('online');
       }
     };
+
     document.addEventListener('visibilitychange', handleVisibility);
 
     // Handle beforeunload
@@ -427,19 +417,11 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     };
     window.addEventListener('beforeunload', handleUnload);
 
-    // Load friends once - no need for periodic refresh
-    // Presence is already handled by presenceService on login/visibility
-    // const refreshInterval = setInterval(() => {
-    //   loadFriends();
-    // }, 10000);
-
     return () => {
-      clearTimeout(timeoutId);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('beforeunload', handleUnload);
-      // clearInterval(refreshInterval); // Removed - no longer needed
     };
-  }, [user?.pub]);
+  }, []);
 
   // Subscribe to friends' presence updates in real-time
   useEffect(() => {
@@ -977,11 +959,7 @@ function App() {
         await hybridGunService.initialize();
         await friendsService.initialize();
 
-        // Start P2P monitoring in development
-        if (import.meta.env.DEV) {
-          p2pDebugger.startMonitoring();
-          debugLogger.info('🔍 P2P debugging enabled');
-        }
+        // P2P debugging removed - using Gun.js only
 
         // Add test helper to window for debugging
         window.testMessage = async (message = 'Test message from console!') => {
@@ -1008,43 +986,13 @@ function App() {
           }
         };
 
-        window.testWebRTC = async () => {
-          const friends = await friendsService.getFriends();
-          if (friends.length === 0) {
-            // console.log('❌ No friends to test with');
-            return;
-          }
-
-          for (const friend of friends) {
-            const presence = await friendsService.getFriendPresence(friend.publicKey);
-            // console.log(`👤 ${friend.nickname} presence:`, presence);
-
-            if (presence.isOnline && presence.peerId) {
-              // console.log(`🔄 Testing WebRTC connection to ${friend.nickname}...`);
-              try {
-                const CONNECTION = await webrtcService.connectToPeer(presence.peerId);
-                // console.log(`✅ Connected to ${friend.nickname}!`, CONNECTION);
-
-                // Test sending a ping
-                await webrtcService.sendMessage(presence.peerId, {
-                  type: 'ping',
-                  timestamp: Date.now()
-                });
-                // console.log(`📡 Ping sent to ${friend.nickname}`);
-              } catch (error) {
-                // console.error(`❌ Failed to connect to ${friend.nickname}:`, error);
-              }
-            } else {
-              // console.log(`⚫ ${friend.nickname} is offline`);
-            }
-          }
-        };
+        // WebRTC test function removed - using Gun.js only
 
         // console.log('✅ Services initialized');
         // console.log('💡 Test helpers available:');
         // console.log('   - window.testMessage("Hello!") - Send test message');
         // console.log('   - window.getMessageHistory() - View all messages');
-        // console.log('   - window.testWebRTC() - Test WebRTC connections');
+
       } catch (error) {
         // console.error('Failed to initialize services:', error);
       }

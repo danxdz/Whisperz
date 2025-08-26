@@ -1,43 +1,46 @@
-# Why We Use Public Peers (And How to Go Private)
+# Gun.js Relay Network - Current Architecture
 
-## 🤔 Why Public Peers?
+## 🤔 Why We Use Gun.js Relays?
 
 ### **Current Setup:**
 ```javascript
-// We connect to these public relays:
-- https://relay.peer.ooo/gun
-- https://gun-relay.herokuapp.com/gun
-- https://gunjs.herokuapp.com/gun
+// We connect to Gun.js relay network:
+- Multiple public relays for redundancy
+- Messages flow through the Gun mesh network
+- Fully decentralized architecture
+- Always available for messaging
 ```
 
 ### **Reasons:**
 
-1. **📡 NAT/Firewall Bypass**
-   - Most users are behind NAT (home routers)
-   - Can't accept direct incoming connections
-   - Public relays act as "meeting points"
+1. **🌐 Decentralized Messaging**
+   - Gun.js provides peer-to-peer messaging through relays
+   - No single point of failure
+   - Messages are stored and forwarded by the relay network
 
 2. **🌍 Always Available**
-   - 24/7 uptime
+   - 24/7 uptime through multiple relays
    - Users can connect from anywhere
-   - No need to run your own server
+   - Reliable message delivery
 
 3. **🤝 Network Bootstrap**
-   - Need at least ONE relay to find other peers
-   - Public relays help peers discover each other
+   - Relays help peers discover each other
+   - Messages are routed through the Gun network
+   - Real-time synchronization across devices
 
-## ⚠️ **The Privacy Problem:**
+## ⚠️ **Privacy Considerations:**
 
 **Public relays can potentially see:**
-- ❌ When you're online
+- ❌ When you're online (presence data)
 - ❌ Your IP address
 - ❌ Encrypted message metadata (not content)
 - ❌ Who you're connecting with (public keys)
 
 **But they CANNOT see:**
-- ✅ Your private messages (encrypted)
+- ✅ Your private messages (E2E encrypted)
 - ✅ Your password
-- ✅ Your private data (SEA encrypted)
+- ✅ Your private data (Gun.SEA encrypted)
+- ✅ Message content (AES-GCM encrypted)
 
 ## 🔒 **Solution: Your Own Private Relay**
 
@@ -155,8 +158,9 @@ You can start with public peers and gradually move to private as needed. The app
 ## 🔐 **Security Note:**
 
 Even with public relays:
-- Messages are end-to-end encrypted (WebRTC)
-- Invites are digitally signed (SEA)
-- Private data is encrypted (Gun SEA)
+- Messages are end-to-end encrypted (AES-GCM + Gun.SEA)
+- Invites are digitally signed (Gun.SEA)
+- Private data is encrypted (Gun.SEA)
+- All message content is encrypted before transmission
 
-Public relays see encrypted traffic, not content!
+Public relays see encrypted traffic, not message content!
