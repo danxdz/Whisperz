@@ -2,6 +2,7 @@ import webrtcService from './webrtcService';
 import hybridGunService from './hybridGunService';
 import gunAuthService from './gunAuthService';
 import friendsService from './friendsService';
+import securityUtils from '../utils/securityUtils.js';
 
 // Message service for handling all message operations
 class MessageService {
@@ -33,7 +34,7 @@ class MessageService {
     const p2pOnlyMode = localStorage.getItem('p2p_only_mode') === 'true';
 
     const message = {
-      id: `msg_${Date.now()}_${Math.random()}`,
+      id: securityUtils.generateMessageId(),
       content,
       from: user.pub,
       to: recipientPublicKey,
@@ -338,7 +339,7 @@ class MessageService {
       }
 
       // Store the message
-      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const messageId = securityUtils.generateMessageId();
       offlineRef.get(messageId).put(message);
 
       // console.log(`📥 Stored offline message for ${recipientPub} (queue: ${messageCount + 1}/${MAX_OFFLINE_MESSAGES})`);

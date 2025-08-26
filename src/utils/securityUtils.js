@@ -51,6 +51,31 @@ class SecurityUtils {
     return `session_${this.generateSecureRandom(32)}_${Date.now()}`;
   }
 
+  // Generate secure message ID
+  generateMessageId() {
+    return `msg_${Date.now()}_${this.generateSecureRandom(16)}`;
+  }
+
+  // Generate secure conversation ID
+  generateConversationId() {
+    return `conv_${Date.now()}_${this.generateSecureRandom(16)}`;
+  }
+
+  // Generate secure invite ID
+  generateInviteId() {
+    return `invite_${Date.now()}_${this.generateSecureRandom(16)}`;
+  }
+
+  // Generate secure request ID
+  generateRequestId() {
+    return `req_${Date.now()}_${this.generateSecureRandom(16)}`;
+  }
+
+  // Generate secure signal ID
+  generateSignalId() {
+    return `${Date.now()}_${this.generateSecureRandom(16)}`;
+  }
+
   // Sanitize user input to prevent XSS
   sanitizeInput(input) {
     if (typeof input !== 'string') return '';

@@ -5,6 +5,7 @@
 
 import gunAuthService from './gunAuthService';
 import debugLogger from '../utils/debugLogger';
+import securityUtils from '../utils/securityUtils.js';
 
 class WebRTCService {
   constructor() {
@@ -363,7 +364,7 @@ class WebRTCService {
   // Send signal via Gun
   sendSignal(targetPeerId, signal) {
     const gun = gunAuthService.gun;
-    const signalId = `${Date.now()}_${Math.random()}`;
+    const signalId = securityUtils.generateSignalId();
 
     debugLogger.webrtc(`📤 Sending ${signal.type} to:`, targetPeerId);
     

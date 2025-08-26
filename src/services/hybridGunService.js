@@ -1,4 +1,5 @@
 import gunAuthService from './gunAuthService';
+import securityUtils from '../utils/securityUtils.js';
 
 // Hybrid Gun.js service for data persistence
 class HybridGunService {
@@ -19,7 +20,7 @@ class HybridGunService {
   async storeOfflineMessage(recipientPub, message) {
     if (!this.gun) throw new Error('Gun not initialized');
 
-    const messageId = `msg_${Date.now()}_${Math.random()}`;
+    const messageId = securityUtils.generateMessageId();
     const messageData = {
       ...message,
       id: messageId,
@@ -83,7 +84,7 @@ class HybridGunService {
   async storeMessageHistory(conversationId, message) {
     if (!this.user) throw new Error('Not authenticated');
 
-    const messageId = message.id || `msg_${Date.now()}_${Math.random()}`;
+    const messageId = message.id || securityUtils.generateMessageId();
 
     // Store in sender's history
     this.user.get('conversations')

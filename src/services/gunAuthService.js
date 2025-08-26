@@ -1,6 +1,7 @@
 import Gun from 'gun/gun';
 import 'gun/sea';
 import 'gun/axe';
+import securityUtils from '../utils/securityUtils.js';
 
 // Gun.js authentication service
 class GunAuthService {
@@ -210,7 +211,7 @@ class GunAuthService {
 
   // Subscribe to auth events
   onAuthChange(callback) {
-    const id = Date.now() + Math.random();
+    const id = `${Date.now()}_${securityUtils.generateSecureRandom(8)}`;
     this.listeners.set(id, callback);
     return () => this.listeners.delete(id);
   }

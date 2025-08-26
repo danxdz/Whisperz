@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import messageService from '../../services/messageService';
 import gunAuthService from '../../services/gunAuthService';
 import webrtcService from '../../services/webrtcService';
+import securityUtils from '../../utils/securityUtils.js';
 
 /**
  * ChatModule - IRC-style chat interface
@@ -71,7 +72,7 @@ function ChatModule({ selectedFriend, currentUser }) {
       from: currentUser.pub,
       to: selectedFriend.publicKey,
       timestamp: Date.now(),
-      id: `msg_${Date.now()}_${Math.random()}`
+      id: securityUtils.generateMessageId()
     };
 
     try {

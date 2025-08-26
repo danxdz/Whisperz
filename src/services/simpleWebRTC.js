@@ -2,6 +2,7 @@
 // Uses Gun.js for signaling only
 
 import gunAuthService from './gunAuthService';
+import securityUtils from '../utils/securityUtils.js';
 
 class SimpleWebRTC {
   constructor() {
@@ -253,7 +254,7 @@ class SimpleWebRTC {
     // Store signal in target's signal space
     gun.get('webrtc_signals')
       .get(targetPublicKey)
-      .get(`signal_${Date.now()}_${Math.random()}`)
+      .get(`signal_${securityUtils.generateSignalId()}`)
       .put(signalData);
   }
 

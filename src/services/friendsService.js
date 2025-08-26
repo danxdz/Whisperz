@@ -4,6 +4,7 @@ import gunAuthService from './gunAuthService';
 import encryptionService from './encryptionService';
 import rateLimiter from '../utils/rateLimiter';
 import debugLogger from '../utils/debugLogger';
+import securityUtils from '../utils/securityUtils.js';
 
 // Friends service for managing relationships
 class FriendsService {
@@ -281,7 +282,7 @@ class FriendsService {
         // No need to connect to peers - everyone uses the same relay now
         debugLogger.info('gun', '🌐 Using default relay - no peer exchange needed');
         // Create bidirectional friendship FIRST (before marking as used)
-        const conversationId = `conv_${Date.now()}_${Math.random()}`;
+        const conversationId = securityUtils.generateConversationId();
 
         // Get current user's nickname
         const currentUserNickname = await this.getUserNickname() || user.alias || 'Anonymous';
@@ -467,7 +468,7 @@ class FriendsService {
     this.friends.set(publicKey, friendData);
 
     // Track as pending invite until accepted
-    const inviteId = `invite_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const inviteId = securityUtils.generateInviteId();
     await new Promise((resolve) => {
       gunAuthService.user.get('pending_invites').get(inviteId).put({
         publicKey,

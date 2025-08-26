@@ -1,5 +1,6 @@
 import gunAuthService from './gunAuthService';
 import friendsService from './friendsService';
+import securityUtils from '../utils/securityUtils.js';
 
 class FriendRequestService {
   constructor() {
@@ -33,7 +34,7 @@ class FriendRequestService {
       throw new Error('Friend request already sent');
     }
 
-    const requestId = `req_${Date.now()}_${Math.random()}`;
+    const requestId = securityUtils.generateRequestId();
     const request = {
       id: requestId,
       from: currentUser.pub,
@@ -91,7 +92,7 @@ class FriendRequestService {
       .put(request);
 
     // Add as friends (both ways)
-    const conversationId = `conv_${Date.now()}_${Math.random()}`;
+    const conversationId = securityUtils.generateConversationId();
 
     // Add friend for current user
     await friendsService.addFriendDirectly(request.from, request.senderNickname, conversationId);

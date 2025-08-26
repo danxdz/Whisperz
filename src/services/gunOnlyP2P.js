@@ -3,6 +3,7 @@
 
 import gunAuthService from './gunAuthService';
 import friendsService from './friendsService';
+import securityUtils from '../utils/securityUtils.js';
 
 class GunOnlyP2P {
   constructor() {
@@ -119,7 +120,7 @@ class GunOnlyP2P {
       };
 
       // Store in friend's inbox
-      const messageId = `msg_${Date.now()}_${Math.random()}`;
+      const messageId = securityUtils.generateMessageId();
       gun.get('p2p_messages')
         .get(friendPublicKey)
         .get(messageId)
