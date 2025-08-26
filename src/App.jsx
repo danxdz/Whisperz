@@ -1217,8 +1217,9 @@ function App() {
       // console.log('📦 Invite code:', codeToUse);
 
       // Small delay to ensure services are ready
-      if (authTimeoutRef?.current !== undefined) {
-        if (authTimeoutRef) authTimeoutRef.current = setTimeout(async () => {
+      try {
+        if (authTimeoutRef && typeof authTimeoutRef === 'object') {
+          authTimeoutRef.current = setTimeout(async () => {
           try {
             const result = await friendsService.acceptInvite(codeToUse);
             // console.log('✅ Invite acceptance result:', result);
@@ -1250,6 +1251,9 @@ function App() {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         }, 4000); // 4 second delay to ensure Gun.js is ready for new users
+        }
+      } catch (error) {
+        console.error('Error setting up invite acceptance timeout:', error);
       }
     }
   };
