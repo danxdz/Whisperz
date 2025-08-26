@@ -309,8 +309,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   useEffect(() => {
     return () => {
       if (authTimeoutRef?.current) {
-        clearTimeout(authTimeoutRef.current);
-        authTimeoutRef.current = null;
+        clearTimeout(authTimeoutRef?.current);
+        if (authTimeoutRef) authTimeoutRef.current = null;
       }
     };
   }, []);
@@ -1179,8 +1179,8 @@ function App() {
 
     // Clear any existing auth-related timeouts to prevent memory leaks
     if (authTimeoutRef?.current) {
-      clearTimeout(authTimeoutRef.current);
-      authTimeoutRef.current = null;
+      clearTimeout(authTimeoutRef?.current);
+      if (authTimeoutRef) authTimeoutRef.current = null;
     }
 
     setUser(authUser);
@@ -1217,8 +1217,8 @@ function App() {
       // console.log('📦 Invite code:', codeToUse);
 
       // Small delay to ensure services are ready
-      if (authTimeoutRef) {
-        authTimeoutRef.current = setTimeout(async () => {
+      if (authTimeoutRef?.current !== undefined) {
+        if (authTimeoutRef) authTimeoutRef.current = setTimeout(async () => {
           try {
             const result = await friendsService.acceptInvite(codeToUse);
             // console.log('✅ Invite acceptance result:', result);
@@ -1243,7 +1243,7 @@ function App() {
           } finally {
             // Always clear the timeout reference and invite code
             if (authTimeoutRef?.current) {
-              authTimeoutRef.current = null;
+              if (authTimeoutRef) authTimeoutRef.current = null;
             }
             setInviteCode(null);
             // Clear the invite from URL
@@ -1258,8 +1258,8 @@ function App() {
   const handleLogout = () => {
     // Clear any pending auth timeouts to prevent memory leaks
     if (authTimeoutRef?.current) {
-      clearTimeout(authTimeoutRef.current);
-      authTimeoutRef.current = null;
+      clearTimeout(authTimeoutRef?.current);
+      if (authTimeoutRef) authTimeoutRef.current = null;
     }
 
     gunAuthService.logout();
