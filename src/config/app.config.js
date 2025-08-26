@@ -82,7 +82,6 @@ export const APP_CONFIG = {
   security: {
     encryptionAlgorithm: 'AES-GCM', // Updated to WebCrypto AES-GCM
     keyDerivationIterations: 600000, // OWASP recommended for PBKDF2
-    inviteHmacSecret: import.meta.env.VITE_INVITE_SECRET || crypto.randomUUID(),
     csrfTokenLength: 32,
     webcryptoRequired: true, // Requires WebCrypto API support
   },
@@ -90,5 +89,43 @@ export const APP_CONFIG = {
 
 // Freeze config to prevent accidental mutations
 Object.freeze(APP_CONFIG);
+
+// Cache for the derived HMAC secret to avoid recalculating
+let _cachedHmacSecret = null;
+
+// Get HMAC secret with consistent fallback
+export async function getInviteHmacSecret() {
+  // Return cached secret if available
+  if (_cachedHmacSecret) {
+    return _cachedHmacSecret;
+  }
+
+  // Use environment variable if available
+  const envSecret = import.meta.env.VITE_INVITE_SECRET;
+  if (envSecret && envSecret !== 'default-invite-secret' && envSecret !== 'your-secret-key-here') {
+    _cachedHmacSecret = envSecret;
+    return envSecret;
+  }
+  
+  // Fallback: derive a consistent secret from domain
+  // This ensures the same secret across deployments on the same domain
+  try {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'fallback-origin';
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`whisperz-hmac-${origin}-v1`);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = new Uint8Array(hashBuffer);
+    const derivedSecret = Array.from(hashArray, byte => byte.toString(16).padStart(2, '0')).join('');
+    
+    _cachedHmacSecret = derivedSecret;
+    return derivedSecret;
+  } catch (error) {
+    // Ultimate fallback if crypto.subtle is not available
+    console.error('Failed to derive HMAC secret, using static fallback');
+    const fallbackSecret = 'fallback-hmac-secret-please-set-env-var';
+    _cachedHmacSecret = fallbackSecret;
+    return fallbackSecret;
+  }
+}
 
 export default APP_CONFIG;

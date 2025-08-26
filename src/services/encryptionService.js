@@ -255,7 +255,13 @@ class EncryptionService {
 
   // Generate HMAC for invite links with secure secret using WebCrypto
   async generateHMAC(data, secret = null) {
-    const actualSecret = secret || import.meta.env.VITE_INVITE_SECRET;
+    let actualSecret = secret;
+    
+    if (!actualSecret) {
+      // Import the function dynamically to avoid circular imports
+      const { getInviteHmacSecret } = await import('../config/app.config.js');
+      actualSecret = await getInviteHmacSecret();
+    }
 
     // Validate secret
     if (!actualSecret || actualSecret === 'default-invite-secret') {
@@ -280,7 +286,13 @@ class EncryptionService {
 
   // Verify HMAC with timing-safe comparison using WebCrypto
   async verifyHMAC(data, hmac, secret = null) {
-    const actualSecret = secret || import.meta.env.VITE_INVITE_SECRET;
+    let actualSecret = secret;
+    
+    if (!actualSecret) {
+      // Import the function dynamically to avoid circular imports
+      const { getInviteHmacSecret } = await import('../config/app.config.js');
+      actualSecret = await getInviteHmacSecret();
+    }
 
     // Validate secret
     if (!actualSecret || actualSecret === 'default-invite-secret') {

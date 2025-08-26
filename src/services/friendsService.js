@@ -12,6 +12,7 @@ class FriendsService {
     this.friends = new Map();
     this.invites = new Map();
     this.friendListeners = new Set();
+    this.inviteRateLimit = new Map(); // Track invite rate limiting per user
     this.gun = null;
     this.user = null;
   }
@@ -86,12 +87,44 @@ class FriendsService {
     }
   }
 
+  // Check invite rate limit
+  checkInviteRateLimit(userPub) {
+    const now = Date.now();
+    const windowMs = 60 * 60 * 1000; // 1 hour window
+    const maxInvites = 10; // Max 10 invites per hour
+    
+    if (!this.inviteRateLimit.has(userPub)) {
+      this.inviteRateLimit.set(userPub, []);
+    }
+    
+    const userInvites = this.inviteRateLimit.get(userPub);
+    
+    // Clean old invites outside the window
+    const recentInvites = userInvites.filter(timestamp => now - timestamp < windowMs);
+    this.inviteRateLimit.set(userPub, recentInvites);
+    
+    if (recentInvites.length >= maxInvites) {
+      const oldestInvite = recentInvites[0];
+      const timeLeft = Math.ceil((windowMs - (now - oldestInvite)) / 1000 / 60); // minutes
+      throw new Error(`Rate limit exceeded. Please wait ${timeLeft} minutes before creating another invite.`);
+    }
+    
+    // Record this invite attempt
+    recentInvites.push(now);
+    this.inviteRateLimit.set(userPub, recentInvites);
+    
+    return true;
+  }
+
   // Generate invite link with one-time use
   async generateInvite() {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
-
+    
     // Check rate limit
+    this.checkInviteRateLimit(user.pub);
+
+    // Check rate limit (using existing rate limiter too)
     const rateCheck = rateLimiter.checkLimit('inviteGeneration');
     if (!rateCheck.allowed) {
       throw new Error(`Rate limit: ${rateCheck.message}`);
