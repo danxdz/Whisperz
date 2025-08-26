@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import friendsService from '../services/friendsService';
 import hybridGunService from '../services/hybridGunService';
-import webrtcService from '../services/webrtcService';
+// WebRTC removed - using Gun.js only
 import backupService from '../services/backupService';
 import p2pDebugger from '../utils/p2pDebugger';
 import consoleCapture from '../utils/consoleCapture';
@@ -91,10 +91,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     try {
       const user = gunAuthService.getCurrentUser();
       if (user) {
-        const peerId = webrtcService.getPeerId();
-        const webrtcReady = webrtcService.isReady();
-
-        // Also check Gun P2P status
+        // Check Gun.js status (WebRTC removed)
         const gunPeers = gunAuthService.gun?._.opt?.peers || {};
         const connectedPeers = Object.keys(gunPeers).filter(url => {
           const peer = gunPeers[url];
@@ -104,8 +101,8 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         setCurrentUserInfo({
           publicKey: user.pub,
           alias: user.alias,
-          peerId: peerId || 'Not initialized',
-          webrtcReady: webrtcReady,
+          peerId: 'Gun.js only',
+          webrtcReady: false, // WebRTC removed
           gunConnected: connectedPeers.length > 0,
           peerCount: connectedPeers.length
         });
@@ -120,8 +117,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       // First, make sure we broadcast our own presence
       const currentUser = gunAuthService.getCurrentUser();
       if (currentUser) {
-        const peerId = webrtcService.getPeerId();
-        hybridGunService.updatePresence('online', { peerId });
+        hybridGunService.updatePresence('online');
         // Broadcasting our presence before checking others
       }
 
@@ -234,12 +230,13 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       const peers = gun?._.opt?.peers ? Object.keys(gun._.opt.peers).length : 0;
 
       // Load network stats
-      const peerId = webrtcService.getPeerId();
-      const webrtcPeers = webrtcService.getConnectedPeers ? webrtcService.getConnectedPeers() : [];
+      // WebRTC removed - using Gun.js only
+      const peerId = 'Gun.js only';
+      const webrtcPeers = [];
 
       setNetworkStats({
         gunStatus: gun ? 'connected' : 'disconnected',
-        webrtcStatus: peerId ? 'initialized' : 'not initialized',
+        webrtcStatus: 'removed',
         peerId: peerId || 'Not initialized',
         connectedPeers: webrtcPeers.length,
         gunPeers: peers,
@@ -252,7 +249,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
         activeInvites: invites.filter(i => !i.used && !i.revoked).length,
         usedInvites: invites.filter(i => i.used).length,
         gunPeers: peers,
-        webrtcStatus: webrtcService.peer?.open ? 'Connected' : 'Disconnected'
+        webrtcStatus: 'Removed - Gun.js only'
       });
     } catch (error) {
       // console.error('Failed to load stats:', error);
@@ -2316,7 +2313,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                         const user = gunAuthService.getCurrentUser();
                         if (user) {
                           console.log('🔧 Forcing WebRTC reconnect...');
-                          await webrtcService.forceReconnect(user.pub);
+                          // WebRTC removed - Gun.js always connected
                           loadCurrentUserInfo();
                         }
                       } catch (error) {
@@ -2646,9 +2643,9 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             🔗 WebRTC Status
           </h4>
           <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)' }}>
-            <div>Peer ID: {webrtcService.getPeerId() || 'Not initialized'}</div>
-            <div>Status: {webrtcService.isReady() ? '🟢 Ready' : '🔴 Not Ready'}</div>
-            <div>Connected Peers: {webrtcService.getConnectedPeers().length}</div>
+            <div>Peer ID: Gun.js only</div>
+            <div>Status: 🟢 Always Ready (Gun.js)</div>
+            <div>Connected Peers: Decentralized</div>
           </div>
         </div>
 

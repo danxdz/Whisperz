@@ -4,7 +4,7 @@
  */
 
 import gunAuthService from './gunAuthService';
-import webrtcService from './webrtcService';
+// WebRTC removed - using Gun.js only for messaging
 import debugLogger from '../utils/debugLogger';
 
 class PresenceService {
@@ -46,25 +46,16 @@ class PresenceService {
     if (!user) return;
 
     this.isOnline = true;
-    const peerId = webrtcService.getPeerId();
 
     const presence = {
       status: 'online',
       lastSeen: Date.now(),
-      peerId: peerId || null,
       timestamp: Date.now()
     };
 
-    // Update in Gun
+    // Update presence in Gun.js only (no WebRTC peers)
     gunAuthService.gun.get('presence').get(user.pub).put(presence);
-
-    // Broadcast to all connected WebRTC peers
-    this.broadcastToWebRTCPeers({
-      type: 'presence',
-      status: 'online',
-      from: user.pub,
-      timestamp: Date.now()
-    });
+    debugLogger.debug('presence', '📍 Presence set to online');
 
     // Status set to online
   }
@@ -81,20 +72,12 @@ class PresenceService {
     const presence = {
       status: 'offline',
       lastSeen: Date.now(),
-      peerId: null,
       timestamp: Date.now()
     };
 
-    // Update in Gun
+    // Update presence in Gun.js only (no WebRTC peers)
     gunAuthService.gun.get('presence').get(user.pub).put(presence);
-
-    // Broadcast to all connected WebRTC peers BEFORE going offline
-    this.broadcastToWebRTCPeers({
-      type: 'presence',
-      status: 'offline',
-      from: user.pub,
-      timestamp: Date.now()
-    });
+    debugLogger.debug('presence', '📍 Presence set to offline');
 
     // Status set to offline
   }
@@ -231,31 +214,7 @@ class PresenceService {
   /**
    * Broadcast to all connected WebRTC peers
    */
-  broadcastToWebRTCPeers(message) {
-    const connectedPeers = webrtcService.getConnectedPeers();
-
-    connectedPeers.forEach(peerId => {
-      try {
-        webrtcService.sendMessage(peerId, message);
-      } catch (error) {
-        debugLogger.error('Failed to send presence to peer:', peerId);
-      }
-    });
-  }
-
-  /**
-   * Handle incoming WebRTC presence message
-   */
-  handleWebRTCPresence(fromPeerId, message) {
-    if (message.type === 'presence') {
-      // Received presence via WebRTC
-
-      // Update friend status based on WebRTC message
-      if (message.from) {
-        this.updateFriendStatus(message.from, message.status);
-      }
-    }
-  }
+  // WebRTC methods removed - using Gun.js only for messaging and presence
 
   /**
    * Setup event listeners
@@ -277,12 +236,7 @@ class PresenceService {
       this.setOffline();
     });
 
-    // Handle WebRTC messages
-    webrtcService.onMessage((peerId, data) => {
-      if (data.type === 'presence') {
-        this.handleWebRTCPresence(peerId, data);
-      }
-    });
+    // WebRTC message handling removed - using Gun.js only
   }
 
   /**

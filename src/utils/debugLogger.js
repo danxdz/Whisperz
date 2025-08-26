@@ -15,8 +15,7 @@ class DebugLogger {
       info: localStorage.getItem('debug_info') !== 'false', // Default to true
       debug: localStorage.getItem('debug_debug') === 'true',
       p2p: localStorage.getItem('debug_p2p') !== 'false', // Default to true for P2P
-      gun: localStorage.getItem('debug_gun') === 'true',
-      webrtc: localStorage.getItem('debug_webrtc') !== 'false' // Default to true for WebRTC
+      gun: localStorage.getItem('debug_gun') === 'true'
     };
 
     // Expose to window for DevTools access
@@ -111,11 +110,7 @@ class DebugLogger {
     }
   }
 
-  webrtc(message, ...args) {
-    if (this.enabled && this.levels.webrtc) {
-      console.log('[WebRTC]', message, ...args);
-    }
-  }
+  // WebRTC debug method removed - using Gun.js only
 
   group(label) {
     if (this.enabled) {

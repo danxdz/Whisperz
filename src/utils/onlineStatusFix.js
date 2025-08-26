@@ -5,7 +5,7 @@
 
 import gunAuthService from '../services/gunAuthService';
 import hybridGunService from '../services/hybridGunService';
-import webrtcService from '../services/webrtcService';
+// WebRTC removed - using Gun.js only
 
 class OnlineStatusManager {
   constructor() {
@@ -53,11 +53,9 @@ class OnlineStatusManager {
     const user = gunAuthService.getCurrentUser();
     if (!user) return;
 
-    const peerId = webrtcService.getPeerId();
     const status = {
       status: 'online',
       lastSeen: Date.now(),
-      peerId: peerId || null,
       timestamp: Date.now()
     };
 

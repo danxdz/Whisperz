@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import gunAuthService from './services/gunAuthService';
-import webrtcService from './services/webrtcService';
+
 import gunOnlyP2P from './services/gunOnlyP2P';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
@@ -395,32 +395,10 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   useEffect(() => {
     loadFriends();
 
-    // Ensure WebRTC is initialized
-    const initializeWebRTC = async () => {
-      if (!webrtcService.isReady() && user?.pub) {
-        try {
-          debugLogger.info('webrtc', '🔄 Re-initializing WebRTC in ChatView...');
-          await webrtcService.initialize(user.pub);
-          // WebRTC ready
-
-          // Gun P2P already initialized in main flow
-        } catch (error) {
-          debugLogger.error('❌ Failed to initialize WebRTC in ChatView:', error);
-        }
-      }
-
-      // Disabled - using Gun.js subscriptions instead
-      // onlineStatusManager.startMonitoring();
-
-      // Subscribe to status changes
-      // const unsubscribe = onlineStatusManager.addListener((statuses) => {
-      //   setOnlineStatus(statuses);
-      // });
-
-      // Update own presence with peer ID
-      const peerId = webrtcService.getPeerId();
-      debugLogger.debug('gun', '📍 Updating presence with peer ID:', peerId);
-      hybridGunService.updatePresence('online', { peerId });
+    // Gun P2P already initialized in main flow
+    // Update own presence
+    debugLogger.debug('gun', '📍 Updating presence...');
+    hybridGunService.updatePresence('online');
 
       // return () => {
       //   unsubscribe();
@@ -625,41 +603,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     // Sanitize input
     const sanitizedMessage = newMessage.trim().slice(0, 1000);
     
-    // Check P2P-only mode
-    const p2pOnlyMode = localStorage.getItem('p2p_only_mode') === 'true';
-    
     try {
-      // In P2P-only mode, check connection first
-      if (p2pOnlyMode && connectionState.status !== 'webrtc') {
-        // Try to connect if friend is online
-        if (connectionState.isOnline) {
-          await attemptWebRTCConnection();
-          // Wait a bit for connection
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Check again
-          if (connectionState.status !== 'webrtc') {
-            alert('P2P-Only Mode: Cannot send message without P2P connection.\nTry clicking the P2P button first.');
-            return;
-          }
-        } else {
-          alert('P2P-Only Mode: Friend is offline. Message not sent.');
-          return;
-        }
-      } else if (!p2pOnlyMode && connectionState.status === 'gun' && connectionState.isOnline) {
-        // Normal mode - try WebRTC if available
-        await attemptWebRTCConnection();
-      }
-
+      // Send message via Gun.js (always available)
       await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
       setNewMessage('');
     } catch (error) {
-      // console.error('Failed to send message:', error);
-      if (error.message.includes('P2P-only')) {
-        alert('🔒 ' + error.message);
-      } else {
-        alert('Failed to send message: ' + error.message);
-      }
+      console.error('Failed to send message:', error);
+      alert('Failed to send message: ' + error.message);
     }
   };
 
@@ -1201,25 +1151,18 @@ function App() {
 
     setUser(authUser);
 
-    // Initialize WebRTC for private chats
+    // Initialize Gun P2P for messaging
     try {
-      debugLogger.debug('webrtc', '🚀 Initializing WebRTC after login...');
-      await webrtcService.initialize(authUser.pub);
-      debugLogger.info('webrtc', '✅ WebRTC initialized with peer ID:', webrtcService.getPeerId());
-
-      // Also initialize Gun P2P as fallback
+      // Initialize Gun P2P messaging
       await gunOnlyP2P.initialize(authUser.pub);
-      debugLogger.debug('gun', '✅ Gun P2P initialized as fallback');
+      debugLogger.debug('gun', '✅ Gun P2P initialized');
     } catch (error) {
       debugLogger.error('❌ Failed to initialize P2P:', error);
     }
 
     // Initialize presence service and set online
     presenceService.initialize();
-
-    // Also update with old methods for compatibility
-    const peerId = webrtcService.getPeerId();
-    hybridGunService.updatePresence('online', { peerId });
+    hybridGunService.updatePresence('online');
     onlineStatusManager.updateOwnStatus();
 
     // Initialize message service
@@ -1270,7 +1213,6 @@ function App() {
     timeoutManager.clearAuthTimeout();
 
     gunAuthService.logout();
-    webrtcService.destroy();
     hybridGunService.cleanup();
     setUser(null);
     setAuthMode('login');

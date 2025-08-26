@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import gunAuthService from '../services/gunAuthService';
 import friendsService from '../services/friendsService';
-import webrtcService from '../services/webrtcService';
+// WebRTC removed - using Gun.js only
 import { useTheme } from '../contexts/ThemeContext';
 
 /**
@@ -49,9 +49,9 @@ function SimplifiedDevTools({ isVisible, onClose }) {
     });
 
     setConnectionInfo({
-      webrtcReady: webrtcService.isReady(),
-      peerId: webrtcService.getPeerId() || 'Not initialized',
-      connectedPeers: webrtcService.getConnectedPeers().length,
+      webrtcReady: false, // WebRTC removed
+      peerId: 'Gun.js only',
+      connectedPeers: 0, // Decentralized
       gunRelays: connectedRelays.length
     });
   };

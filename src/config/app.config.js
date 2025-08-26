@@ -34,13 +34,7 @@ export const APP_CONFIG = {
     inviteCodeLength: 32,
   },
 
-  // WebRTC
-  webrtc: {
-    reconnectDelay: 3000,
-    maxReconnectAttempts: 5,
-    heartbeatInterval: 5000,
-    connectionTimeout: 10000,
-  },
+  // WebRTC removed - using Gun.js only
 
   // Gun.js
   gun: {

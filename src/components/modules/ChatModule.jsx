@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import messageService from '../../services/messageService';
 import gunAuthService from '../../services/gunAuthService';
-import webrtcService from '../../services/webrtcService';
+// WebRTC removed - using Gun.js only
 import securityUtils from '../../utils/securityUtils.js';
 
 /**
@@ -56,12 +56,8 @@ function ChatModule({ selectedFriend, currentUser }) {
   const checkConnection = async () => {
     if (!selectedFriend) return;
 
-    try {
-      const isConnected = await webrtcService.isConnected(selectedFriend.publicKey);
-      setConnectionStatus(isConnected ? 'connected' : 'disconnected');
-    } catch (error) {
-      setConnectionStatus('disconnected');
-    }
+    // Gun.js is always connected for messaging
+    setConnectionStatus('connected');
   };
 
   const sendMessage = async () => {

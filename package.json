@@ -2,7 +2,7 @@
   "name": "whisperz",
   "private": true,
   "version": "2.1.1",
-  "description": "Secure decentralized P2P chat application with WebRTC and Gun.js",
+  "description": "Secure decentralized P2P chat application with Gun.js only",
   "author": "Whisperz Team",
   "license": "MIT",
   "type": "module",
@@ -31,7 +31,6 @@
   },
   "dependencies": {
     "gun": "0.2020.1241",
-    "peerjs": "1.5.5",
     "qrcode.react": "^4.2.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
@@ -55,7 +54,6 @@
   "keywords": [
     "p2p",
     "chat",
-    "webrtc",
     "gun",
     "decentralized",
     "encrypted",

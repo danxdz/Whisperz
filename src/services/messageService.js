@@ -1,4 +1,3 @@
-import webrtcService from './webrtcService';
 import hybridGunService from './hybridGunService';
 import gunAuthService from './gunAuthService';
 import friendsService from './friendsService';
@@ -13,25 +12,17 @@ class MessageService {
 
   // Initialize message service
   initialize() {
-    // Subscribe to WebRTC messages
-    webrtcService.onMessage((peerId, data) => {
-      this.handleIncomingMessage(peerId, data);
-    });
-
-    // Offline messages are checked on initialization and friend selection
-    // No need for periodic checking
+    // Message service initialized - ready for Gun.js messaging
+    console.log('📨 Message service initialized');
   }
 
-  // Send message with WebRTC first, Gun fallback
+  // Send message via Gun.js only (simplified)
   async sendMessage(recipientPublicKey, content, metadata = {}) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
     const friend = await friendsService.getFriend(recipientPublicKey);
     if (!friend) throw new Error('Not a friend');
-    
-    // Check if P2P-only mode is enabled
-    const p2pOnlyMode = localStorage.getItem('p2p_only_mode') === 'true';
 
     const message = {
       id: securityUtils.generateMessageId(),
@@ -40,117 +31,60 @@ class MessageService {
       to: recipientPublicKey,
       timestamp: Date.now(),
       conversationId: friend.conversationId,
+      deliveryMethod: 'gun',
       ...metadata
     };
 
-    // console.log('📤 Sending message:', message);
+    console.log('📤 Sending message via Gun.js:', message);
 
-    // Try to encrypt message using epub (encryption public key)
+    // Encrypt message using epub (encryption public key)
     let encryptedMessage;
     try {
-      // Use epub from friend data for proper Gun.SEA encryption
       const friendData = await friendsService.getFriend(recipientPublicKey);
-      const encryptionKey = friendData?.epub || recipientPublicKey; // Fallback to pub if epub not available
-      
-      // Debug logging
-      console.log('🔐 Encryption Debug:');
-      console.log('  Friend data:', friendData);
-      console.log('  Friend epub:', friendData?.epub);
-      console.log('  Using encryption key:', encryptionKey);
-      console.log('  Current user epub:', gunAuthService.getCurrentUser()?.epub);
-      
+      const encryptionKey = friendData?.epub || recipientPublicKey;
+
+      console.log('🔐 Encrypting message for:', encryptionKey);
       encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);
       console.log('✅ Message encrypted successfully');
     } catch (error) {
       console.error('❌ Failed to encrypt message:', error);
-      debugLogger.error('Failed to encrypt message:', error);
       encryptedMessage = message; // Fallback to unencrypted
     }
 
-    // Try WebRTC first
-    let sentViaWebRTC = false;
-    const presence = await friendsService.getFriendPresence(recipientPublicKey);
+    try {
+      // Store message in Gun.js for delivery
+      await hybridGunService.storeMessage(friend.conversationId, encryptedMessage);
+      console.log('📦 Message stored in Gun.js');
 
-    // console.log('👤 Friend presence:', presence);
+      // Store in local conversation history
+      await hybridGunService.storeMessageHistory(friend.conversationId, message);
 
-    if (presence.isOnline && presence.peerId) {
-      try {
-        // Try to connect if not already connected
-        const connectionStatus = webrtcService.getConnectionStatus(presence.peerId);
-        // console.log('🔌 Connection status:', connectionStatus);
+      // Notify handlers
+      this.notifyHandlers('sent', message);
 
-        if (!connectionStatus.connected) {
-          // console.log('🔄 Attempting to connect to peer:', presence.peerId);
-          await webrtcService.connectToPeer(presence.peerId, {
-            publicKey: user.pub,
-            nickname: await friendsService.getUserNickname()
-          });
-          
-          // Wait a bit for connection to establish
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
-        // Send via WebRTC
-        // console.log('📡 Sending via WebRTC to:', presence.peerId);
-        await webrtcService.sendMessage(presence.peerId, {
-          type: 'message',
-          data: encryptedMessage
-        });
-
-        sentViaWebRTC = true;
-        message.deliveryMethod = 'webrtc';
-        message.delivered = true;
-        // console.log('✅ Message sent via WebRTC');
-      } catch (error) {
-        console.warn('❌ WebRTC send failed, will use Gun:', error.message);
-        
-        // If P2P-only mode, throw error instead of falling back
-        if (p2pOnlyMode) {
-          throw new Error('P2P-only mode: Message not sent (no P2P connection)');
-        }
-      }
+      return message;
+    } catch (error) {
+      console.error('❌ Failed to send message:', error);
+      throw error;
     }
-
-    // Only store in Gun if not P2P-only mode OR if sent via WebRTC (for history)
-    if (!p2pOnlyMode || sentViaWebRTC) {
-      // console.log('💾 Storing message in Gun.js');
-      await hybridGunService.storeOfflineMessage(recipientPublicKey, encryptedMessage);
-    }
-
-    if (!sentViaWebRTC) {
-      if (p2pOnlyMode) {
-        throw new Error('P2P-only mode: Cannot send message without P2P connection');
-      }
-      message.deliveryMethod = 'gun';
-      message.delivered = false;
-      // console.log('📦 Message stored in Gun for offline delivery');
-    }
-
-    // Store in conversation history
-    await hybridGunService.storeMessageHistory(friend.conversationId, message);
-    // console.log('📜 Message added to history');
-
-    // Notify handlers
-    this.notifyHandlers('sent', message);
-
-    return message;
   }
 
-  // Handle incoming message
-  async handleIncomingMessage(peerId, data) {
-    if (data.type !== 'message') return;
-
+  // Handle incoming Gun.js message
+  async handleIncomingMessage(conversationId, encryptedMessage) {
     try {
       // Decrypt message using epub (encryption public key)
-      let message = data.data;
+      let message = encryptedMessage;
       if (message.from) {
         try {
           // Use epub from friend data for proper Gun.SEA decryption
           const friendData = await friendsService.getFriend(message.from);
           const encryptionKey = friendData?.epub || message.from; // Fallback to pub if epub not available
-          message = await gunAuthService.decryptFrom(data.data, encryptionKey);
+          message = await gunAuthService.decryptFrom(encryptedMessage, encryptionKey);
+          console.log('✅ Message decrypted successfully');
         } catch (error) {
-          debugLogger.error('Failed to decrypt message:', error);
+          console.error('❌ Failed to decrypt message:', error);
+          // Use encrypted message as fallback
+          message = encryptedMessage;
         }
       }
 
@@ -172,7 +106,7 @@ class MessageService {
         ...message,
         received: true,
         receivedAt: Date.now(),
-        deliveryMethod: 'webrtc' // Message came via WebRTC
+        deliveryMethod: 'gun' // Message came via Gun.js
       });
 
       // Notify handlers

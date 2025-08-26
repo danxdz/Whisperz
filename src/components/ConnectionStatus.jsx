@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react';
 import gunAuthService from '../services/gunAuthService';
-import webrtcService from '../services/webrtcService';
+// WebRTC removed - using Gun.js only
 
 /**
  * ConnectionStatus Component
@@ -36,18 +36,10 @@ const ConnectionStatus = memo(() => {
     // Monitor PeerJS connection
     const checkPeerConnection = () => {
       try {
-        const peer = webrtcService.peer;
-        if (peer) {
-          if (peer.disconnected) {
-            setPeerStatus('disconnected');
-          } else if (peer.destroyed) {
-            setPeerStatus('destroyed');
-          } else {
-            setPeerStatus('connected');
-          }
-        } else {
-          setPeerStatus('initializing');
-        }
+        // WebRTC removed
+        const peer = null;
+        // WebRTC removed - always show as disconnected
+        setPeerStatus('disconnected');
       } catch (error) {
         // console.error('Peer status check error:', error);
         setPeerStatus('error');

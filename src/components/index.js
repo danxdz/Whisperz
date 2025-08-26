@@ -9,7 +9,7 @@ export { default as DevToolsWrapper } from './DevToolsWrapper';
 export { default as MobileDevTools } from './MobileDevTools';
 export { default as MobileDevToolsCompact } from './MobileDevToolsCompact';
 export { default as ConnectionStatus } from './ConnectionStatus';
-export { default as WebRTCStatus } from './WebRTCStatus';
+// WebRTCStatus removed - using Gun.js only
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as ThemeToggle } from './ThemeToggle';

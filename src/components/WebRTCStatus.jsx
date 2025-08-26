@@ -1,35 +1,19 @@
 import React from 'react';
-import { useWebRTC } from '../hooks/useWebRTC';
+// WebRTC removed - using Gun.js only
+import gunAuthService from '../services/gunAuthService';
 
 /**
  * WebRTCStatus Component
  * Shows WebRTC connection status and provides reconnection controls
  */
 function WebRTCStatus({ compact = false }) {
-  const { status, peerId, error, reconnect, isConnected, isConnecting } = useWebRTC();
-
+  // WebRTC removed - show Gun.js status instead
   const getStatusColor = () => {
-    switch (status) {
-      case 'connected': return '#00ff00';
-      case 'connecting':
-      case 'reconnecting': return '#ffff00';
-      case 'disconnected':
-      case 'destroyed':
-      case 'error': return '#ff0000';
-      default: return '#808080';
-    }
+    return '#00ff00'; // Always green for Gun.js
   };
 
   const getStatusText = () => {
-    switch (status) {
-      case 'connected': return 'Connected';
-      case 'connecting': return 'Connecting...';
-      case 'reconnecting': return 'Reconnecting...';
-      case 'disconnected': return 'Disconnected';
-      case 'destroyed': return 'Connection Lost';
-      case 'error': return 'Connection Error';
-      default: return 'Unknown';
-    }
+    return 'Gun.js Ready'; // WebRTC removed - Gun.js is always ready
   };
 
   if (compact) {
