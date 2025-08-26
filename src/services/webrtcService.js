@@ -180,6 +180,11 @@ class WebRTCService {
 
     // Set remote description and create answer
     try {
+      // Validate offer before using it
+      if (!offer || !offer.type || !offer.sdp) {
+        throw new Error(`Invalid offer received: ${JSON.stringify(offer)}`);
+      }
+      
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       debugLogger.webrtc('✅ Remote description set, creating answer...');
       
@@ -223,6 +228,11 @@ class WebRTCService {
     }
 
     try {
+      // Validate answer before using it
+      if (!answer || !answer.type || !answer.sdp) {
+        throw new Error(`Invalid answer received: ${JSON.stringify(answer)}`);
+      }
+      
       debugLogger.webrtc('Setting remote description with answer from:', from);
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
       debugLogger.webrtc('✅ Answer processed successfully, connection should be established');
@@ -398,8 +408,8 @@ class WebRTCService {
     if (!dc || dc.readyState !== 'open') {
       debugLogger.webrtc('Data channel not ready, waiting...');
       
-      // Wait up to 2 seconds for data channel to open
-      const maxWaitTime = 2000;
+      // Wait up to 5 seconds for data channel to open
+      const maxWaitTime = 5000;
       const checkInterval = 100;
       let waited = 0;
       
