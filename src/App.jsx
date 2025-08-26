@@ -11,6 +11,27 @@ import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
 import debugLogger from './utils/debugLogger';
 import './index.css';
+
+// Module-level timeout manager to avoid React ref issues in production
+class TimeoutManager {
+  constructor() {
+    this.authTimeout = null;
+  }
+  
+  setAuthTimeout(callback, delay) {
+    this.clearAuthTimeout();
+    this.authTimeout = setTimeout(callback, delay);
+  }
+  
+  clearAuthTimeout() {
+    if (this.authTimeout) {
+      clearTimeout(this.authTimeout);
+      this.authTimeout = null;
+    }
+  }
+}
+
+const timeoutManager = new TimeoutManager();
 // import encryptionService from './services/encryptionService'; // Not used currently
 import { ThemeToggle, SwipeableChat, InviteModal } from './components';
 import ChatSecurityStatus from './components/ChatSecurityStatus';
@@ -298,7 +319,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // const [friendsLoading, setFriendsLoading] = useState(true); // Not used currently
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const authTimeoutRef = useRef(null);
+  // Using module-level timeout manager instead of useRef for production stability
 
   // Connection state for selected friend
   const { connectionState, attemptWebRTCConnection } = useConnectionState(
@@ -308,10 +329,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Cleanup auth timeouts on unmount
   useEffect(() => {
     return () => {
-      if (authTimeoutRef?.current) {
-        clearTimeout(authTimeoutRef?.current);
-        if (authTimeoutRef) authTimeoutRef.current = null;
-      }
+      timeoutManager.clearAuthTimeout();
     };
   }, []);
 
@@ -1178,10 +1196,7 @@ function App() {
     // console.log('🔐 Authentication successful:', authUser);
 
     // Clear any existing auth-related timeouts to prevent memory leaks
-    if (authTimeoutRef?.current) {
-      clearTimeout(authTimeoutRef?.current);
-      if (authTimeoutRef) authTimeoutRef.current = null;
-    }
+    timeoutManager.clearAuthTimeout();
 
     setUser(authUser);
 
@@ -1217,9 +1232,7 @@ function App() {
       // console.log('📦 Invite code:', codeToUse);
 
       // Small delay to ensure services are ready
-      try {
-        if (authTimeoutRef && typeof authTimeoutRef === 'object') {
-          authTimeoutRef.current = setTimeout(async () => {
+      timeoutManager.setAuthTimeout(async () => {
           try {
             const result = await friendsService.acceptInvite(codeToUse);
             // console.log('✅ Invite acceptance result:', result);
@@ -1242,29 +1255,18 @@ function App() {
               alert('Note: ' + error.message);
             }
           } finally {
-            // Always clear the timeout reference and invite code
-            if (authTimeoutRef?.current) {
-              if (authTimeoutRef) authTimeoutRef.current = null;
-            }
             setInviteCode(null);
             // Clear the invite from URL
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         }, 4000); // 4 second delay to ensure Gun.js is ready for new users
-        }
-      } catch (error) {
-        console.error('Error setting up invite acceptance timeout:', error);
-      }
     }
   };
 
   // Handle logout
   const handleLogout = () => {
     // Clear any pending auth timeouts to prevent memory leaks
-    if (authTimeoutRef?.current) {
-      clearTimeout(authTimeoutRef?.current);
-      if (authTimeoutRef) authTimeoutRef.current = null;
-    }
+    timeoutManager.clearAuthTimeout();
 
     gunAuthService.logout();
     webrtcService.destroy();
