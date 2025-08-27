@@ -43,22 +43,23 @@ class MessageService {
     console.log('📤 Sending message via Gun.js:', message);
 
     try {
-      const friendData = await friendsService.getFriend(recipientPublicKey);
+      let friendData = await friendsService.getFriend(recipientPublicKey);
+      let encryptionKey = friendData?.epub;
 
-      if (!friendData?.epub) {
-        // Friend doesn't have encryption key - try to get current user data
-        const currentUser = gunAuthService.getCurrentUser();
-        if (currentUser?.epub) {
-          // Update friend data with current epub if available
-          await friendsService.updateFriendEpub(recipientPublicKey, currentUser.epub);
-          console.log('🔄 Updated friend with encryption key');
+      // If friend doesn't have epub, try to retrieve it from their Gun user data
+      if (!encryptionKey) {
+        console.log('🔍 Retrieving encryption key for friend...');
+        encryptionKey = await friendsService.getUserEpub(recipientPublicKey);
+
+        if (encryptionKey) {
+          // Update friend data with the retrieved epub
+          await friendsService.updateFriendEpub(recipientPublicKey, encryptionKey);
+          console.log('✅ Retrieved and stored encryption key for friend');
         }
       }
 
-      const encryptionKey = friendData?.epub;
-
       if (!encryptionKey) {
-        throw new Error('🔒 Encryption required: Friend does not have encryption key. Please wait for encryption keys to sync or re-add the friend.');
+        throw new Error('🔒 Encryption required: Cannot retrieve friend\'s encryption key. They may need to log out and log back in, or re-add them as a friend.');
       } else {
         console.log('🔐 Encrypting message for:', encryptionKey);
         encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);

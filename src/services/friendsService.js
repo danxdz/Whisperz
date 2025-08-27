@@ -1066,6 +1066,20 @@ class FriendsService {
     }
   }
 
+  // Retrieve a user's encryption key from their Gun user data
+  async getUserEpub(publicKey) {
+    return new Promise((resolve) => {
+      this.gun.user(publicKey).get('epub').once((epub) => {
+        resolve(epub);
+      });
+
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        resolve(null);
+      }, 5000);
+    });
+  }
+
   // Notify friend listeners
   notifyFriendListeners(event, data) {
     this.friendListeners.forEach(listener => {
