@@ -90,12 +90,12 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
         securityLevel = 'pending';
       } else {
         details.push({
-          type: 'error',
-          icon: '❌',
-          text: 'Offline',
-          tooltip: 'Friend is not online'
+          type: 'info',
+          icon: '📦',
+          text: 'Offline (Messages Queued)',
+          tooltip: 'Friend is offline. Messages will be delivered when they come online.'
         });
-        securityLevel = 'none';
+        securityLevel = hasEncryptionKey ? 'medium' : 'none';
       }
 
       // Check if we have user's own keys (should always be true)

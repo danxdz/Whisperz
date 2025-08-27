@@ -456,6 +456,14 @@ class FriendsService {
         // Add current user as friend for the inviter
         // This creates the bidirectional relationship in PUBLIC space
         try {
+          // Validate data before creating friendship
+          if (!this.isValidFriendData(inviteData.from, safeNickname)) {
+            throw new Error('Invalid inviter data - cannot create friendship');
+          }
+          if (!this.isValidFriendData(user.pub, currentUserNickname)) {
+            throw new Error('Invalid current user data - cannot create friendship');
+          }
+
           // Store bidirectional friendship in PUBLIC friendships space
           // Use the same key generation as addFriend for consistency
           const friendshipKey = this.generateConversationId(inviteData.from, user.pub);
@@ -470,6 +478,11 @@ class FriendsService {
             conversationId: conversationId,
             status: 'connected'
           };
+
+          // Additional validation: ensure all required fields are present
+          if (!friendshipData.fromPublicKey || !friendshipData.toPublicKey) {
+            throw new Error('Missing required public keys in friendship data');
+          }
 
           // console.log('📝 Writing friendship to public space:', friendshipData);
 
@@ -609,6 +622,11 @@ class FriendsService {
   async addFriend(publicKey, nickname, epub = null, skipPendingInvite = false) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
+
+    // Validate inputs before proceeding
+    if (!this.isValidFriendData(publicKey, nickname)) {
+      throw new Error(`Cannot add friend: Invalid data provided (publicKey: ${publicKey}, nickname: ${nickname})`);
+    }
 
     console.log('🔧 Adding friend - Current user:', user.pub);
     console.log('🔧 Adding friend - Friend key:', publicKey);

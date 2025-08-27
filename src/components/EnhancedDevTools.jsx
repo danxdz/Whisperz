@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import friendsService from '../services/friendsService';
 import gunAuthService from '../services/gunAuthService';
+import backupService from '../services/backupService';
+import securityTriggerService from '../services/securityTriggerService';
 
 /**
  * DevTools Component with Full User Management (CRUD)
@@ -16,6 +18,9 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   const [status, setStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [newUserForm, setNewUserForm] = useState({ nickname: '', publicKey: '' });
+  const [backupPassword, setBackupPassword] = useState('');
+  const [securitySettings, setSecuritySettings] = useState({});
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     if (isVisible) {
@@ -23,6 +28,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
       loadInvites();
       loadAllUsers();
       discoverUsers();
+      loadSecuritySettings();
     }
   }, [isVisible]);
 
@@ -260,6 +266,152 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     user.publicKey.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Load security settings
+  const loadSecuritySettings = () => {
+    try {
+      const settings = securityTriggerService.getStatus();
+      setSecuritySettings(settings);
+    } catch (error) {
+      console.error('Failed to load security settings:', error);
+    }
+  };
+
+  // Backup functions
+  const createBackup = async () => {
+    if (!backupPassword) {
+      setStatus('❌ Password required for encrypted backup');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const backup = await backupService.createBackup(backupPassword);
+      
+      // Download backup file
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `whisperz-backup-${timestamp}.json`;
+      
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setStatus(`✅ Backup created and downloaded: ${filename}`);
+      setBackupPassword(''); // Clear password for security
+      
+    } catch (error) {
+      setStatus(`❌ Backup failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const restoreBackup = async () => {
+    if (!selectedFile) {
+      setStatus('❌ Please select a backup file');
+      return;
+    }
+    
+    if (!backupPassword) {
+      setStatus('❌ Password required for encrypted backup');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const result = await backupService.importFromFile(selectedFile, backupPassword);
+      
+      if (result.success) {
+        setStatus(`✅ Backup restored: ${result.restoredCount} items restored`);
+        setSelectedFile(null);
+        setBackupPassword('');
+        
+        // Refresh all data
+        setTimeout(() => {
+          loadFriends();
+          loadInvites();
+          loadAllUsers();
+          loadSecuritySettings();
+        }, 1000);
+      } else {
+        setStatus(`❌ Restore failed: ${result.error}`);
+      }
+      
+    } catch (error) {
+      setStatus(`❌ Restore failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Security functions
+  const configureSecurityTrigger = () => {
+    const maxAttempts = prompt('Max failed login attempts before trigger (default: 3):', '3');
+    const lockoutMinutes = prompt('Lockout duration in minutes (default: 30):', '30');
+    const enableDestruction = confirm('Enable data destruction on security trigger?\n\n⚠️ WARNING: This will permanently wipe all data after failed attempts!');
+    
+    if (maxAttempts && lockoutMinutes) {
+      try {
+        securityTriggerService.configure({
+          maxAttempts: parseInt(maxAttempts),
+          lockoutDuration: parseInt(lockoutMinutes) * 60 * 1000,
+          destructionEnabled: enableDestruction
+        });
+        
+        setStatus(`✅ Security trigger configured: ${maxAttempts} attempts, ${lockoutMinutes}min lockout, destruction ${enableDestruction ? 'ENABLED' : 'disabled'}`);
+        loadSecuritySettings();
+        
+      } catch (error) {
+        setStatus(`❌ Configuration failed: ${error.message}`);
+      }
+    }
+  };
+
+  const createEmergencyKey = () => {
+    try {
+      const result = securityTriggerService.createEmergencyKey();
+      setStatus(`🆘 Emergency key created! Valid until: ${result.validUntil}`);
+    } catch (error) {
+      setStatus(`❌ Emergency key creation failed: ${error.message}`);
+    }
+  };
+
+  const showEmergencyMethods = () => {
+    const methods = securityTriggerService.getEmergencyMethods();
+    let message = '🆘 EMERGENCY RESET METHODS:\n\n';
+    
+    methods.methods.forEach((method, index) => {
+      message += `${index + 1}. ${method.name}\n`;
+      message += `   Trigger: ${method.trigger}\n`;
+      message += `   ${method.description}\n`;
+      message += `   Available: ${method.availability}\n\n`;
+    });
+    
+    message += `Current Status:\n`;
+    message += `Failed Attempts: ${methods.currentStatus.failedAttempts}/${methods.currentStatus.maxAttempts}\n`;
+    message += `Locked: ${methods.currentStatus.isLocked ? 'YES' : 'No'}\n`;
+    message += `Destruction: ${methods.currentStatus.destructionEnabled ? 'ENABLED' : 'Disabled'}`;
+    
+    alert(message);
+  };
+
+  const resetSecurityTrigger = () => {
+    if (confirm('Reset security trigger and clear all failed attempts?')) {
+      try {
+        securityTriggerService.reset();
+        setStatus('✅ Security trigger reset');
+        loadSecuritySettings();
+      } catch (error) {
+        setStatus(`❌ Reset failed: ${error.message}`);
+      }
+    }
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -376,6 +528,34 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             }}
           >
             + Add User
+          </button>
+          <button
+            onClick={() => setActiveTab('backup')}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: activeTab === 'backup' ? '#17a2b8' : '#333',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            💾 Backup
+          </button>
+          <button
+            onClick={() => setActiveTab('security')}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: activeTab === 'security' ? '#dc3545' : '#333',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            🔒 Security
           </button>
         </div>
 
@@ -800,6 +980,236 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
                   </div>
                 ))
               )}
+            </div>
+          )}
+
+          {activeTab === 'backup' && (
+            <div>
+              <h4 style={{ margin: '0 0 15px 0' }}>Backup & Restore</h4>
+              
+              {/* Create Backup */}
+              <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#1a2332', borderRadius: '4px' }}>
+                <h5 style={{ margin: '0 0 10px 0', color: '#17a2b8' }}>💾 Create Backup</h5>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#999' }}>
+                  Create an encrypted backup of all your data including friends, messages, and settings.
+                </p>
+                
+                <input
+                  type="password"
+                  placeholder="Backup encryption password"
+                  value={backupPassword}
+                  onChange={(e) => setBackupPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginBottom: '10px',
+                    backgroundColor: '#2a2a3e',
+                    border: '1px solid #444',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}
+                />
+                
+                <button
+                  onClick={createBackup}
+                  disabled={loading || !backupPassword}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: loading || !backupPassword ? '#666' : '#17a2b8',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: loading || !backupPassword ? 'not-allowed' : 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  {loading ? 'Creating Backup...' : '💾 Create & Download Backup'}
+                </button>
+              </div>
+
+              {/* Restore Backup */}
+              <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#1a2332', borderRadius: '4px' }}>
+                <h5 style={{ margin: '0 0 10px 0', color: '#28a745' }}>📥 Restore Backup</h5>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#999' }}>
+                  Restore data from a previous backup. This will replace current data.
+                </p>
+                
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={(e) => setSelectedFile(e.target.files[0])}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginBottom: '10px',
+                    backgroundColor: '#2a2a3e',
+                    border: '1px solid #444',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}
+                />
+                
+                <input
+                  type="password"
+                  placeholder="Backup decryption password"
+                  value={backupPassword}
+                  onChange={(e) => setBackupPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    marginBottom: '10px',
+                    backgroundColor: '#2a2a3e',
+                    border: '1px solid #444',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}
+                />
+                
+                <button
+                  onClick={restoreBackup}
+                  disabled={loading || !selectedFile || !backupPassword}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: loading || !selectedFile || !backupPassword ? '#666' : '#28a745',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: loading || !selectedFile || !backupPassword ? 'not-allowed' : 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  {loading ? 'Restoring...' : '📥 Restore from Backup'}
+                </button>
+              </div>
+
+              <div style={{ padding: '10px', backgroundColor: '#1a2332', borderRadius: '4px', fontSize: '11px', color: '#999' }}>
+                💡 <strong>Security Tips:</strong><br/>
+                • Use a strong password for backup encryption<br/>
+                • Store backups in multiple secure locations<br/>
+                • Test restore process periodically<br/>
+                • Backups include all sensitive data - protect accordingly
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div>
+              <h4 style={{ margin: '0 0 15px 0' }}>Security & Anti-Tamper</h4>
+              
+              {/* Current Status */}
+              <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#1a2332', borderRadius: '4px' }}>
+                <h5 style={{ margin: '0 0 10px 0', color: '#ffc107' }}>🔒 Current Security Status</h5>
+                <div style={{ fontSize: '12px' }}>
+                  <div>Failed Attempts: <span style={{ color: securitySettings.failedAttempts > 0 ? '#dc3545' : '#28a745' }}>
+                    {securitySettings.failedAttempts || 0}/{securitySettings.maxAttempts || 3}
+                  </span></div>
+                  <div>Device Locked: <span style={{ color: securitySettings.isLocked ? '#dc3545' : '#28a745' }}>
+                    {securitySettings.isLocked ? 'YES' : 'No'}
+                  </span></div>
+                  <div>Data Destruction: <span style={{ color: securitySettings.destructionEnabled ? '#dc3545' : '#666' }}>
+                    {securitySettings.destructionEnabled ? 'ENABLED' : 'Disabled'}
+                  </span></div>
+                  {securitySettings.timeRemaining > 0 && (
+                    <div>Unlock In: <span style={{ color: '#ffc107' }}>
+                      {Math.ceil(securitySettings.timeRemaining / (60 * 1000))} minutes
+                    </span></div>
+                  )}
+                </div>
+              </div>
+
+              {/* Security Configuration */}
+              <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#1a2332', borderRadius: '4px' }}>
+                <h5 style={{ margin: '0 0 10px 0', color: '#dc3545' }}>⚙️ Configure Security Trigger</h5>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#999' }}>
+                  Set up automatic security response to failed login attempts.
+                </p>
+                
+                <button
+                  onClick={configureSecurityTrigger}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#dc3545',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    marginBottom: '10px'
+                  }}
+                >
+                  ⚙️ Configure Security Trigger
+                </button>
+                
+                <button
+                  onClick={resetSecurityTrigger}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#ffc107',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  🔓 Reset Security Trigger
+                </button>
+              </div>
+
+              {/* Emergency Reset */}
+              <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#1a2332', borderRadius: '4px' }}>
+                <h5 style={{ margin: '0 0 10px 0', color: '#28a745' }}>🆘 Emergency Reset System</h5>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#999' }}>
+                  Multiple ways to reset security locks when everything goes wrong.
+                </p>
+                
+                <div style={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
+                  <button
+                    onClick={createEmergencyKey}
+                    style={{
+                      padding: '8px',
+                      backgroundColor: '#28a745',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    🆘 Create Emergency Key
+                  </button>
+                  
+                  <button
+                    onClick={showEmergencyMethods}
+                    style={{
+                      padding: '8px',
+                      backgroundColor: '#17a2b8',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    📋 Show All Emergency Methods
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ padding: '10px', backgroundColor: '#2a1a1a', borderRadius: '4px', fontSize: '11px', color: '#dc3545', border: '1px solid #dc3545' }}>
+                ⚠️ <strong>DANGER ZONE:</strong><br/>
+                • Security triggers can permanently destroy all data<br/>
+                • Emergency reset methods bypass all security<br/>
+                • Test emergency methods before relying on them<br/>
+                • Consider the paranoia level you actually need
+              </div>
             </div>
           )}
         </div>
