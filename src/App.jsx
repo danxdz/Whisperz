@@ -401,7 +401,9 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // const [friendsLoading, setFriendsLoading] = useState(true); // Not used currently
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
-  // Using module-level timeout manager instead of useRef for production stability
+  
+  // Create local timeout manager for this component
+  const timeoutManager = useRef(createTimeoutManager()).current;
 
   // Connection state for selected friend
   const { connectionState, checkConnection } = useConnectionState(
@@ -1192,7 +1194,9 @@ function App() {
     // console.log('🔐 Authentication successful:', authUser);
 
     // Clear any existing auth-related timeouts to prevent memory leaks
-    timeoutManager.clearAuthTimeout();
+    if (timeoutManager && timeoutManager.clearAuthTimeout) {
+      timeoutManager.clearAuthTimeout();
+    }
 
     setUser(authUser);
 
@@ -1224,7 +1228,8 @@ function App() {
       // console.log('📦 Invite code:', codeToUse);
 
       // Small delay to ensure services are ready
-      timeoutManager.setAuthTimeout(async () => {
+      if (timeoutManager && timeoutManager.setAuthTimeout) {
+        timeoutManager.setAuthTimeout(async () => {
           try {
             const result = await friendsService.acceptInvite(codeToUse);
             // console.log('✅ Invite acceptance result:', result);
@@ -1252,13 +1257,16 @@ function App() {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         }, 4000); // 4 second delay to ensure Gun.js is ready for new users
+      }
     }
   };
 
   // Handle logout
   const handleLogout = () => {
     // Clear any pending auth timeouts to prevent memory leaks
-    timeoutManager.clearAuthTimeout();
+    if (timeoutManager && timeoutManager.clearAuthTimeout) {
+      timeoutManager.clearAuthTimeout();
+    }
 
     gunAuthService.logout();
     hybridGunService.cleanup();
