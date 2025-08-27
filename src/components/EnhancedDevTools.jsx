@@ -69,8 +69,12 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     if (!confirm('Remove this friend?')) return;
     try {
       setLoading(true);
-      await friendsService.removeFriend(publicKey);
-      setStatus('✅ Friend removed');
+      const result = await friendsService.removeFriend(publicKey);
+      if (result.warning) {
+        setStatus(`✅ Friend removed (${result.warning})`);
+      } else {
+        setStatus('✅ Friend removed');
+      }
       loadFriends();
     } catch (error) {
       setStatus(`❌ Failed to remove friend: ${error.message}`);

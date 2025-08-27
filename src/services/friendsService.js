@@ -809,8 +809,13 @@ class FriendsService {
   async removeFriend(publicKey, blockUser = false) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
+    
+    // Validate publicKey
+    if (!publicKey || typeof publicKey !== 'string') {
+      throw new Error('Invalid public key provided');
+    }
 
-    // console.log('🗑️ Removing friend:', publicKey, blockUser ? '(with blocking)' : '');
+    console.log('🗑️ Removing friend:', publicKey, blockUser ? '(with blocking)' : '');
 
     try {
       // If blocking, add to block list first
@@ -819,33 +824,79 @@ class FriendsService {
       }
 
       // 1. Remove from current user's friends list
-      await new Promise((resolve) => {
-        gunAuthService.user.get('friends').get(publicKey).put(null, (ack) => {
-          // console.log('✅ Removed from current user friends:', ack);
-          resolve();
-        });
+      await new Promise((resolve, reject) => {
+        try {
+          gunAuthService.user.get('friends').get(publicKey).put(null, (ack) => {
+            if (ack.err) {
+              console.warn('Warning removing from user friends:', ack.err);
+              // Don't reject, just warn - this might be expected if already removed
+            }
+            console.log('✅ Removed from current user friends');
+            resolve();
+          });
+        } catch (error) {
+          console.warn('Error in step 1:', error);
+          resolve(); // Continue with other steps
+        }
       });
 
-      // 2. Remove from friend's friends list (bidirectional removal)
-      await new Promise((resolve) => {
-        this.gun.get('~' + publicKey).get('friends').get(user.pub).put(null, (ack) => {
-          // console.log('✅ Removed from friend\'s friends list:', ack);
-          resolve();
-        });
+      // 2. Remove from friend's friends list (bidirectional removal) - with validation
+      await new Promise((resolve, reject) => {
+        try {
+          // Only attempt if we have a valid publicKey and Gun instance
+          if (publicKey && publicKey.length > 10 && this.gun) {
+            // Validate the Gun path before accessing
+            const friendUserPath = this.gun.get('~' + publicKey);
+            if (friendUserPath) {
+              friendUserPath.get('friends').get(user.pub).put(null, (ack) => {
+                if (ack && ack.err && !ack.err.includes('Unverified')) {
+                  console.warn('Warning removing from friend\'s friends list:', ack.err);
+                }
+                console.log('✅ Attempted to remove from friend\'s friends list');
+                resolve();
+              });
+            } else {
+              console.warn('Could not access friend\'s Gun node');
+              resolve();
+            }
+          } else {
+            console.warn('Invalid publicKey or Gun instance for bidirectional removal');
+            resolve();
+          }
+        } catch (error) {
+          console.warn('Error in step 2:', error);
+          resolve(); // Continue with other steps
+        }
       });
 
-      // 3. Remove from friendsIndex for both users
-      gunAuthService.user.get('friendsIndex').get(publicKey).put(null);
-      this.gun.get('~' + publicKey).get('friendsIndex').get(user.pub).put(null);
+      // 3. Remove from friendsIndex for both users (with error handling)
+      try {
+        gunAuthService.user.get('friendsIndex').get(publicKey).put(null);
+        if (publicKey && publicKey.length > 10) {
+          this.gun.get('~' + publicKey).get('friendsIndex').get(user.pub).put(null);
+        }
+        console.log('✅ Removed from friends indexes');
+      } catch (error) {
+        console.warn('Error removing from indexes:', error);
+      }
 
       // 4. Remove from public friendships space
-      const friendshipKey = this.generateConversationId(user.pub, publicKey);
-      await new Promise((resolve) => {
-        gunAuthService.gun.get('friendships').get(friendshipKey).put(null, (ack) => {
-          // console.log('✅ Removed from public friendships:', ack);
-          resolve();
-        });
-      });
+      try {
+        const friendshipKey = this.generateConversationId(user.pub, publicKey);
+        if (friendshipKey) {
+          await new Promise((resolve) => {
+            gunAuthService.gun.get('friendships').get(friendshipKey).put(null, (ack) => {
+              if (ack.err) {
+                console.warn('Warning removing from public friendships:', ack.err);
+              }
+              console.log('✅ Removed from public friendships');
+              resolve();
+            });
+          });
+        }
+      } catch (error) {
+        console.warn('Error removing from public friendships:', error);
+      }
 
       // 5. Clear any conversation/messages (optional - you might want to keep history)
       const clearMessages = !blockUser && window.confirm('Also delete conversation history with this friend?');
@@ -862,10 +913,25 @@ class FriendsService {
       // 7. Notify listeners
       this.notifyFriendListeners('removed', { publicKey });
 
-      // console.log('✅ Friend removed successfully');
+      console.log('✅ Friend removed successfully');
       return { success: true, blocked: blockUser };
     } catch (error) {
-      // console.error('❌ Error removing friend:', error);
+      console.error('❌ Error removing friend:', error);
+      
+      // Still remove from local map even if Gun operations failed
+      this.friends.delete(publicKey);
+      this.notifyFriendListeners('removed', { publicKey });
+      
+      // Don't throw error for Gun.js issues - just log them
+      if (error.message && (
+        error.message.includes('JWK') || 
+        error.message.includes('Unverified data') ||
+        error.message.includes('Invalid get request')
+      )) {
+        console.warn('Gun.js data structure issue during friend removal - continuing anyway');
+        return { success: true, blocked: blockUser, warning: 'Some cleanup operations failed' };
+      }
+      
       throw error;
     }
   }

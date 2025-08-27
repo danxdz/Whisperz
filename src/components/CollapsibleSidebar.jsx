@@ -38,11 +38,15 @@ function CollapsibleSidebar({
     if (!confirmRemove) return;
 
     try {
-      await friendsService.removeFriend(friend.publicKey, false);
-      alert(`${friend.nickname} has been removed from your friends.`);
+      const result = await friendsService.removeFriend(friend.publicKey, false);
+      if (result.warning) {
+        alert(`${friend.nickname} has been removed from your friends.\n\nNote: ${result.warning}`);
+      } else {
+        alert(`${friend.nickname} has been removed from your friends.`);
+      }
       if (onFriendsUpdate) onFriendsUpdate();
     } catch (error) {
-      // console.error('Failed to remove friend:', error);
+      console.error('Failed to remove friend:', error);
       alert('Failed to remove friend: ' + error.message);
     }
     setShowActions(null);
