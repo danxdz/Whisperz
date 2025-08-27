@@ -86,122 +86,121 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   // P2P logs now go directly to console - no need to track them
 
   // Auto-scroll console logs
-  useEffect(() => {
-    if (autoScroll && consoleEndRef.current && activeTab === 'console') {
-      consoleEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [consoleLogs, activeTab, autoScroll]);
+  // useEffect(() => { // Temporarily disabled
+  //   if (autoScroll && consoleEndRef.current && activeTab === 'console') {
+  //     consoleEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  //   }
+  // }, [consoleLogs, activeTab, autoScroll]); // Temporarily disabled
 
-  const loadCurrentUserInfo = () => {
-    try {
-      const user = gunAuthService.getCurrentUser();
-      if (user) {
-        // Check Gun.js status (WebRTC removed)
-        const gunPeers = gunAuthService.gun?._.opt?.peers || {};
-        const connectedPeers = Object.keys(gunPeers).filter(url => {
-          const peer = gunPeers[url];
-          return peer && peer.wire && !peer.wire.closed;
-        });
+  // const loadCurrentUserInfo = () => { // Temporarily disabled
+  //   try {
+  //     const user = gunAuthService.getCurrentUser();
+  //     if (user) {
+  //       // Check Gun.js status (WebRTC removed)
+  //       const gunPeers = gunAuthService.gun?._.opt?.peers || {};
+  //       const connectedPeers = Object.keys(gunPeers).filter(url => {
+  //         const peer = gunPeers[url];
+  //         return peer && peer.wire && !peer.wire.closed;
+  //       });
 
-        setCurrentUserInfo({
-          publicKey: user.pub,
-          alias: user.alias,
-          peerId: 'Gun.js only',
-          webrtcReady: false, // WebRTC removed
-          gunConnected: connectedPeers.length > 0,
-          peerCount: connectedPeers.length
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load current user info:', error);
-    }
-  };
+  //       setCurrentUserInfo({
+  //         publicKey: user.pub,
+  //         alias: user.alias,
+  //         peerId: 'Gun.js only',
+  //         webrtcReady: false, // WebRTC removed
+  //         gunConnected: connectedPeers.length > 0,
+  //         peerCount: connectedPeers.length
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to load current user info:', error);
+  //   }
+  // }; // Temporarily disabled
 
-  const loadOnlineUsers = async () => {
-    try {
-      // First, make sure we broadcast our own presence
-      const currentUser = gunAuthService.getCurrentUser();
-      if (currentUser) {
-        hybridGunService.updatePresence('online');
-        // Broadcasting our presence before checking others
-      }
+  // const loadOnlineUsers = async () => { // Temporarily disabled
+  //   try {
+  //     // First, make sure we broadcast our own presence
+  //     const currentUser = gunAuthService.getCurrentUser();
+  //     if (currentUser) {
+  //       hybridGunService.updatePresence('online');
+  //       // Broadcasting our presence before checking others
+  //     }
 
-      const onlineList = [];
-      const seenKeys = new Set();
+  //     const onlineList = [];
+  //     const seenKeys = new Set();
 
-      // Get all online users from Gun presence space
-      await new Promise((resolve) => {
-        let checkCount = 0;
+  //     // Get all online users from Gun presence space
+  //     await new Promise((resolve) => {
+  //       let checkCount = 0;
 
-        // Check presence space
-        gunAuthService.gun.get('presence').map().once((data, key) => {
-          checkCount++;
-          // Checking presence for key
+  //       // Check presence space
+  //       gunAuthService.gun.get('presence').map().once((data, key) => {
+  //         checkCount++;
+  //         // Checking presence for key
 
-          if (data && key && key !== '_' && !key.startsWith('~')) {
-            // Clean Gun metadata
-            const cleanData = Object.keys(data).reduce((acc, k) => {
-              if (!k.startsWith('_') && k !== '#' && k !== '>') {
-                acc[k] = data[k];
-              }
-              return acc;
-            }, {});
+  //         if (data && key && key !== '_' && !key.startsWith('~')) {
+  //           // Clean Gun metadata
+  //           const cleanData = Object.keys(data).reduce((acc, k) => {
+  //             if (!k.startsWith('_') && k !== '#' && k !== '>') {
+  //               acc[k] = data[k];
+  //             }
+  //           }, {});
 
-            // Check if user is online (seen in last 2 minutes)
-            if (cleanData.status === 'online' && cleanData.lastSeen &&
-                (Date.now() - cleanData.lastSeen) < 120000) {
-              if (!seenKeys.has(key)) {
-                seenKeys.add(key);
-                onlineList.push({
-                  publicKey: key,
-                  lastSeen: cleanData.lastSeen,
-                  peerId: cleanData.peerId,
-                  status: cleanData.status
-                });
-                // Found online user
-              }
-            }
-          }
-        });
+  //           // Check if user is online (seen in last 2 minutes)
+  //           if (cleanData.status === 'online' && cleanData.lastSeen &&
+  //               (Date.now() - cleanData.lastSeen) < 120000) {
+  //             if (!seenKeys.has(key)) {
+  //               seenKeys.add(key);
+  //               onlineList.push({
+  //                 publicKey: key,
+  //                 lastSeen: cleanData.lastSeen,
+  //                 peerId: cleanData.peerId,
+  //                 status: cleanData.status
+  //               });
+  //               // Found online user
+  //             }
+  //           }
+  //         }
+  //       });
 
-        // Also check users space for presence
-        gunAuthService.gun.get('~@').map().once((alias, key) => {
-          if (alias && key && key !== '_') {
-            // Extract public key from the ~pubkey format
-            const pubKey = key.replace('~', '').split('.')[0];
-            if (pubKey && !seenKeys.has(pubKey)) {
-              // Check this user's presence
-              gunAuthService.gun.user(pubKey).get('presence').once((data) => {
-                if (data && data.status === 'online' && data.lastSeen &&
-                    (Date.now() - data.lastSeen) < 120000) {
-                  seenKeys.add(pubKey);
-                  onlineList.push({
-                    publicKey: pubKey,
-                    alias: alias,
-                    lastSeen: data.lastSeen,
-                    peerId: data.peerId,
-                    status: data.status
-                  });
-                  // Found online user via alias
-                }
-              });
-            }
-          }
-        });
+  //       // Also check users space for presence
+  //       gunAuthService.gun.get('~@').map().once((alias, key) => {
+  //         if (alias && key && key !== '_') {
+  //           // Extract public key from the ~pubkey format
+  //           const pubKey = key.replace('~', '').split('.')[0];
+  //           if (pubKey && !seenKeys.has(pubKey)) {
+  //             // Check this user's presence
+  //             gunAuthService.gun.user(pubKey).get('presence').once((data) => {
+  //               if (data && data.status === 'online' && data.lastSeen &&
+  //                   (Date.now() - data.lastSeen) < 120000) {
+  //                 seenKeys.add(pubKey);
+  //                 onlineList.push({
+  //                   publicKey: pubKey,
+  //                   alias: alias,
+  //                   lastSeen: data.lastSeen,
+  //                   peerId: data.peerId,
+  //                   status: data.status
+  //                 });
+  //                 // Found online user via alias
+  //               }
+  //             });
+  //           }
+  //         }
+  //       });
 
-        // Wait a bit for data to load
-        setTimeout(() => {
-          // Total presence checks: checkCount
-          resolve();
-        }, 2000);
-      });
+  //       // Wait a bit for data to load
+  //       setTimeout(() => {
+  //         // Total presence checks: checkCount
+  //         resolve();
+  //       }, 2000);
+  //     });
 
-      setAllOnlineUsers(onlineList);
-      // Online users found: onlineList.length
-    } catch (error) {
-      console.error('Failed to load online users:', error);
-    }
-  };
+  //     setAllOnlineUsers(onlineList);
+  //     // Online users found: onlineList.length
+  //   } catch (error) {
+  //     console.error('Failed to load online users:', error);
+  //   }
+  // }; // Temporarily disabled
 
   const loadUsers = async () => {
     try {
