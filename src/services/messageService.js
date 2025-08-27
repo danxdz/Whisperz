@@ -24,6 +24,10 @@ class MessageService {
     const friend = await friendsService.getFriend(recipientPublicKey);
     if (!friend) throw new Error('Not a friend');
 
+    // Encrypt message using epub (encryption public key)
+    let encryptedMessage;
+    let encryptionStatus = 'encrypted'; // Default to encrypted
+
     const message = {
       id: securityUtils.generateMessageId(),
       content,
@@ -35,10 +39,6 @@ class MessageService {
       encryptionStatus: encryptionStatus,
       ...metadata
     };
-
-    // Encrypt message using epub (encryption public key)
-    let encryptedMessage;
-    let encryptionStatus = 'encrypted';
 
     console.log('📤 Sending message via Gun.js:', message);
 
