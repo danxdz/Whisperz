@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import gunAuthService from '../services/gunAuthService';
-import friendsService from '../services/friendsService';
-import hybridGunService from '../services/hybridGunService';
+// Temporarily disabled to isolate temporal dead zone error
+// import gunAuthService from '../services/gunAuthService';
+// import friendsService from '../services/friendsService';
+// import hybridGunService from '../services/hybridGunService';
 // WebRTC removed - using Gun.js only
-import backupService from '../services/backupService';
+// import backupService from '../services/backupService';
 // p2pDebugger removed - using Gun.js only
 // import consoleCapture from '../utils/consoleCapture'; // Temporarily disabled to fix init error
 import { useTheme } from '../contexts/ThemeContext';
@@ -55,12 +56,13 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   // Load users (friends)
   useEffect(() => {
     if (!isVisible) return;
-    loadUsers();
-    loadInvites();
-    loadStats();
-    loadRelayConfig();
-    loadCurrentUserInfo();
-    loadOnlineUsers();
+    // Temporarily disabled to isolate temporal dead zone error
+    // loadUsers();
+    // loadInvites();
+    // loadStats();
+    // loadRelayConfig();
+    // loadCurrentUserInfo();
+    // loadOnlineUsers();
 
     // Load console logs
     // const logs = consoleCapture.getLogs(); // Temporarily disabled
@@ -75,7 +77,10 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     //   }
     // }); // Temporarily disabled
 
-    // return () => unsubscribe(); // Temporarily disabled
+    // return () => {
+    //   // Temporarily disabled to isolate temporal dead zone error
+    //   // unsubscribe();
+    // };
   }, [isVisible, loadStats]);
 
   // P2P logs now go directly to console - no need to track them
