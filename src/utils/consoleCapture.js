@@ -93,7 +93,29 @@ class ConsoleCapture {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
-  
+
+  subscribe(callback) {
+    // Alias for onUpdate for consistency
+    return this.onUpdate(callback);
+  }
+
+  getLogs() {
+    // Alias for getHistory for consistency
+    return this.getHistory();
+  }
+
+  getStats() {
+    return {
+      capturing: this.capturing,
+      historyLength: this.history.length,
+      maxHistory: this.maxHistory,
+      listenersCount: this.listeners.size,
+      isMobile: this.isMobile,
+      isProduction: this.isProduction,
+      enabled: !this.isMobile && !this.isProduction
+    };
+  }
+
   notifyListeners() {
     this.listeners.forEach(callback => {
       try {
