@@ -55,14 +55,12 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
   // Load users (friends)
   useEffect(() => {
     if (!isVisible) return;
-
-    // Temporarily comment out function calls to isolate the error
-    // loadUsers();
-    // loadInvites();
-    // loadStats();
-    // loadRelayConfig();
-    // loadCurrentUserInfo();
-    // loadOnlineUsers();
+    loadUsers();
+    loadInvites();
+    loadStats();
+    loadRelayConfig();
+    loadCurrentUserInfo();
+    loadOnlineUsers();
 
     // Load console logs
     const logs = consoleCapture.getLogs();
@@ -78,7 +76,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     });
 
     return () => unsubscribe();
-  }, [isVisible]);
+  }, [isVisible, loadStats]);
 
   // P2P logs now go directly to console - no need to track them
 
