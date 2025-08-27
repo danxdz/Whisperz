@@ -243,15 +243,15 @@ class GunAuthService {
 
     const user = this.getCurrentUser();
     
-    // Debug logging
-    console.log('🔑 Gun.SEA Debug:');
-    console.log('  Current user:', user);
-    console.log('  Current user epub:', user?.epub);
-    console.log('  Recipient epub:', recipientEpub);
+    // Debug logging disabled to prevent crashes
+    // console.log('🔑 Gun.SEA Debug:');
+    // console.log('  Current user:', user);
+    // console.log('  Current user epub:', user?.epub);
+    // console.log('  Recipient epub:', recipientEpub);
     
     // Use recipientEpub (encryption public key) instead of pub for proper Gun.SEA secret generation
     const secret = await Gun.SEA.secret(recipientEpub, user);
-    console.log('  Secret generated:', !!secret);
+    // console.log('  Secret generated:', !!secret);
     return secret;
   }
 

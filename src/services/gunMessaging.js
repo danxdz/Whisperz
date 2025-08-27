@@ -29,10 +29,10 @@ class GunMessaging {
     this.startPresenceBroadcast();
 
     this.isInitialized = true;
-    // Only log in debug mode
-    if (localStorage.getItem('debug_gun') === 'true') {
-      console.log('🎉 Gun messaging initialized for user:', userId);
-    }
+    // Logging disabled to prevent crashes
+    // if (localStorage.getItem('debug_gun') === 'true') {
+    //   console.log('🎉 Gun messaging initialized for user:', userId);
+    // }
     return true;
   }
 
