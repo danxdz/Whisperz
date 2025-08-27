@@ -255,17 +255,34 @@ class GunAuthService {
     }
 
     const user = this.getCurrentUser();
-    
-    // Debug logging disabled to prevent crashes
-    // console.log('🔑 Gun.SEA Debug:');
-    // console.log('  Current user:', user);
-    // console.log('  Current user epub:', user?.epub);
-    // console.log('  Recipient epub:', recipientEpub);
-    
-    // Use recipientEpub (encryption public key) instead of pub for proper Gun.SEA secret generation
-    const secret = await Gun.SEA.secret(recipientEpub, user);
-    // console.log('  Secret generated:', !!secret);
-    return secret;
+
+    // Validate encryption keys
+    if (!user?.epub) {
+      throw new Error('Your encryption key is missing. Please log out and log back in.');
+    }
+
+    if (!recipientEpub) {
+      throw new Error('Recipient encryption key is missing');
+    }
+
+    try {
+      console.log('🔑 Gun.SEA Debug:');
+      console.log('  Current user epub:', user.epub);
+      console.log('  Recipient epub:', recipientEpub);
+
+      // Use recipientEpub (encryption public key) instead of pub for proper Gun.SEA secret generation
+      const secret = await Gun.SEA.secret(recipientEpub, user);
+      console.log('  Secret generated:', !!secret);
+
+      if (!secret) {
+        throw new Error('Failed to generate encryption secret');
+      }
+
+      return secret;
+    } catch (error) {
+      console.error('❌ Gun.SEA.secret() failed:', error);
+      throw new Error(`Encryption key error: ${error.message}`);
+    }
   }
 
   // Encrypt data for a specific user using their encryption public key

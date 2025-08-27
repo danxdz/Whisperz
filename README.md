@@ -19,11 +19,12 @@ In a world of surveillance and data breaches, Whisperz offers **genuine privacy*
 ## ✨ Features
 
 ### Security & Privacy
-- **End-to-End Encryption** - WebCrypto AES-GCM + Gun.SEA ECC
+- **Mandatory End-to-End Encryption** - WebCrypto AES-GCM + Gun.SEA ECC (always required)
 - **600,000 PBKDF2 iterations** - OWASP recommended for key derivation
 - **Authenticated encryption** - AES-GCM provides confidentiality & integrity
 - **Hardware-accelerated crypto** - Native WebCrypto API performance
 - **No metadata leaks** - Even presence is encrypted
+- **No unencrypted messages** - Encryption is mandatory, not optional
 
 ### Communication
 - **Real-time messaging** - Instant delivery via Gun.js mesh network
@@ -31,6 +32,7 @@ In a world of surveillance and data breaches, Whisperz offers **genuine privacy*
 - **Offline messages** - Delivered when friend comes online
 - **Typing indicators** - See when friends are typing
 - **Online presence** - Know when friends are available
+- **Encryption key sync** - Automatic key exchange between friends
 
 ### Technical Excellence
 - **Progressive Web App** - Install on any device
