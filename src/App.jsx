@@ -75,6 +75,7 @@ function LoginView({ onLogin, inviteCode }) {
 
   // Check if this might be the first user (no accounts exist)
   useEffect(() => {
+    console.log('LoginView mounted - Reset button should be visible');
     // Simple check - if in production and no stored auth, show setup hint
     if (window.location.hostname !== 'localhost' && !localStorage.getItem('gun/')) {
       setShowFirstUserSetup(true);
@@ -84,6 +85,7 @@ function LoginView({ onLogin, inviteCode }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    console.log('Login form submitted with username:', username);
 
     // Input validation
     if (!username || !password) {
@@ -186,11 +188,18 @@ function LoginView({ onLogin, inviteCode }) {
           <button 
             type="button"
             onClick={() => {
+              console.log('Reset button clicked');
               if (confirm('This will clear all local Gun database data. Are you sure?')) {
-                resetDatabase();
-                setTimeout(() => {
-                  window.location.reload();
-                }, 1000);
+                try {
+                  resetDatabase();
+                  console.log('Database reset completed');
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1000);
+                } catch (error) {
+                  console.error('Reset failed:', error);
+                  alert('Failed to reset database: ' + error.message);
+                }
               }
             }}
             style={{ 
@@ -936,6 +945,12 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 }
 
 // Main App Component - Fixed invite handling
+// Make resetDatabase available globally for debugging
+if (typeof window !== 'undefined') {
+  window.resetGunDB = resetDatabase;
+  console.log('Reset function available: window.resetGunDB()');
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
