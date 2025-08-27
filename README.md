@@ -3,7 +3,7 @@
 [![Security Score](https://img.shields.io/badge/Security-9%2F10-green)](./DEEP_SECURITY_ANALYSIS.md)
 [![Encryption](https://img.shields.io/badge/Encryption-Military%20Grade-blue)](./SECURITY_AUDIT_REPORT.md)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.1.1-purple)](./package.json)
+[![Version](https://img.shields.io/badge/Version-2.1.2-purple)](./package.json)
 
 **True decentralized encrypted messaging with Gun.js - no central server, no phone number, no email required.**
 
@@ -238,7 +238,35 @@ We welcome contributions! Please read our [Contributing Guidelines](./CONTRIBUTI
 3. Run tests and linting
 4. Submit a pull request
 
-## 📈 Recent Improvements (v2.1.1)
+## 📈 Recent Improvements (v2.1.2)
+
+### 🔥 Critical Fixes
+- ✅ **Fixed DevTools initialization error** - Resolved "Cannot access 'Un' before initialization"
+- ✅ **Fixed message sending failures** - Resolved Gun.SEA encryption key issues
+- ✅ **Fixed "No secret mix" errors** - Proper encryption key retrieval and validation
+- ✅ **Fixed variable declaration order** - Prevented temporal dead zone errors
+- ✅ **Enhanced encryption key sync** - Automatic retrieval of missing friend keys
+
+### 🔐 Mandatory Encryption
+- ✅ **Always Encrypted** - No more unencrypted message options
+- ✅ **Encryption Required** - Messages cannot be sent without encryption keys
+- ✅ **Clear Security Status** - Simple "Always Encrypted" indicator
+- ✅ **Key Validation** - Proper encryption key validation before sending
+- ✅ **Automatic Key Sync** - Retrieves friend's encryption keys when missing
+
+### 🎨 UI/UX Improvements
+- ✅ **Simplified Security Status** - Removed confusing encryption toggles
+- ✅ **Better Error Messages** - User-friendly error descriptions
+- ✅ **Loading States** - Visual feedback during message sending
+- ✅ **Performance Optimization** - Reduced unnecessary re-renders
+- ✅ **Enhanced Invite Flow** - Better success/error handling
+
+### 🔧 Technical Enhancements
+- ✅ **Gun.SEA Key Management** - Proper encryption key handling
+- ✅ **Message Encryption Validation** - Ensures encryption before sending
+- ✅ **Friend Data Sync** - Automatic encryption key updates
+- ✅ **Error Boundary Improvements** - Better error recovery
+- ✅ **Build Process Fixes** - Resolved Vercel deployment issues
 
 ### Architecture Simplification
 - ✅ **WebRTC Removal** - Simplified to Gun.js only for better reliability
