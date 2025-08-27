@@ -1,233 +1,80 @@
-import React, { useState, useEffect, useRef } from 'react';
-// Temporarily disabled to isolate temporal dead zone error
-// import gunAuthService from '../services/gunAuthService';
-// import friendsService from '../services/friendsService';
-// import hybridGunService from '../services/hybridGunService';
-// WebRTC removed - using Gun.js only
-// import backupService from '../services/backupService';
-// p2pDebugger removed - using Gun.js only
-// import consoleCapture from '../utils/consoleCapture'; // Temporarily disabled to fix init error
-import { useTheme } from '../contexts/ThemeContext';
-import { useResponsive } from '../hooks/useResponsive';
+import React from 'react';
 
 /**
- * EnhancedDevTools Component
- * Advanced developer tools with user management, backup system, and mobile optimization
+ * ULTRA-MINIMAL DevTools Component - Complete isolation test
+ * Removed ALL hooks, services, external dependencies, and complex logic
  */
 function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
-  const { colors } = useTheme();
-  const screen = useResponsive();
-  const [activeTab, setActiveTab] = useState('status');
-  const [currentUserInfo, setCurrentUserInfo] = useState(null);
-  const [allOnlineUsers, setAllOnlineUsers] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [invites, setInvites] = useState([]);
-  const [stats, setStats] = useState({});
-  const [networkStats, setNetworkStats] = useState({
-    gunStatus: 'unknown',
-    webrtcStatus: 'unknown',
-    peerId: '',
-    connectedPeers: 0,
-    gunPeers: 0
-  });
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [discoverUsers, setDiscoverUsers] = useState([]);
-  const [discoverLoading, setDiscoverLoading] = useState(false);
+  if (!isVisible) return null;
 
-  // P2P Tab state (removed - logs go to console)
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        backgroundColor: '#1a1a2e',
+        color: '#ffffff',
+        padding: '20px',
+        borderRadius: '8px',
+        border: '1px solid #333333',
+        maxWidth: '400px',
+        width: '90%'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, color: '#ffffff' }}>DevTools (Minimal Mode)</h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#cccccc',
+              fontSize: '20px',
+              cursor: 'pointer'
+            }}
+          >
+            ×
+          </button>
+        </div>
 
-  // Console logs state
-  const [consoleLogs, setConsoleLogs] = useState([]);
-  const [logFilter, setLogFilter] = useState('all');
-  const consoleEndRef = useRef(null);
-  const [autoScroll, setAutoScroll] = useState(true);
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ margin: '0 0 10px 0', color: '#cccccc' }}>
+            DevTools is currently in minimal mode due to initialization issues.
+          </p>
+          <p style={{ margin: '0 0 10px 0', color: '#cccccc', fontSize: '12px' }}>
+            This is a temporary state while debugging temporal dead zone errors.
+          </p>
+        </div>
 
-  // Backup state
-  const [backupPassword, setBackupPassword] = useState('');
-  const [storageStats, setStorageStats] = useState(null);
-  const [backupStatus, setBackupStatus] = useState('');
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={onClose}
+            style={{
+              backgroundColor: '#0f3460',
+              color: '#ffffff',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  // Gun DB state
-  const [customRelay, setCustomRelay] = useState('');
-  const [currentRelays, setCurrentRelays] = useState([]);
-  const [savedRelays, setSavedRelays] = useState([]);
-  const [privateMode, setPrivateMode] = useState(localStorage.getItem('P2P_PRIVATE_MODE') === 'true');
-
-  // Load users (friends)
-  useEffect(() => {
-    if (!isVisible) return;
-    // Temporarily disabled to isolate temporal dead zone error
-    // loadUsers();
-    // loadInvites();
-    // loadStats();
-    // loadRelayConfig();
-    // loadCurrentUserInfo();
-    // loadOnlineUsers();
-
-    // Load console logs
-    // const logs = consoleCapture.getLogs(); // Temporarily disabled
-    // setConsoleLogs(logs); // Temporarily disabled
-
-    // Subscribe to new console logs
-    // const unsubscribe = consoleCapture.subscribe((log) => { // Temporarily disabled
-    //   if (log.type === 'clear') {
-    //     setConsoleLogs([]);
-    //   } else {
-    //     setConsoleLogs(prev => [...prev, log].slice(-200)); // Keep last 200 logs
-    //   }
-    // }); // Temporarily disabled
-
-    // return () => {
-    //   // Temporarily disabled to isolate temporal dead zone error
-    //   // unsubscribe();
-    // };
-  }, [isVisible, loadStats]);
-
-  // P2P logs now go directly to console - no need to track them
-
-  // Auto-scroll console logs
-  // useEffect(() => { // Temporarily disabled
-  //   if (autoScroll && consoleEndRef.current && activeTab === 'console') {
-  //     consoleEndRef.current.scrollIntoView({ behavior: 'smooth' });
-  //   }
-  // }, [consoleLogs, activeTab, autoScroll]); // Temporarily disabled
-
-  // const loadCurrentUserInfo = () => { // Temporarily disabled
-  //   try {
-  //     const user = gunAuthService.getCurrentUser();
-  //     if (user) {
-  //       // Check Gun.js status (WebRTC removed)
-  //       const gunPeers = gunAuthService.gun?._.opt?.peers || {};
-  //       const connectedPeers = Object.keys(gunPeers).filter(url => {
-  //         const peer = gunPeers[url];
-  //         return peer && peer.wire && !peer.wire.closed;
-  //       });
-
-  //       setCurrentUserInfo({
-  //         publicKey: user.pub,
-  //         alias: user.alias,
-  //         peerId: 'Gun.js only',
-  //         webrtcReady: false, // WebRTC removed
-  //         gunConnected: connectedPeers.length > 0,
-  //         peerCount: connectedPeers.length
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error('Failed to load current user info:', error);
-  //   }
-  // }; // Temporarily disabled
-
-  // const loadOnlineUsers = async () => { // Temporarily disabled
-  //   try {
-  //     // First, make sure we broadcast our own presence
-  //     const currentUser = gunAuthService.getCurrentUser();
-  //     if (currentUser) {
-  //       hybridGunService.updatePresence('online');
-  //       // Broadcasting our presence before checking others
-  //     }
-
-  //     const onlineList = [];
-  //     const seenKeys = new Set();
-
-  //     // Get all online users from Gun presence space
-  //     await new Promise((resolve) => {
-  //       let checkCount = 0;
-
-  //       // Check presence space
-  //       gunAuthService.gun.get('presence').map().once((data, key) => {
-  //         checkCount++;
-  //         // Checking presence for key
-
-  //         if (data && key && key !== '_' && !key.startsWith('~')) {
-  //           // Clean Gun metadata
-  //           const cleanData = Object.keys(data).reduce((acc, k) => {
-  //             if (!k.startsWith('_') && k !== '#' && k !== '>') {
-  //               acc[k] = data[k];
-  //             }
-  //           }, {});
-
-  //           // Check if user is online (seen in last 2 minutes)
-  //           if (cleanData.status === 'online' && cleanData.lastSeen &&
-  //               (Date.now() - cleanData.lastSeen) < 120000) {
-  //             if (!seenKeys.has(key)) {
-  //               seenKeys.add(key);
-  //               onlineList.push({
-  //                 publicKey: key,
-  //                 lastSeen: cleanData.lastSeen,
-  //                 peerId: cleanData.peerId,
-  //                 status: cleanData.status
-  //               });
-  //               // Found online user
-  //             }
-  //           }
-  //         }
-  //       });
-
-  //       // Also check users space for presence
-  //       gunAuthService.gun.get('~@').map().once((alias, key) => {
-  //         if (alias && key && key !== '_') {
-  //           // Extract public key from the ~pubkey format
-  //           const pubKey = key.replace('~', '').split('.')[0];
-  //           if (pubKey && !seenKeys.has(pubKey)) {
-  //             // Check this user's presence
-  //             gunAuthService.gun.user(pubKey).get('presence').once((data) => {
-  //               if (data && data.status === 'online' && data.lastSeen &&
-  //                   (Date.now() - data.lastSeen) < 120000) {
-  //                 seenKeys.add(pubKey);
-  //                 onlineList.push({
-  //                   publicKey: pubKey,
-  //                   alias: alias,
-  //                   lastSeen: data.lastSeen,
-  //                   peerId: data.peerId,
-  //                   status: data.status
-  //                 });
-  //                 // Found online user via alias
-  //               }
-  //             });
-  //           }
-  //         }
-  //       });
-
-  //       // Wait a bit for data to load
-  //       setTimeout(() => {
-  //         // Total presence checks: checkCount
-  //         resolve();
-  //       }, 2000);
-  //     });
-
-  //     setAllOnlineUsers(onlineList);
-  //     // Online users found: onlineList.length
-  //   } catch (error) {
-  //     console.error('Failed to load online users:', error);
-  //   }
-  // }; // Temporarily disabled
-
-  const loadUsers = async () => {
-    try {
-      const friends = await friendsService.getFriends();
-      const userList = friends.map(friend => ({
-        ...friend,
-        id: friend.publicKey,
-        name: friend.nickname,
-        status: 'friend',
-        lastSeen: friend.lastSeen || 'Unknown'
-      }));
-      setUsers(userList);
-    } catch (error) {
-      // console.error('Failed to load users:', error);
-    }
-  };
-
-  const loadInvites = async () => {
-    try {
-      const myInvites = await friendsService.getMyInvites();
-      setInvites(myInvites);
-    } catch (error) {
-      // console.error('Failed to load invites:', error);
-    }
-  };
-
-  const loadStats = async () => {
+export default EnhancedDevTools;
     try {
       const dbStats = await hybridGunService.getDatabaseStats();
       const gun = gunAuthService.gun;
