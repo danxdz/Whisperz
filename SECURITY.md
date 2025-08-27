@@ -38,6 +38,8 @@ Whisperz implements **exceptional security** with military-grade encryption, zer
 - **E2E Encryption**: Messages encrypted before transmission
 - **Secure Random Generation**: `crypto.getRandomValues()` for all security tokens
 - **Input Validation**: XSS protection via React's built-in sanitization
+- **User Management Security**: CRUD operations maintain encryption and privacy
+- **Network Discovery**: User scanning respects privacy boundaries
 
 #### ✅ Network Security
 - **Gun.js Relays**: Decentralized relay network (no single point of failure)

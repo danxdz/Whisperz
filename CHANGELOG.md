@@ -5,6 +5,42 @@ All notable changes to the Whisperz project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2024-08-27
+
+### Added - CRUD User Management DevTools
+- **Complete User CRUD System** - Full Create, Read, Update, Delete operations for all users
+- **Network User Discovery** - Scan Gun network to find all registered users
+- **Admin-Level DevTools** - Professional user management interface
+- **5-Tab Interface** - All Users, Discover, Friends, Invites, Add User tabs
+- **Real-Time Search** - Filter users by nickname or public key
+- **Online Status Tracking** - Live indicators for currently active users
+- **Manual User Addition** - Add users directly with public key input
+- **User Moderation** - Block/unblock users functionality
+- **Comprehensive Network Scanning** - Find users from presence data and alias registry
+
+### Fixed - Perfect Invite System
+- **Fixed Invite→Friend Creation** - Invites now automatically create bidirectional friendships
+- **Eliminated Strange Notifications** - Removed "pending invite from inviter accepted" messages
+- **Smart Cleanup System** - Proper cleanup of pending invites and friend requests
+- **Instant Connection Flow** - Users become friends immediately upon invite acceptance
+- **Bidirectional Friendship** - Both users see each other as friends automatically
+- **Comprehensive Debugging** - Added detailed logging for invite flow troubleshooting
+
+### Fixed - Critical System Issues
+- **DevTools Initialization** - Resolved "Cannot access 'Un' before initialization" errors
+- **Message Sending Failures** - Fixed Gun.SEA encryption key issues
+- **Temporal Dead Zone** - Fixed variable declaration order in config files
+- **Invite Data Storage** - Fixed invite metadata vs full data storage
+- **Friend Creation Logic** - Separated invite acceptance from new friend requests
+- **Memory Cleanup** - Proper cleanup of pending invites and friend requests
+
+### Enhanced - User Experience
+- **Streamlined Friend Addition** - Multiple ways to add friends (invite, discover, manual)
+- **Better Error Messages** - Clear feedback for all user operations
+- **Loading States** - Visual feedback during network operations
+- **Status Messages** - Success/error notifications for all actions
+- **Responsive Design** - Optimized DevTools interface for all screen sizes
+
 ## [Unreleased]
 
 ### Added

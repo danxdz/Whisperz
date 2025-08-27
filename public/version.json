@@ -1,10 +1,14 @@
 {
-  "version": "2.1.0",
-  "buildDate": "2024-01-15",
+  "version": "2.1.3",
+  "buildDate": "2024-08-27",
   "features": [
-    "Theme system with light/dark modes",
-    "Swipeable mobile interface",
-    "Improved friend management",
-    "WebRTC peer-to-peer messaging"
+    "CRUD User Management DevTools",
+    "Perfect Invite System with Auto-Friendship",
+    "Network User Discovery and Search",
+    "Admin-Level User Management",
+    "Fixed DevTools Initialization Issues",
+    "Enhanced Friend Management System",
+    "Real-Time Online Status Tracking",
+    "Manual User Addition with Public Keys"
   ]
 }

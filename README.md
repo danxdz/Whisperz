@@ -3,7 +3,7 @@
 [![Security Score](https://img.shields.io/badge/Security-9%2F10-green)](./DEEP_SECURITY_ANALYSIS.md)
 [![Encryption](https://img.shields.io/badge/Encryption-Military%20Grade-blue)](./SECURITY_AUDIT_REPORT.md)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.1.2-purple)](./package.json)
+[![Version](https://img.shields.io/badge/Version-2.1.3-purple)](./package.json)
 
 **True decentralized encrypted messaging with Gun.js - no central server, no phone number, no email required.**
 
@@ -184,11 +184,13 @@ All security settings are pre-configured for maximum protection:
 ## 📱 Features in Detail
 
 ### Friend System
-- Generate secure invite links
-- 24-hour expiration
-- One-time use only
-- Cryptographic signatures
-- No friend requests - instant connection
+- **Perfect Invite System** - Generate secure invite links that automatically create friendships
+- **CRUD User Management** - Admin-level DevTools for managing all users on the network
+- **Network Discovery** - Find and add any users currently online
+- **24-hour expiration** - Secure time-limited invites
+- **One-time use only** - Cryptographically secure single-use links
+- **Instant friendship** - No pending requests, immediate bidirectional connection
+- **Manual User Addition** - Add users directly with public keys
 
 ### Message Features
 - Real-time delivery
@@ -238,9 +240,26 @@ We welcome contributions! Please read our [Contributing Guidelines](./CONTRIBUTI
 3. Run tests and linting
 4. Submit a pull request
 
-## 📈 Recent Improvements (v2.1.2)
+## 📈 Recent Improvements (v2.1.3)
 
-### 🔥 Critical Fixes
+### 🛠️ CRUD User Management DevTools
+- ✅ **Complete User CRUD System** - Create, Read, Update, Delete operations for all users
+- ✅ **Network User Discovery** - Scan and find all users on the Gun network
+- ✅ **Admin-Level Control** - Full user management interface in DevTools
+- ✅ **5-Tab Interface** - All Users, Discover, Friends, Invites, Add User
+- ✅ **Real-Time Search** - Filter users by nickname or public key
+- ✅ **Online Status Tracking** - Live indicators for active users
+- ✅ **Manual User Addition** - Add users directly with public key input
+- ✅ **Block/Unblock Users** - User moderation capabilities
+
+### 🎯 Perfect Invite System
+- ✅ **Fixed Invite→Friend Creation** - Invites now automatically create bidirectional friendships
+- ✅ **Eliminated Strange Notifications** - No more "pending invite from inviter accepted" messages
+- ✅ **Smart Cleanup System** - Proper cleanup of pending invites and friend requests
+- ✅ **Instant Connection** - Users become friends immediately upon invite acceptance
+- ✅ **Comprehensive Debugging** - Added detailed logging for invite flow troubleshooting
+
+### 🔥 Critical System Fixes
 - ✅ **Fixed DevTools initialization error** - Resolved "Cannot access 'Un' before initialization"
 - ✅ **Fixed message sending failures** - Resolved Gun.SEA encryption key issues
 - ✅ **Fixed "No secret mix" errors** - Proper encryption key retrieval and validation
