@@ -1145,7 +1145,8 @@ function App() {
 
         // Initialize Gun services once
         gunAuthService.initialize();
-        
+        friendsService.initialize();
+
         // Only initialize hybridGunService on desktop
         const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
         if (!isMobile) {
