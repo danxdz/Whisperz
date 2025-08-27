@@ -1130,10 +1130,13 @@ function App() {
           // Initialize Gun messaging for private chats
           try {
             debugLogger.debug('gun', '🚀 Initializing Gun messaging for existing session...');
-            await gunMessaging.initialize(currentUser.pub);
+            if (gunMessaging && gunMessaging.initialize) {
+              await gunMessaging.initialize(currentUser.pub);
+            }
             // Gun messaging initialized
           } catch (error) {
-            debugLogger.error('❌ Failed to initialize messaging:', error);
+            console.error('❌ Failed to initialize messaging:', error);
+            // Don't block app loading on messaging init failure
           }
 
           // Initialize message service
@@ -1174,10 +1177,13 @@ function App() {
     // Initialize Gun messaging
     try {
       // Initialize Gun relay messaging
-      await gunMessaging.initialize(authUser.pub);
-      debugLogger.debug('gun', '✅ Gun messaging initialized');
+      if (gunMessaging && gunMessaging.initialize) {
+        await gunMessaging.initialize(authUser.pub);
+        debugLogger.debug('gun', '✅ Gun messaging initialized');
+      }
     } catch (error) {
-      debugLogger.error('❌ Failed to initialize messaging:', error);
+      console.error('❌ Failed to initialize messaging:', error);
+      // Don't block app loading on messaging init failure
     }
 
     // Initialize presence service and set online
