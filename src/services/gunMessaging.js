@@ -2,7 +2,6 @@
 // All messages go through Gun.js relay network
 
 import gunAuthService from './gunAuthService';
-import friendsService from './friendsService';
 import securityUtils from '../utils/securityUtils.js';
 
 class GunMessaging {
@@ -149,15 +148,18 @@ class GunMessaging {
   // Encrypt message for friend
   async encryptForFriend(friendPublicKey, content) {
     try {
-      // Get friend's public key
-      const friend = await friendsService.getFriend(friendPublicKey);
-      if (!friend) {
-        throw new Error('Friend not found');
-      }
-
-      // Use Gun's SEA to encrypt
+      // Use Gun's SEA to encrypt directly with public key
       const user = gunAuthService.getCurrentUser();
-      const secret = await gunAuthService.gun.SEA.secret(friend.epub || friendPublicKey, user);
+      // Try to get epub from Gun directly
+      const friendUser = await new Promise((resolve) => {
+        gunAuthService.gun.user(friendPublicKey).get('epub').once((epub) => {
+          resolve(epub);
+        });
+        setTimeout(() => resolve(null), 1000); // Timeout after 1 second
+      });
+      
+      const keyToUse = friendUser || friendPublicKey;
+      const secret = await gunAuthService.gun.SEA.secret(keyToUse, user);
       const encrypted = await gunAuthService.gun.SEA.encrypt(content, secret);
 
       return encrypted;
@@ -171,15 +173,18 @@ class GunMessaging {
   // Decrypt message from friend
   async decryptFromFriend(friendPublicKey, encryptedContent) {
     try {
-      // Get friend's public key
-      const friend = await friendsService.getFriend(friendPublicKey);
-      if (!friend) {
-        throw new Error('Friend not found');
-      }
-
-      // Use Gun's SEA to decrypt
+      // Use Gun's SEA to decrypt directly with public key
       const user = gunAuthService.getCurrentUser();
-      const secret = await gunAuthService.gun.SEA.secret(friend.epub || friendPublicKey, user);
+      // Try to get epub from Gun directly
+      const friendUser = await new Promise((resolve) => {
+        gunAuthService.gun.user(friendPublicKey).get('epub').once((epub) => {
+          resolve(epub);
+        });
+        setTimeout(() => resolve(null), 1000); // Timeout after 1 second
+      });
+      
+      const keyToUse = friendUser || friendPublicKey;
+      const secret = await gunAuthService.gun.SEA.secret(keyToUse, user);
       const decrypted = await gunAuthService.gun.SEA.decrypt(encryptedContent, secret);
 
       return decrypted || encryptedContent;
