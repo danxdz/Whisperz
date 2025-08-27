@@ -42,10 +42,10 @@ function ChatModule({ selectedFriend, currentUser }) {
   }, [selectedFriend]);
 
   const loadMessages = async () => {
-    if (!selectedFriend) return;
+    if (!selectedFriend || !selectedFriend.conversationId) return;
 
     try {
-      const history = await messageService.getMessageHistory(selectedFriend.publicKey);
+      const history = await messageService.getConversationHistory(selectedFriend.conversationId);
       setMessages(history || []);
       scrollToBottom();
     } catch (error) {
@@ -64,7 +64,7 @@ function ChatModule({ selectedFriend, currentUser }) {
     if (!newMessage.trim() || !selectedFriend) return;
 
     const message = {
-      text: newMessage,
+      content: newMessage,
       from: currentUser.pub,
       to: selectedFriend.publicKey,
       timestamp: Date.now(),
@@ -207,7 +207,7 @@ function ChatModule({ selectedFriend, currentUser }) {
                     color: '#e0e0e0',
                     wordBreak: 'break-word'
                   }}>
-                    {msg.text}
+                    {msg.content}
                   </div>
                 </div>
               </div>

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import gunAuthService from './services/gunAuthService';
-
 import gunOnlyP2P from './services/gunOnlyP2P';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
@@ -981,7 +980,7 @@ function App() {
             return;
           }
           for (const friend of friends) {
-            const _messages = await messageService.getMessages(friend.conversationId);
+            const _messages = await messageService.getConversationHistory(friend.conversationId);
             // console.log(`📜 Messages with ${friend.nickname}:`, _messages);
           }
         };
@@ -1051,15 +1050,10 @@ function App() {
         if (currentUser) {
           setUser(currentUser);
 
-          // Initialize WebRTC for private chats
+          // Initialize Gun P2P for messaging
           try {
-            debugLogger.debug('webrtc', '🚀 Initializing WebRTC for existing session...');
-            await webrtcService.initialize(currentUser.pub);
-            // WebRTC initialized
-
-            // Also initialize Gun P2P as fallback
             await gunOnlyP2P.initialize(currentUser.pub);
-            // Gun P2P initialized as fallback
+            debugLogger.debug('gun', '✅ Gun P2P initialized');
           } catch (error) {
             debugLogger.error('❌ Failed to initialize P2P:', error);
           }
