@@ -150,9 +150,9 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
   const getStatusText = () => {
     switch (securityStatus.securityLevel) {
       case 'maximum': return 'Maximum Security';
-      case 'high': return 'Encrypted';
+      case 'high': return 'Secure Chat';
       case 'partial': return 'Partial Security';
-      case 'critical': return 'Keys Missing';
+      case 'critical': return 'Syncing Keys...';
       case 'pending': return 'Connecting...';
       default: return 'Offline';
     }
@@ -227,7 +227,7 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
       >
         {/* Status Icon */}
         <span style={{ fontSize: '14px' }}>{getStatusIcon()}</span>
-        
+
         {/* Status Text */}
         <span style={{
           color: getStatusColor(),
@@ -251,6 +251,17 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
            securityStatus.connectionType === 'connecting' ? '...' :
            'OFF'}
         </span>
+
+        {/* Show click hint for critical status */}
+        {securityStatus.securityLevel === 'critical' && (
+          <span style={{
+            fontSize: '10px',
+            color: colors.textMuted,
+            marginLeft: '4px'
+          }}>
+            💡 Click for help
+          </span>
+        )}
       </div>
 
       {/* Detailed Security Panel */}
@@ -328,22 +339,47 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
             <div style={{
               marginTop: '12px',
               padding: '8px',
-              background: 'rgba(255, 0, 0, 0.1)',
-              border: '1px solid rgba(255, 0, 0, 0.3)',
+              background: 'rgba(255, 165, 0, 0.1)',
+              border: '1px solid rgba(255, 165, 0, 0.3)',
               borderRadius: '6px',
               fontSize: '11px',
-              color: colors.danger
+              color: colors.warning
             }}>
-              ⚠️ <strong>Action Required:</strong><br/>
-              {!securityStatus.hasEncryptionKey && (
+              🔄 <strong>Syncing encryption keys...</strong><br/>
+              {!securityStatus.hasEncryptionKey ? (
                 <>
-                  This friend was added before encryption keys were properly exchanged.<br/>
-                  <strong>To fix:</strong> One of you needs to generate a new invite link and re-add each other.<br/>
-                  <small>This is a one-time fix for old connections.</small>
+                  Waiting for {friend?.nickname || 'friend'}'s encryption keys to sync.<br/>
+                  <small>This usually takes a few moments. No action needed.</small>
+                </>
+              ) : (
+                <>
+                  Your encryption keys are being synchronized.<br/>
+                  <small>Please wait while keys are exchanged securely.</small>
                 </>
               )}
-              {!gunAuthService.getCurrentUser()?.epub && 
-                'Your encryption keys are missing. Please log out and log back in.'}
+
+              {/* Action button */}
+              <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Trigger a refresh of the security status
+                    window.location.reload();
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    background: colors.primary,
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    cursor: 'pointer'
+                  }}
+                  title="Refresh security status"
+                >
+                  🔄 Refresh
+                </button>
+              </div>
             </div>
           )}
 
