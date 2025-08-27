@@ -10,6 +10,7 @@ import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
 import debugLogger from './utils/debugLogger';
+import resetDatabase from './utils/resetDatabase';
 import './index.css';
 
 // Production-safe timeout manager using closure
@@ -181,6 +182,27 @@ function LoginView({ onLogin, inviteCode }) {
         <p className="invite-only-notice">
           This is an invite-only chat. You need an invite link from an existing member to join.
         </p>
+        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <button 
+            type="button"
+            onClick={() => {
+              if (confirm('This will clear all local Gun database data. Are you sure?')) {
+                resetDatabase();
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1000);
+              }
+            }}
+            style={{ 
+              background: 'rgba(255, 0, 0, 0.2)', 
+              border: '1px solid rgba(255, 0, 0, 0.5)',
+              fontSize: '12px',
+              padding: '8px 16px'
+            }}
+          >
+            🗑️ Reset Database
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1051,15 +1073,11 @@ function App() {
         if (currentUser) {
           setUser(currentUser);
 
-          // Initialize WebRTC for private chats
+          // Initialize Gun P2P for private chats
           try {
-            debugLogger.debug('webrtc', '🚀 Initializing WebRTC for existing session...');
-            await webrtcService.initialize(currentUser.pub);
-            // WebRTC initialized
-
-            // Also initialize Gun P2P as fallback
+            debugLogger.debug('p2p', '🚀 Initializing Gun P2P for existing session...');
             await gunOnlyP2P.initialize(currentUser.pub);
-            // Gun P2P initialized as fallback
+            // Gun P2P initialized
           } catch (error) {
             debugLogger.error('❌ Failed to initialize P2P:', error);
           }
