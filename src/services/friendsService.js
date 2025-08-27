@@ -967,34 +967,41 @@ class FriendsService {
         if (data) {
           // console.log('🔗 Friendship found:', key, data);
 
-          // Check if this friendship involves the current user
-          if (data.fromPublicKey === currentUser.pub || data.toPublicKey === currentUser.pub) {
-            // Determine which user is the friend
-            const isSender = data.fromPublicKey === currentUser.pub;
-            const friendKey = isSender ? data.toPublicKey : data.fromPublicKey;
-            const friendEpub = isSender ? data.toEpub : data.fromEpub;
-            const friendNickname = isSender ? data.toNickname : data.fromNickname;
+                      // Check if this friendship involves the current user
+            if (data.fromPublicKey === currentUser.pub || data.toPublicKey === currentUser.pub) {
+              // Determine which user is the friend
+              const isSender = data.fromPublicKey === currentUser.pub;
+              const friendKey = isSender ? data.toPublicKey : data.fromPublicKey;
+              const friendEpub = isSender ? data.toEpub : data.fromEpub;
+              const friendNickname = isSender ? data.toNickname : data.fromNickname;
 
-            // Add friend if not already in list
-            if (!friends.has(friendKey)) {
-              const friendData = {
-                publicKey: friendKey,
-                epub: friendEpub || null,  // CRITICAL: Include encryption key
-                nickname: friendNickname,
-                addedAt: data.addedAt,
-                conversationId: data.conversationId
-              };
+              // Validate friend data before adding
+              if (this.isValidFriendData(friendKey, friendNickname)) {
+                // Add friend if not already in list
+                if (!friends.has(friendKey)) {
+                  const friendData = {
+                    publicKey: friendKey,
+                    epub: friendEpub || null,  // CRITICAL: Include encryption key
+                    nickname: friendNickname || 'Unknown',
+                    addedAt: data.addedAt,
+                    conversationId: data.conversationId
+                  };
 
-              // console.log('➕ Adding friend from public space:', friendData);
-              friends.set(friendKey, friendData);
-              this.friends.set(friendKey, friendData);
+                  // console.log('➕ Adding friend from public space:', friendData);
+                  friends.set(friendKey, friendData);
+                  this.friends.set(friendKey, friendData);
 
-              // Also store in user's local friends list for faster access
-              gunAuthService.user.get('friends').get(friendKey).put(friendData);
+                  // Also store in user's local friends list for faster access
+                  gunAuthService.user.get('friends').get(friendKey).put(friendData);
 
-              this.notifyFriendListeners('added', friendData);
+                  this.notifyFriendListeners('added', friendData);
+                }
+              } else {
+                console.warn('🚨 Invalid friend data detected and skipped:', { friendKey, friendNickname });
+                // Clean up invalid friendship entry
+                this.cleanupInvalidFriendship(key, data);
+              }
             }
-          }
         }
       });
 
@@ -1264,6 +1271,100 @@ class FriendsService {
     gunAuthService.gun.get('friendRequests').get(publicKey).get(user.pub).put(null);
 
     return true;
+  }
+
+  // Validate friend data to prevent invalid entries
+  isValidFriendData(publicKey, nickname) {
+    // Check if publicKey is valid
+    if (!publicKey || 
+        typeof publicKey !== 'string' || 
+        publicKey.length < 10 || 
+        publicKey === 'undefined' || 
+        publicKey === 'null') {
+      return false;
+    }
+
+    // Check if nickname is reasonable (optional but helpful)
+    if (nickname && typeof nickname !== 'string') {
+      return false;
+    }
+
+    // Additional validation: publicKey should look like a Gun public key
+    if (publicKey.includes(' ') || publicKey.includes('\n') || publicKey.includes('\t')) {
+      return false;
+    }
+
+    return true;
+  }
+
+  // Clean up invalid friendship entries
+  cleanupInvalidFriendship(friendshipKey, friendshipData) {
+    try {
+      console.log('🧹 Cleaning up invalid friendship:', friendshipKey);
+      // Remove invalid friendship from public space
+      gunAuthService.gun.get('friendships').get(friendshipKey).put(null);
+      
+      // Also try to clean up any local references
+      if (friendshipData.fromPublicKey && friendshipData.toPublicKey) {
+        const currentUser = gunAuthService.getCurrentUser();
+        if (currentUser && 
+            (friendshipData.fromPublicKey === currentUser.pub || friendshipData.toPublicKey === currentUser.pub)) {
+          const invalidKey = friendshipData.fromPublicKey === currentUser.pub ? 
+                             friendshipData.toPublicKey : friendshipData.fromPublicKey;
+          
+          if (!this.isValidFriendData(invalidKey)) {
+            // Remove from user's friends list
+            gunAuthService.user.get('friends').get(invalidKey).put(null);
+            // Remove from local map
+            this.friends.delete(invalidKey);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error cleaning up invalid friendship:', error);
+    }
+  }
+
+  // Manual cleanup function for duplicates and invalid friends
+  async cleanupFriends() {
+    const user = gunAuthService.getCurrentUser();
+    if (!user) return;
+
+    console.log('🧹 Starting friend cleanup...');
+    
+    const validFriends = new Map();
+    const invalidKeys = [];
+
+    // Check all friends in local map
+    for (const [key, friend] of this.friends.entries()) {
+      if (this.isValidFriendData(key, friend.nickname)) {
+        validFriends.set(key, friend);
+      } else {
+        invalidKeys.push(key);
+        console.log('🗑️ Found invalid friend:', key, friend);
+      }
+    }
+
+    // Remove invalid friends
+    for (const invalidKey of invalidKeys) {
+      try {
+        this.friends.delete(invalidKey);
+        gunAuthService.user.get('friends').get(invalidKey).put(null);
+        console.log('✅ Removed invalid friend:', invalidKey);
+      } catch (error) {
+        console.warn('Error removing invalid friend:', invalidKey, error);
+      }
+    }
+
+    // Update local map
+    this.friends = validFriends;
+
+    console.log(`🧹 Cleanup complete. Removed ${invalidKeys.length} invalid friends.`);
+    
+    // Notify listeners to refresh UI
+    this.notifyFriendListeners('cleanup', { removedCount: invalidKeys.length });
+    
+    return { removedCount: invalidKeys.length, invalidKeys };
   }
 }
 

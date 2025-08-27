@@ -97,6 +97,22 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     }
   };
 
+  // Clean up invalid/duplicate friends
+  const cleanupFriends = async () => {
+    if (!confirm('Clean up invalid and duplicate friends?\n\nThis will remove friends with invalid public keys or corrupted data.')) return;
+    try {
+      setLoading(true);
+      const result = await friendsService.cleanupFriends();
+      setStatus(`🧹 Cleanup complete! Removed ${result.removedCount} invalid friends`);
+      loadFriends();
+      loadAllUsers();
+    } catch (error) {
+      setStatus(`❌ Cleanup failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load all users from Gun network
   const loadAllUsers = async () => {
     try {
@@ -619,21 +635,38 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h4 style={{ margin: 0 }}>Friends</h4>
-                <button
-                  onClick={loadFriends}
-                  disabled={loading}
-                  style={{
-                    padding: '6px 12px',
-                    backgroundColor: '#28a745',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '12px'
-                  }}
-                >
-                  {loading ? 'Loading...' : 'Refresh'}
-                </button>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <button
+                    onClick={cleanupFriends}
+                    disabled={loading}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#ffc107',
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    🧹 Cleanup
+                  </button>
+                  <button
+                    onClick={loadFriends}
+                    disabled={loading}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#28a745',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {loading ? 'Loading...' : 'Refresh'}
+                  </button>
+                </div>
               </div>
               
               {friends.length === 0 ? (
