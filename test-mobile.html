@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mobile Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Testing Mobile Login</h1>
+    <div id="status">Loading...</div>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="errors" style="color: red;"></div>
+    
+    <script>
+        // Override user agent to simulate mobile
+        Object.defineProperty(navigator, 'userAgent', {
+            get: function() { return 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) Mobile/15E148'; },
+            configurable: true
+        });
+        
+        // Load Gun and test
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        async function testMobile() {
+            const status = document.getElementById('status');
+            const errors = document.getElementById('errors');
+            
+            try {
+                status.textContent = 'Loading Gun.js...';
+                
+                // Load Gun
+                await loadScript('/node_modules/gun/gun.js');
+                await loadScript('/node_modules/gun/sea.js');
+                await loadScript('/node_modules/gun/axe.js');
+                
+                status.textContent = 'Initializing Gun with mobile config...';
+                
+                // Test Gun initialization with mobile config
+                const gun = Gun({
+                    peers: ['https://gun-relay-nchb.onrender.com/gun'],
+                    localStorage: false,
+                    radisk: false,
+                    file: false,
+                    multicast: false,
+                    axe: false,
+                    memory: true,
+                    ws: {
+                        reconnect: true,
+                        reconnectDelay: 5000,
+                        pingInterval: 60000,
+                        timeout: 30000
+                    }
+                });
+                
+                status.textContent = 'Gun initialized! Testing user...';
+                
+                const user = gun.user();
+                
+                status.textContent = '✅ Mobile Gun.js initialization successful!';
+                
+            } catch (error) {
+                errors.textContent = 'Error: ' + error.toString();
+                console.error(error);
+            }
+        }
+        
+        async function testLogin() {
+            const errors = document.getElementById('errors');
+            try {
+                const gun = Gun({
+                    peers: ['https://gun-relay-nchb.onrender.com/gun'],
+                    localStorage: false,
+                    memory: true
+                });
+                
+                const user = gun.user();
+                
+                user.auth('test', 'test1234', (ack) => {
+                    if (ack.err) {
+                        errors.textContent = 'Login error: ' + ack.err;
+                    } else {
+                        document.getElementById('status').textContent = '✅ Login successful!';
+                    }
+                });
+            } catch (error) {
+                errors.textContent = 'Error: ' + error.toString();
+            }
+        }
+        
+        // Test on load
+        testMobile();
+    </script>
+</body>
+</html>

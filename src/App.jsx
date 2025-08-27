@@ -1060,8 +1060,8 @@ function App() {
   useEffect(() => {
     const initServices = async () => {
       try {
-        await hybridGunService.initialize();
-        await friendsService.initialize();
+        // Services are initialized in the main init useEffect below
+        // This is just for test helpers
 
         // Gun.js relay messaging
 
@@ -1146,9 +1146,14 @@ function App() {
           debugLogger.info('📧 Invite code detected:', code);
         }
 
-        // Initialize Gun
+        // Initialize Gun services once
         gunAuthService.initialize();
-        hybridGunService.initialize();
+        
+        // Only initialize hybridGunService on desktop
+        const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
+        if (!isMobile) {
+          hybridGunService.initialize();
+        }
 
         // Check for existing session
         const currentUser = gunAuthService.getCurrentUser();

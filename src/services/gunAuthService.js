@@ -34,26 +34,39 @@ class GunAuthService {
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
 
+    // Simplified configuration for mobile
+    const gunConfig = isMobile ? {
+      // Mobile configuration - minimal to prevent crashes
+      peers: [finalRelay],
+      localStorage: false,
+      radisk: false,
+      file: false,
+      multicast: false,
+      axe: false,
+      memory: true,
+      ws: {
+        reconnect: true,
+        reconnectDelay: 5000,
+        pingInterval: 60000,
+        timeout: 30000
+      }
+    } : {
+      // Desktop configuration - full features
+      peers: [finalRelay],
+      localStorage: true,
+      radisk: true,
+      multicast: false,
+      axe: false,
+      ws: {
+        reconnect: true,
+        reconnectDelay: 1000,
+        pingInterval: 10000,
+        timeout: 20000
+      }
+    };
+    
     try {
-      this.gun = Gun({
-        peers: [finalRelay], // Use configured relay with optional instance
-        localStorage: !isMobile,  // Disable localStorage on mobile to prevent crashes
-        radisk: !isMobile,        // Disable radisk on mobile
-        multicast: false,         // Disabled for battery saving
-        axe: false,               // Disabled to reduce memory usage
-        ws: {
-          reconnect: true,
-          reconnectDelay: isMobile ? 5000 : 1000,  // Longer delay on mobile
-          pingInterval: isMobile ? 60000 : 10000,  // Much less frequent pings on mobile
-          timeout: isMobile ? 30000 : 20000        // Longer timeout on mobile
-        },
-        // Mobile optimizations - use memory only
-        file: false,  // Disable file storage on mobile
-        localStorage: false,  // Force disable localStorage
-        batch: isMobile ? 500 : 10,  // Batch more updates on mobile
-        throttle: isMobile ? 500 : 10,  // Throttle updates on mobile
-        memory: true  // Use memory only on mobile
-      });
+      this.gun = Gun(gunConfig);
     } catch (error) {
       // Silent fail - no console logging
       // Fallback to minimal configuration
