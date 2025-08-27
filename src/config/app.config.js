@@ -84,23 +84,23 @@ export const APP_CONFIG = {
 // Freeze config to prevent accidental mutations
 Object.freeze(APP_CONFIG);
 
-// Cache for the derived HMAC secret to avoid recalculating
-let _cachedHmacSecret = null;
+// HMAC secret cache - using object to avoid temporal dead zone issues
+const _hmacSecretCache = { value: null };
 
 // Get HMAC secret with consistent fallback
 export async function getInviteHmacSecret() {
   // Return cached secret if available
-  if (_cachedHmacSecret) {
-    return _cachedHmacSecret;
+  if (_hmacSecretCache.value) {
+    return _hmacSecretCache.value;
   }
 
   // Use environment variable if available
   const envSecret = import.meta.env.VITE_INVITE_SECRET;
   if (envSecret && envSecret !== 'default-invite-secret' && envSecret !== 'your-secret-key-here') {
-    _cachedHmacSecret = envSecret;
+    _hmacSecretCache.value = envSecret;
     return envSecret;
   }
-  
+
   // Fallback: derive a consistent secret from domain
   // This ensures the same secret across deployments on the same domain
   try {
@@ -110,14 +110,14 @@ export async function getInviteHmacSecret() {
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = new Uint8Array(hashBuffer);
     const derivedSecret = Array.from(hashArray, byte => byte.toString(16).padStart(2, '0')).join('');
-    
-    _cachedHmacSecret = derivedSecret;
+
+    _hmacSecretCache.value = derivedSecret;
     return derivedSecret;
   } catch (error) {
     // Ultimate fallback if crypto.subtle is not available
     console.error('Failed to derive HMAC secret, using static fallback');
     const fallbackSecret = 'fallback-hmac-secret-please-set-env-var';
-    _cachedHmacSecret = fallbackSecret;
+    _hmacSecretCache.value = fallbackSecret;
     return fallbackSecret;
   }
 }
