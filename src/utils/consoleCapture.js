@@ -1,186 +1,111 @@
 /**
  * Console Capture Utility
- * Captures console.log, console.error, console.warn messages for display in DevTools
+ * Safe console capture that doesn't crash
  */
 
 class ConsoleCapture {
   constructor() {
-    this.logs = [];
-    this.maxLogs = 500; // Maximum number of logs to keep
+    this.history = [];
+    this.maxHistory = 50; // Limit history to prevent memory issues
+    this.capturing = false;
     this.listeners = new Set();
-    this.originalConsole = {
-      log: console.log,
-      error: console.error,
-      warn: console.warn,
-      info: console.info,
-      debug: console.debug
-    };
-    this.isCapturing = false;
+    
+    // Don't capture on mobile or production
+    this.isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
+    this.isProduction = window.location.hostname !== 'localhost';
+    
+    if (this.isMobile || this.isProduction) {
+      // Don't capture anything on mobile/production
+      return;
+    }
   }
-
+  
   start() {
-    if (this.isCapturing) return;
-    this.isCapturing = true;
-
-    // Override console methods
-    console.log = (...args) => {
-      this.capture('log', args);
-      this.originalConsole.log.apply(console, args);
-    };
-
-    console.error = (...args) => {
-      this.capture('error', args);
-      this.originalConsole.error.apply(console, args);
-    };
-
-    console.warn = (...args) => {
-      this.capture('warn', args);
-      this.originalConsole.warn.apply(console, args);
-    };
-
-    console.info = (...args) => {
-      this.capture('info', args);
-      this.originalConsole.info.apply(console, args);
-    };
-
-    console.debug = (...args) => {
-      this.capture('debug', args);
-      this.originalConsole.debug.apply(console, args);
-    };
+    // Don't capture on mobile/production
+    if (this.isMobile || this.isProduction || this.capturing) {
+      return;
+    }
+    
+    this.capturing = true;
+    // Don't actually override console methods anymore
+    // Just track what debugLogger logs
   }
-
+  
   stop() {
-    if (!this.isCapturing) return;
-    this.isCapturing = false;
-
-    // Restore original console methods
-    console.log = this.originalConsole.log;
-    console.error = this.originalConsole.error;
-    console.warn = this.originalConsole.warn;
-    console.info = this.originalConsole.info;
-    console.debug = this.originalConsole.debug;
+    this.capturing = false;
   }
-
-  capture(type, args) {
-    // Determine the actual type from the message content
-    let actualType = type;
-    const message = this.formatArgs(args);
-
-    // Check for debugLogger prefixes
-    if (message.includes('[DEBUG]')) actualType = 'debug';
-    else if (message.includes('[GUN]')) actualType = 'gun';
-    else if (message.includes('[GUN]')) actualType = 'gun';
-    // WebRTC detection removed - using Gun.js only
-    else if (message.includes('❌') || message.includes('Error') || message.includes('Failed')) actualType = 'error';
-    else if (message.includes('⚠️') || message.includes('Warning')) actualType = 'warn';
-    else if (message.includes('✅') || message.includes('Success')) actualType = 'success';
-    else if (message.includes('🔧') || message.includes('Debug')) actualType = 'debug';
-    else if (message.includes('📹') || message.includes('🚀') || message.includes('💡')) actualType = 'info';
-
-    const log = {
-      type: actualType,
-      timestamp: new Date().toISOString(),
-      time: new Date().toLocaleTimeString(),
-      message: message,
-      raw: args,
-      stack: type === 'error' ? new Error().stack : undefined
-    };
-
-    this.logs.push(log);
-
-    // Keep only the latest logs
-    if (this.logs.length > this.maxLogs) {
-      this.logs.shift();
-    }
-
-    // Notify listeners
-    this.notifyListeners(log);
-  }
-
-  formatArgs(args) {
-    return args.map(arg => {
-      if (arg === undefined) return 'undefined';
-      if (arg === null) return 'null';
-      if (typeof arg === 'object') {
-        try {
-          return JSON.stringify(arg, null, 2);
-        } catch (e) {
-          return arg.toString();
-        }
-      }
-      return String(arg);
-    }).join(' ');
-  }
-
+  
   clear() {
-    this.logs = [];
-    this.notifyListeners({ type: 'clear' });
+    this.history = [];
+    this.notifyListeners();
   }
-
-  getLogs(filter = null) {
-    if (!filter) return this.logs;
-
-    if (typeof filter === 'string') {
-      return this.logs.filter(log => log.type === filter);
+  
+  addLog(type, message, ...args) {
+    if (!this.capturing || this.isMobile || this.isProduction) {
+      return;
     }
-
-    if (Array.isArray(filter)) {
-      return this.logs.filter(log => filter.includes(log.type));
+    
+    try {
+      const entry = {
+        type,
+        message: this.formatMessage(message, args),
+        timestamp: new Date().toISOString()
+      };
+      
+      this.history.push(entry);
+      
+      // Keep history limited
+      if (this.history.length > this.maxHistory) {
+        this.history.shift();
+      }
+      
+      this.notifyListeners();
+    } catch (e) {
+      // Silent fail
     }
-
-    return this.logs;
   }
-
-  subscribe(callback) {
+  
+  formatMessage(message, args) {
+    try {
+      let formatted = String(message);
+      
+      if (args && args.length > 0) {
+        const safeArgs = args.map(arg => {
+          if (typeof arg === 'object' && arg !== null) {
+            return '[Object]';
+          }
+          return String(arg);
+        });
+        formatted += ' ' + safeArgs.join(' ');
+      }
+      
+      return formatted;
+    } catch (e) {
+      return String(message);
+    }
+  }
+  
+  getHistory() {
+    return [...this.history];
+  }
+  
+  onUpdate(callback) {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
-
-  notifyListeners(log) {
+  
+  notifyListeners() {
     this.listeners.forEach(callback => {
       try {
-        callback(log);
+        callback(this.history);
       } catch (e) {
-        this.originalConsole.error('ConsoleCapture listener error:', e);
+        // Silent fail
       }
     });
   }
-
-  getStats() {
-    const stats = {
-      total: this.logs.length,
-      log: 0,
-      error: 0,
-      warn: 0,
-      info: 0,
-      debug: 0
-    };
-
-    this.logs.forEach(log => {
-      stats[log.type] = (stats[log.type] || 0) + 1;
-    });
-
-    return stats;
-  }
-
-  export() {
-    return JSON.stringify(this.logs, null, 2);
-  }
-
-  download() {
-    const dataStr = this.export();
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-
-    const exportFileDefaultName = `console-logs-${new Date().toISOString()}.json`;
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  }
 }
 
-// Create singleton instance
+// Create singleton
 const consoleCapture = new ConsoleCapture();
 
 export default consoleCapture;

@@ -8,24 +8,8 @@ import messageService from './services/messageService';
 // Using Gun.js relay for all messaging
 import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
-// Disable console capture and debug logger to prevent crashes
-// import consoleCapture from './utils/consoleCapture';
-// import debugLogger from './utils/debugLogger';
-
-// Create stub objects to prevent crashes
-const debugLogger = {
-  debug: () => {},
-  info: () => {},
-  error: () => {},
-  warn: () => {}
-};
-
-const consoleCapture = {
-  start: () => {},
-  stop: () => {},
-  clear: () => {},
-  getHistory: () => []
-};
+import debugLogger from './utils/debugLogger';
+import consoleCapture from './utils/consoleCapture';
 import resetDatabase from './utils/resetDatabase';
 import { getMobileConfig } from './utils/mobileDetect';
 import './index.css';
