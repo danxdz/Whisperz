@@ -36,11 +36,11 @@ class MessageService {
       ...metadata
     };
 
-    console.log('📤 Sending message via Gun.js:', message);
-
     // Encrypt message using epub (encryption public key)
     let encryptedMessage;
     let encryptionStatus = 'encrypted';
+
+    console.log('📤 Sending message via Gun.js:', message);
 
     try {
       const friendData = await friendsService.getFriend(recipientPublicKey);
@@ -58,9 +58,7 @@ class MessageService {
       const encryptionKey = friendData?.epub;
 
       if (!encryptionKey) {
-        console.warn('⚠️ No encryption key available for friend, sending unencrypted');
-        encryptedMessage = message;
-        encryptionStatus = 'unencrypted';
+        throw new Error('🔒 Encryption required: Friend does not have encryption key. Please wait for encryption keys to sync or re-add the friend.');
       } else {
         console.log('🔐 Encrypting message for:', encryptionKey);
         encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);
@@ -68,8 +66,7 @@ class MessageService {
       }
     } catch (error) {
       console.error('❌ Failed to encrypt message:', error);
-      encryptedMessage = message; // Fallback to unencrypted
-      encryptionStatus = 'encryption_failed';
+      throw new Error(`🔒 Encryption failed: ${error.message}. Message not sent for security reasons.`);
     }
 
     try {
