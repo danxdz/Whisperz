@@ -281,16 +281,10 @@ class FriendsService {
       });
     });
 
-    // Store encrypted metadata in global registry for lookup
-    // Only store minimal encrypted data to preserve privacy
-    const publicMetadata = await this.encryptInviteMetadata({
-      inviteCode,
-      createdAt: inviteData.createdAt,
-      expiresAt: inviteData.expiresAt,
-      used: inviteData.used
-    });
-    
-    this.gun.get('invites').get(inviteCode).put(publicMetadata);
+    // Store full invite data in global registry for lookup
+    // This is needed for acceptInvite to work properly
+    console.log('📝 Storing invite in global registry:', inviteCode);
+    this.gun.get('invites').get(inviteCode).put(inviteData);
 
     // Store as pending friend for the inviter
     const pendingFriend = {
@@ -309,7 +303,7 @@ class FriendsService {
 
     // Use hash-based routing for better compatibility
     const inviteLink = `${window.location.origin}/#/invite/${inviteCode}`;
-    // console.log('🔗 Generated invite link:', inviteLink);
+    console.log('🔗 Generated invite link:', inviteLink);
 
     // console.log('🎫 Invite generated:', {
     //       code: inviteCode,
@@ -449,14 +443,14 @@ class FriendsService {
         // Ensure nickname is not undefined to prevent errors
         const safeNickname = inviteData.nickname || 'Anonymous';
 
-        // console.log('🤝 Creating bidirectional friendship...');
-        // console.log('Current user:', user.pub, currentUserNickname);
-        // console.log('Inviter:', inviteData.from, safeNickname);
+        console.log('🤝 Creating bidirectional friendship...');
+        console.log('Current user:', user.pub, currentUserNickname);
+        console.log('Inviter:', inviteData.from, safeNickname);
 
         // Add friend for current user (the one accepting the invite)
         // Pass epub from invite data for encryption to work
         await this.addFriend(inviteData.from, safeNickname, inviteData.epub);
-        // console.log('✅ Step 1: Added inviter as friend for current user');
+        console.log('✅ Step 1: Added inviter as friend for current user');
 
         // Add current user as friend for the inviter
         // This creates the bidirectional relationship in PUBLIC space
@@ -476,17 +470,17 @@ class FriendsService {
             status: 'connected'
           };
 
-          // console.log('📝 Writing friendship to public space:', friendshipData);
+          console.log('📝 Writing friendship to public space:', friendshipData);
 
           await new Promise((addResolve) => {
             this.gun.get('friendships').get(friendshipKey).put(friendshipData, () => {
-              // console.log('✅ Step 2: Created bidirectional friendship in public space');
+              console.log('✅ Step 2: Created bidirectional friendship in public space');
               addResolve();
             });
           });
 
           // Mark invite as used ONLY AFTER successful friend addition
-          // console.log('📌 Marking invite as used...');
+          console.log('📌 Marking invite as used...');
           this.gun.get('invites').get(inviteCode).put({
             ...inviteData,
             used: true,
@@ -501,11 +495,11 @@ class FriendsService {
           // Note: The friendship is established through the public 'friendships' space
           // Both users will see each other when they check the friendships space
         } catch (error) {
-          // console.error('Error adding bidirectional friendship:', error);
+          console.error('❌ Error adding bidirectional friendship:', error);
           // Continue even if reverse add fails - at least one direction worked
         }
 
-        // console.log('✅ Invite accepted successfully');
+        console.log('✅ Invite accepted successfully');
         resolve({
           success: true,
           friend: {
@@ -602,8 +596,8 @@ class FriendsService {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    // console.log('🔧 Adding friend - Current user:', user.pub);
-    // console.log('🔧 Adding friend - Friend key:', publicKey);
+    console.log('🔧 Adding friend - Current user:', user.pub);
+    console.log('🔧 Adding friend - Friend key:', publicKey);
 
     const friendData = {
       publicKey,
@@ -613,14 +607,14 @@ class FriendsService {
       conversationId: this.generateConversationId(user.pub, publicKey)
     };
 
-    // console.log('💾 Storing friend data:', friendData);
+    console.log('💾 Storing friend data:', friendData);
 
     // Store friend relationship for current user (this works - own space)
     await new Promise((resolve) => {
       gunAuthService.user.get('friends').get(publicKey).put(friendData, (ack) => {
-        // console.log('📝 Friend stored for current user:', ack);
+        console.log('📝 Friend stored for current user:', ack);
         if (ack.err) {
-          // console.error('Error storing friend:', ack.err);
+          console.error('Error storing friend:', ack.err);
         }
         resolve();
       });

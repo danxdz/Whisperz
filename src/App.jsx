@@ -1267,42 +1267,47 @@ function App() {
     messageService.initialize();
     // console.log('✅ Message service initialized');
 
-    // Handle invite if present (from registration or from URL)
-    const codeToUse = inviteCodeFromReg || inviteCode;
-    if (codeToUse) {
-      // console.log('🎫 Processing invite after auth...');
-      // console.log('📦 Invite code:', codeToUse);
+            // Handle invite if present (from registration or from URL)
+        const codeToUse = inviteCodeFromReg || inviteCode;
+        if (codeToUse) {
+          console.log('🎫 Processing invite after auth...');
+          console.log('📦 Invite code:', codeToUse);
 
-      // Small delay to ensure services are ready
-      if (timeoutManager && timeoutManager.setAuthTimeout) {
-        timeoutManager.setAuthTimeout(async () => {
-          try {
-            const result = await friendsService.acceptInvite(codeToUse);
-            // console.log('✅ Invite acceptance result:', result);
+          // Small delay to ensure services are ready
+          if (timeoutManager && timeoutManager.setAuthTimeout) {
+            timeoutManager.setAuthTimeout(async () => {
+              try {
+                console.log('⏳ Attempting to accept invite:', codeToUse);
+                const result = await friendsService.acceptInvite(codeToUse);
+                console.log('✅ Invite acceptance result:', result);
 
-            if (result.alreadyFriends) {
-              // console.log('Already friends with this user');
-              // Don't show alert if already friends, just continue
-            } else {
-              alert('Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
-            }
+                if (result.alreadyFriends) {
+                  console.log('Already friends with this user');
+                  alert('✅ You are already friends with ' + (result.friend?.nickname || 'this user') + '!');
+                } else {
+                  console.log('🎉 New friendship created!');
+                  alert('🎉 Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
+                }
 
-            // Refresh friends list
-            if (typeof loadFriendsRef.current === 'function') {
-              loadFriendsRef.current();
-            }
-          } catch (error) {
-            // console.error('❌ Failed to accept invite:', error);
-            // Don't show error for "already used" if it was just used by this user
-            if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
-              alert('Note: ' + error.message);
-            }
-          } finally {
-            setInviteCode(null);
-            // Clear the invite from URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        }, 4000); // 4 second delay to ensure Gun.js is ready for new users
+                // Refresh friends list
+                console.log('🔄 Refreshing friends list...');
+                if (typeof loadFriendsRef.current === 'function') {
+                  loadFriendsRef.current();
+                }
+              } catch (error) {
+                console.error('❌ Failed to accept invite:', error);
+                // Don't show error for "already used" if it was just used by this user
+                if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
+                  alert('❌ Failed to accept invite: ' + error.message);
+                } else {
+                  console.log('⚠️ Invite already used by this user - that\'s normal');
+                }
+              } finally {
+                setInviteCode(null);
+                // Clear the invite from URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
+            }, 4000); // 4 second delay to ensure Gun.js is ready for new users
       }
     }
   };
