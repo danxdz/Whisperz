@@ -443,14 +443,15 @@ class FriendsService {
         // Ensure nickname is not undefined to prevent errors
         const safeNickname = inviteData.nickname || 'Anonymous';
 
-        console.log('🤝 Creating bidirectional friendship...');
-        console.log('Current user:', user.pub, currentUserNickname);
-        console.log('Inviter:', inviteData.from, safeNickname);
+        // console.log('🤝 Creating bidirectional friendship...');
+        // console.log('Current user:', user.pub, currentUserNickname);
+        // console.log('Inviter:', inviteData.from, safeNickname);
 
         // Add friend for current user (the one accepting the invite)
         // Pass epub from invite data for encryption to work
-        await this.addFriend(inviteData.from, safeNickname, inviteData.epub);
-        console.log('✅ Step 1: Added inviter as friend for current user');
+        // Skip pending invite creation since this IS the invite acceptance
+        await this.addFriend(inviteData.from, safeNickname, inviteData.epub, true);
+        // console.log('✅ Step 1: Added inviter as friend for current user');
 
         // Add current user as friend for the inviter
         // This creates the bidirectional relationship in PUBLIC space
@@ -470,17 +471,17 @@ class FriendsService {
             status: 'connected'
           };
 
-          console.log('📝 Writing friendship to public space:', friendshipData);
+          // console.log('📝 Writing friendship to public space:', friendshipData);
 
           await new Promise((addResolve) => {
             this.gun.get('friendships').get(friendshipKey).put(friendshipData, () => {
-              console.log('✅ Step 2: Created bidirectional friendship in public space');
+              // console.log('✅ Step 2: Created bidirectional friendship in public space');
               addResolve();
             });
           });
 
           // Mark invite as used ONLY AFTER successful friend addition
-          console.log('📌 Marking invite as used...');
+          // console.log('📌 Marking invite as used...');
           this.gun.get('invites').get(inviteCode).put({
             ...inviteData,
             used: true,
@@ -488,9 +489,22 @@ class FriendsService {
             usedAt: Date.now()
           });
 
-          // Update the inviter's pending friend to actual friend
-          // Remove from pending_friends
+          // Clean up pending data on both sides
+          // console.log('🧹 Cleaning up pending invites and friend requests...');
+          
+          // Remove from inviter's pending_friends
           this.gun.get('~' + inviteData.from).get('pending_friends').get(inviteCode).put(null);
+          
+          // Remove any friend request entries for this invite
+          this.gun.get('friend_requests').get(user.pub).get(inviteCode).put(null);
+          this.gun.get('friend_requests').get(inviteData.from).get(inviteCode).put(null);
+          
+          // Clean up any pending_invites entries
+          gunAuthService.user.get('pending_invites').map().once((data, key) => {
+            if (data && data.publicKey === inviteData.from) {
+              gunAuthService.user.get('pending_invites').get(key).put(null);
+            }
+          });
 
           // Note: The friendship is established through the public 'friendships' space
           // Both users will see each other when they check the friendships space
@@ -499,7 +513,7 @@ class FriendsService {
           // Continue even if reverse add fails - at least one direction worked
         }
 
-        console.log('✅ Invite accepted successfully');
+        // console.log('✅ Invite accepted successfully');
         resolve({
           success: true,
           friend: {
@@ -592,7 +606,7 @@ class FriendsService {
   }
 
   // Add friend - Fixed to use public space for friend connections
-  async addFriend(publicKey, nickname, epub = null) {
+  async addFriend(publicKey, nickname, epub = null, skipPendingInvite = false) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -623,44 +637,51 @@ class FriendsService {
     // Store in local map
     this.friends.set(publicKey, friendData);
 
-    // Track as pending invite until accepted
-    const inviteId = securityUtils.generateInviteId();
-    await new Promise((resolve) => {
-      gunAuthService.user.get('pending_invites').get(inviteId).put({
-        publicKey,
-        nickname,
-        status: 'pending',
-        sentAt: Date.now()
-      }, resolve);
-    });
-
-    // Create friend request in PUBLIC space (not user's private space)
-    // This is readable by the other user when they check for friend requests
-    const myData = {
-      fromPublicKey: user.pub,
-      toPublicKey: publicKey,
-      fromNickname: await this.getUserNickname(),
-      toNickname: nickname,
-      addedAt: Date.now(),
-      conversationId: friendData.conversationId,
-      status: 'connected'
-    };
-
-    // console.log('💾 Storing friend connection in public space:', myData);
-
-    // Use a public "friendships" space that both users can read
-    // Create a deterministic key for the friendship
-    const friendshipKey = this.generateConversationId(user.pub, publicKey);
-
-    await new Promise((resolve) => {
-      gunAuthService.gun.get('friendships').get(friendshipKey).put(myData, (ack) => {
-        // console.log('📝 Friendship stored in public space:', ack);
-        if (ack.err) {
-          // console.error('Error storing friendship:', ack.err);
-        }
-        resolve();
+    // Track as pending invite until accepted (only for new friend requests, not for invite acceptance)
+    if (!skipPendingInvite) {
+      console.log('📝 Creating pending invite entry (new friend request)');
+      const inviteId = securityUtils.generateInviteId();
+      await new Promise((resolve) => {
+        gunAuthService.user.get('pending_invites').get(inviteId).put({
+          publicKey,
+          nickname,
+          status: 'pending',
+          sentAt: Date.now()
+        }, resolve);
       });
-    });
+    } else {
+      console.log('⏭️ Skipping pending invite creation (invite acceptance)');
+    }
+
+    // Create friend request in PUBLIC space only for new friend requests (not invite acceptance)
+    if (!skipPendingInvite) {
+      console.log('📝 Creating public friend request (new friend request)');
+      const myData = {
+        fromPublicKey: user.pub,
+        toPublicKey: publicKey,
+        fromNickname: await this.getUserNickname(),
+        toNickname: nickname,
+        addedAt: Date.now(),
+        conversationId: friendData.conversationId,
+        status: 'connected'
+      };
+
+      // Use a public "friendships" space that both users can read
+      // Create a deterministic key for the friendship
+      const friendshipKey = this.generateConversationId(user.pub, publicKey);
+
+      await new Promise((resolve) => {
+        gunAuthService.gun.get('friendships').get(friendshipKey).put(myData, (ack) => {
+          console.log('📝 Friendship stored in public space:', ack);
+          if (ack.err) {
+            console.error('Error storing friendship:', ack.err);
+          }
+          resolve();
+        });
+      });
+    } else {
+      console.log('⏭️ Skipping public friend request creation (invite acceptance)');
+    }
 
     this.notifyFriendListeners('added', friendData);
     return friendData;
