@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Reset - Whisperz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        button:hover {
+            background: #cc0000;
+        }
+        .success {
+            color: #00ff00;
+            margin: 20px 0;
+        }
+        .error {
+            color: #ff6666;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 Emergency Reset</h1>
+        <p>If you can't login to Whisperz, use this page to reset your local database.</p>
+        
+        <button onclick="resetDatabase()">
+            🗑️ Reset Gun Database
+        </button>
+        
+        <button onclick="clearEverything()">
+            💣 Clear ALL Browser Data
+        </button>
+        
+        <div id="status"></div>
+        
+        <p style="margin-top: 40px; color: #999;">
+            After reset, create a new account at:<br>
+            <a href="/?setup=admin" style="color: #00ff00;">Setup Admin Account</a>
+        </p>
+    </div>
+
+    <script>
+        function resetDatabase() {
+            const status = document.getElementById('status');
+            try {
+                // Clear all localStorage items related to Gun
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key) {
+                        keysToRemove.push(key);
+                    }
+                }
+                
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                });
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                
+                // Clear IndexedDB
+                if (window.indexedDB) {
+                    indexedDB.deleteDatabase('radata');
+                    indexedDB.deleteDatabase('gun');
+                    indexedDB.deleteDatabase('gunDB');
+                }
+                
+                status.innerHTML = '<div class="success">✅ Database reset successful! Redirecting...</div>';
+                
+                setTimeout(() => {
+                    window.location.href = '/?setup=admin';
+                }, 2000);
+                
+            } catch (error) {
+                status.innerHTML = '<div class="error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function clearEverything() {
+            if (confirm('This will clear ALL browser storage including cookies. Are you sure?')) {
+                // Clear everything
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Clear all cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Clear IndexedDB
+                if (window.indexedDB) {
+                    indexedDB.deleteDatabase('radata');
+                    indexedDB.deleteDatabase('gun');
+                    indexedDB.deleteDatabase('gunDB');
+                }
+                
+                const status = document.getElementById('status');
+                status.innerHTML = '<div class="success">✅ All data cleared! Redirecting...</div>';
+                
+                setTimeout(() => {
+                    window.location.href = '/?setup=admin';
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,11 +1,10 @@
-// Fully decentralized P2P using only Gun.js peers
-// No public servers, no STUN, no external dependencies
+// Gun.js relay-based messaging service
+// All messages go through Gun.js relay network
 
 import gunAuthService from './gunAuthService';
-import friendsService from './friendsService';
 import securityUtils from '../utils/securityUtils.js';
 
-class GunOnlyP2P {
+class GunMessaging {
   constructor() {
     this.messageHandlers = new Set();
     this.connectionStatus = new Map(); // friendKey -> status
@@ -13,10 +12,10 @@ class GunOnlyP2P {
     this.userId = null;
   }
 
-  // Initialize the P2P service
+  // Initialize the messaging service
   async initialize(userId) {
     if (this.isInitialized) {
-      // Gun P2P already initialized
+      // Gun messaging already initialized
       return true;
     }
 
@@ -29,10 +28,10 @@ class GunOnlyP2P {
     this.startPresenceBroadcast();
 
     this.isInitialized = true;
-    // Only log in debug mode
-    if (localStorage.getItem('debug_gun') === 'true') {
-      console.log('🎉 Gun-only P2P initialized for user:', userId);
-    }
+    // Logging disabled to prevent crashes
+    // if (localStorage.getItem('debug_gun') === 'true') {
+    //   console.log('🎉 Gun messaging initialized for user:', userId);
+    // }
     return true;
   }
 
@@ -43,7 +42,7 @@ class GunOnlyP2P {
     if (!user) return;
 
     // Listen for messages in our inbox
-    gun.get('p2p_messages')
+    gun.get('messages')
       .get(user.pub)
       .map()
       .on((message, key) => {
@@ -54,13 +53,13 @@ class GunOnlyP2P {
           return;
         }
 
-        console.log('📨 Received P2P message from:', message.from);
+        // console.log('📨 Received message from:', message.from);
 
         // Decrypt message if encrypted
         this.handleMessage(message.from, message);
 
         // Clean up processed message
-        gun.get('p2p_messages').get(user.pub).get(key).put(null);
+        gun.get('messages').get(user.pub).get(key).put(null);
       });
   }
 
@@ -75,7 +74,7 @@ class GunOnlyP2P {
       const presence = {
         status: 'online',
         timestamp: Date.now(),
-        gunPeerCount: this.getConnectedGunPeers().length // Store count instead of array
+        gunRelayConnected: this.isConnectedToRelay()
       };
 
       gun.get('presence').get(user.pub).put(presence);
@@ -87,16 +86,16 @@ class GunOnlyP2P {
     // No need for periodic broadcasting - only on login/visibility change
   }
 
-  // Get list of connected Gun peers
-  getConnectedGunPeers() {
+  // Check if connected to Gun relay
+  isConnectedToRelay() {
     const gun = gunAuthService.gun;
-    if (!gun || !gun._) return [];
+    if (!gun || !gun._) return false;
 
     const peers = gun._.opt.peers;
-    if (!peers) return [];
+    if (!peers) return false;
 
-    // Get URLs of connected peers
-    return Object.keys(peers).filter(url => {
+    // Check if any relay is connected
+    return Object.keys(peers).some(url => {
       const peer = peers[url];
       return peer && peer.wire && !peer.wire.closed;
     });
@@ -121,12 +120,12 @@ class GunOnlyP2P {
 
       // Store in friend's inbox
       const messageId = securityUtils.generateMessageId();
-      gun.get('p2p_messages')
+      gun.get('messages')
         .get(friendPublicKey)
         .get(messageId)
         .put(message);
 
-      console.log('📤 Sent P2P message to:', friendPublicKey);
+      // console.log('📤 Sent message to:', friendPublicKey);
 
       // Also store in conversation for history
       const conversationId = this.getConversationId(user.pub, friendPublicKey);
@@ -141,7 +140,7 @@ class GunOnlyP2P {
 
       return true;
     } catch (error) {
-      console.error('❌ Failed to send P2P message:', error);
+      // console.error('❌ Failed to send message:', error);
       return false;
     }
   }
@@ -149,20 +148,23 @@ class GunOnlyP2P {
   // Encrypt message for friend
   async encryptForFriend(friendPublicKey, content) {
     try {
-      // Get friend's public key
-      const friend = await friendsService.getFriend(friendPublicKey);
-      if (!friend) {
-        throw new Error('Friend not found');
-      }
-
-      // Use Gun's SEA to encrypt
+      // Use Gun's SEA to encrypt directly with public key
       const user = gunAuthService.getCurrentUser();
-      const secret = await gunAuthService.gun.SEA.secret(friend.epub || friendPublicKey, user);
+      // Try to get epub from Gun directly
+      const friendUser = await new Promise((resolve) => {
+        gunAuthService.gun.user(friendPublicKey).get('epub').once((epub) => {
+          resolve(epub);
+        });
+        setTimeout(() => resolve(null), 1000); // Timeout after 1 second
+      });
+      
+      const keyToUse = friendUser || friendPublicKey;
+      const secret = await gunAuthService.gun.SEA.secret(keyToUse, user);
       const encrypted = await gunAuthService.gun.SEA.encrypt(content, secret);
 
       return encrypted;
     } catch (error) {
-      console.error('Failed to encrypt message:', error);
+      // console.error('Failed to encrypt message:', error);
       // Return unencrypted as fallback
       return content;
     }
@@ -171,20 +173,23 @@ class GunOnlyP2P {
   // Decrypt message from friend
   async decryptFromFriend(friendPublicKey, encryptedContent) {
     try {
-      // Get friend's public key
-      const friend = await friendsService.getFriend(friendPublicKey);
-      if (!friend) {
-        throw new Error('Friend not found');
-      }
-
-      // Use Gun's SEA to decrypt
+      // Use Gun's SEA to decrypt directly with public key
       const user = gunAuthService.getCurrentUser();
-      const secret = await gunAuthService.gun.SEA.secret(friend.epub || friendPublicKey, user);
+      // Try to get epub from Gun directly
+      const friendUser = await new Promise((resolve) => {
+        gunAuthService.gun.user(friendPublicKey).get('epub').once((epub) => {
+          resolve(epub);
+        });
+        setTimeout(() => resolve(null), 1000); // Timeout after 1 second
+      });
+      
+      const keyToUse = friendUser || friendPublicKey;
+      const secret = await gunAuthService.gun.SEA.secret(keyToUse, user);
       const decrypted = await gunAuthService.gun.SEA.decrypt(encryptedContent, secret);
 
       return decrypted || encryptedContent;
     } catch (error) {
-      console.error('Failed to decrypt message:', error);
+      // console.error('Failed to decrypt message:', error);
       // Return as-is if decryption fails
       return encryptedContent;
     }
@@ -205,14 +210,14 @@ class GunOnlyP2P {
         decrypted: true
       };
 
-      console.log('📥 Processing message from:', from);
+      // console.log('📥 Processing message from:', from);
 
       // Notify all message handlers
       this.messageHandlers.forEach(handler => {
         handler(from, processedMessage);
       });
     } catch (error) {
-      console.error('Failed to handle message:', error);
+      // console.error('Failed to handle message:', error);
     }
   }
 
@@ -236,16 +241,15 @@ class GunOnlyP2P {
         const isOnline = presence.timestamp && (Date.now() - presence.timestamp) < 120000;
         const status = isOnline ? 'online' : 'offline';
 
-        // Check if both have Gun peers connected
-        const ourPeerCount = this.getConnectedGunPeers().length;
-        const theirPeerCount = presence.gunPeerCount || 0;
+        // Check if relay is connected
+        const relayConnected = this.isConnectedToRelay();
 
         resolve({
-          connected: isOnline && ourPeerCount > 0 && theirPeerCount > 0,
+          connected: isOnline && relayConnected,
           status: status,
           lastSeen: presence.timestamp,
-          sharedPeers: Math.min(ourPeerCount, theirPeerCount) > 0,
-          directPath: (ourPeerCount > 0 && theirPeerCount > 0) ? 'gun-mesh' : 'gun-relay'
+          relayConnected: relayConnected,
+          directPath: 'gun-relay'
         });
       });
     });
@@ -271,8 +275,8 @@ class GunOnlyP2P {
     this.messageHandlers.clear();
     this.connectionStatus.clear();
     this.isInitialized = false;
-    console.log('💥 Gun P2P service destroyed');
+    // console.log('💥 Gun messaging service destroyed');
   }
 }
 
-export default new GunOnlyP2P();
+export default new GunMessaging();

@@ -87,7 +87,7 @@ class FriendsService {
         version: 1
       };
     } catch (error) {
-      console.error('Failed to encrypt invite metadata:', error);
+      // console.error('Failed to encrypt invite metadata:', error);
       // Fallback to minimal unencrypted data if encryption fails
       return {
         encrypted: false,
@@ -146,7 +146,7 @@ class FriendsService {
       const decryptedText = decoder.decode(decryptedData);
       return JSON.parse(decryptedText);
     } catch (error) {
-      console.error('Failed to decrypt invite metadata:', error);
+      // console.error('Failed to decrypt invite metadata:', error);
       // Return minimal fallback data
       return {
         createdAt: null,

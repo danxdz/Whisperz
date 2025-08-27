@@ -22,8 +22,20 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log error to console in development
-    // console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Store error message safely
+    const errorMessage = error?.toString() || 'Unknown error';
+    const errorStack = error?.stack || 'No stack trace';
+    
+    // Store in localStorage for debugging
+    try {
+      localStorage.setItem('last_error', JSON.stringify({
+        message: errorMessage,
+        stack: errorStack.substring(0, 500), // Limit size
+        time: new Date().toISOString()
+      }));
+    } catch (e) {
+      // Silent fail
+    }
 
     // Update state with error details
     this.setState(prevState => ({
@@ -59,6 +71,20 @@ class ErrorBoundary extends React.Component {
         }}>
           <h2 style={{ color: '#ff0000' }}>⚠️ Something went wrong</h2>
           <p>The application encountered an unexpected error.</p>
+          
+          {/* Always show error message */}
+          {this.state.error && (
+            <div style={{
+              marginTop: '10px',
+              padding: '10px',
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              borderRadius: '4px',
+              fontSize: '14px',
+              wordBreak: 'break-word'
+            }}>
+              <strong>Error:</strong> {this.state.error.toString()}
+            </div>
+          )}
 
           {/* Show error details in development */}
           {import.meta.env.DEV && this.state.error && (

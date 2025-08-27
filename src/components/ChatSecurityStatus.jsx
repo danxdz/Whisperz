@@ -8,7 +8,7 @@ import friendsService from '../services/friendsService';
  * Shows real-time security status for the current chat
  * Displays encryption status, key exchange status, and connection type
  */
-const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} }) => {
+const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style = {} }) => {
   const { colors } = useTheme();
   const [securityStatus, setSecurityStatus] = useState({
     hasEncryptionKey: false,
@@ -18,8 +18,8 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
     details: []
   });
   const [showDetails, setShowDetails] = useState(false);
-  const [p2pOnlyMode, setP2pOnlyMode] = useState(
-    localStorage.getItem('p2p_only_mode') === 'true'
+  const [encryptionMode, setEncryptionMode] = useState(
+    localStorage.getItem('encryption_mode') || 'auto'
   );
 
   useEffect(() => {
@@ -63,16 +63,7 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
       // Check connection type and encryption
       const connType = connectionState?.status || 'offline';
       
-      if (connType === 'webrtc') {
-        isEncrypted = true;
-        details.push({
-          type: 'success',
-          icon: '🔐',
-          text: 'P2P Direct (E2E Encrypted)',
-          tooltip: 'Messages sent directly, fully encrypted'
-        });
-        securityLevel = hasEncryptionKey ? 'maximum' : 'partial';
-      } else if (connType === 'gun') {
+      if (connType === 'gun') {
         isEncrypted = hasEncryptionKey;
         details.push({
           type: isEncrypted ? 'success' : 'warning',
@@ -169,10 +160,10 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
       gap: '8px',
       ...style
     }}>
-      {/* P2P Connect Button - only show if not already P2P and friend is online */}
-      {connectionState?.isOnline && connectionState?.status !== 'webrtc' && onAttemptP2P && (
+      {/* Connection status - Gun.js relay */}
+      {false && (
         <button
-          onClick={onAttemptP2P}
+          onClick={onCheckConnection}
           style={{
             padding: '6px 10px',
             background: 'rgba(0, 255, 0, 0.1)',
@@ -187,36 +178,36 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
             transition: 'all 0.2s',
             fontWeight: '600'
           }}
-          title="Try direct P2P connection"
+          title="Check Gun relay connection"
         >
-          🚀 P2P
+          🔄 Check
         </button>
       )}
       
-      {/* P2P Only Mode Toggle */}
+      {/* Encryption Mode Toggle */}
       <button
         onClick={() => {
-          const newMode = !p2pOnlyMode;
-          setP2pOnlyMode(newMode);
-          localStorage.setItem('p2p_only_mode', newMode.toString());
+          const newMode = encryptionMode === 'auto' ? 'always' : 'auto';
+          setEncryptionMode(newMode);
+          localStorage.setItem('encryption_mode', newMode);
         }}
         style={{
           padding: '6px 10px',
-          background: p2pOnlyMode ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-          border: `1px solid ${p2pOnlyMode ? '#ff0000' : '#666'}`,
+          background: encryptionMode === 'always' ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+          border: `1px solid ${encryptionMode === 'always' ? '#00ff00' : '#666'}`,
           borderRadius: '6px',
-          color: p2pOnlyMode ? '#ff0000' : '#999',
+          color: encryptionMode === 'always' ? '#00ff00' : '#999',
           fontSize: '11px',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
           transition: 'all 0.2s',
-          fontWeight: p2pOnlyMode ? '600' : '400'
+          fontWeight: encryptionMode === 'always' ? '600' : '400'
         }}
-        title={p2pOnlyMode ? 'P2P-Only Mode: Messages only send via P2P' : 'Normal Mode: Messages use P2P or relay'}
+        title={encryptionMode === 'always' ? 'Always Encrypt: All messages encrypted' : 'Auto Mode: Encryption when available'}
       >
-        {p2pOnlyMode ? '🔒 P2P Only' : '🔓 P2P/Relay'}
+        {encryptionMode === 'always' ? '🔒 Always Encrypt' : '🔓 Auto Encrypt'}
       </button>
       
       {/* Main Security Indicator */}
@@ -258,8 +249,7 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
           color: colors.textSecondary,
           fontWeight: '500'
         }}>
-          {securityStatus.connectionType === 'webrtc' ? 'P2P' :
-           securityStatus.connectionType === 'gun' ? 'RELAY' :
+          {securityStatus.connectionType === 'gun' ? 'GUN' :
            securityStatus.connectionType === 'connecting' ? '...' :
            'OFF'}
         </span>

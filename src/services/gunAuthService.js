@@ -22,34 +22,61 @@ class GunAuthService {
     const instance = import.meta.env.VITE_GUN_INSTANCE || localStorage.getItem('gun_instance') || '';
     const finalRelay = instance ? `${gunRelay}?instance=${instance}` : gunRelay;
 
-    // Initialization logs moved to debug level
-    if (localStorage.getItem('debug_gun') === 'true') {
-      console.log('🔫 Initializing Gun.js');
-      console.log('🌐 Relay:', finalRelay);
-      if (instance) {
-        console.log('📦 Instance:', instance);
-      }
-    }
+    // Disable all console logs to prevent crashes
+    // if (localStorage.getItem('debug_gun') === 'true') {
+    //   console.log('🔫 Initializing Gun.js');
+    //   console.log('🌐 Relay:', finalRelay);
+    //   if (instance) {
+    //     console.log('📦 Instance:', instance);
+    //   }
+    // }
 
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
 
-    this.gun = Gun({
-      peers: [finalRelay], // Use configured relay with optional instance
-      localStorage: true,
-      radisk: true,
-      multicast: false,  // Disabled for battery saving
-      axe: false,        // Disabled to reduce memory usage
+    // Simplified configuration for mobile
+    const gunConfig = isMobile ? {
+      // Mobile configuration - minimal to prevent crashes
+      peers: [finalRelay],
+      localStorage: false,
+      radisk: false,
+      file: false,
+      multicast: false,
+      axe: false,
+      memory: true,
       ws: {
         reconnect: true,
-        reconnectDelay: isMobile ? 3000 : 1000,  // Longer delay on mobile to save battery
-        pingInterval: isMobile ? 30000 : 10000   // Less frequent pings on mobile
-      },
-      // Mobile optimizations
-      file: isMobile ? 'radata-mobile' : 'radata',
-      batch: isMobile ? 100 : 10,  // Batch more updates on mobile
-      throttle: isMobile ? 100 : 10  // Throttle updates on mobile
-    });
+        reconnectDelay: 5000,
+        pingInterval: 60000,
+        timeout: 30000
+      }
+    } : {
+      // Desktop configuration - full features
+      peers: [finalRelay],
+      localStorage: true,
+      radisk: true,
+      multicast: false,
+      axe: false,
+      ws: {
+        reconnect: true,
+        reconnectDelay: 1000,
+        pingInterval: 10000,
+        timeout: 20000
+      }
+    };
+    
+    try {
+      this.gun = Gun(gunConfig);
+    } catch (error) {
+      // Silent fail - no console logging
+      // Fallback to minimal configuration
+      this.gun = Gun({
+        peers: [finalRelay],
+        localStorage: false,
+        file: false,
+        memory: true
+      });
+    }
 
     // Test connection to peers
     setTimeout(() => {
@@ -229,15 +256,15 @@ class GunAuthService {
 
     const user = this.getCurrentUser();
     
-    // Debug logging
-    console.log('🔑 Gun.SEA Debug:');
-    console.log('  Current user:', user);
-    console.log('  Current user epub:', user?.epub);
-    console.log('  Recipient epub:', recipientEpub);
+    // Debug logging disabled to prevent crashes
+    // console.log('🔑 Gun.SEA Debug:');
+    // console.log('  Current user:', user);
+    // console.log('  Current user epub:', user?.epub);
+    // console.log('  Recipient epub:', recipientEpub);
     
     // Use recipientEpub (encryption public key) instead of pub for proper Gun.SEA secret generation
     const secret = await Gun.SEA.secret(recipientEpub, user);
-    console.log('  Secret generated:', !!secret);
+    // console.log('  Secret generated:', !!secret);
     return secret;
   }
 

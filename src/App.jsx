@@ -1,15 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 import gunAuthService from './services/gunAuthService';
-import gunOnlyP2P from './services/gunOnlyP2P';
+import gunMessaging from './services/gunMessaging';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
-// p2pDebugger removed - using Gun.js only
-import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
 import debugLogger from './utils/debugLogger';
-import './index.css';
+
+// Import utilities first (no dependencies)
+import resetDatabase from './utils/resetDatabase';
+import { getMobileConfig } from './utils/mobileDetect';
+
+// Import logging (depends on nothing) - already imported above
+
+// Import basic services first
+import gunAuthService from './services/gunAuthService';
+import hybridGunService from './services/hybridGunService';
+import presenceService from './services/presenceService';
+
+// Import onlineStatusFix after basic services (it depends on them)
+import onlineStatusManager from './utils/onlineStatusFix';
+
+// Import remaining services
+import messageService from './services/messageService';
+import friendsService from './services/friendsService';
+import gunMessaging from './services/gunMessaging';
 
 // Production-safe timeout manager using closure
 const createTimeoutManager = () => {
@@ -28,8 +44,14 @@ const createTimeoutManager = () => {
     }
   };
 };
+
+// Create a module-level timeout manager instance
+const globalTimeoutManager = createTimeoutManager();
 // import encryptionService from './services/encryptionService'; // Not used currently
-import { ThemeToggle, SwipeableChat, InviteModal } from './components';
+// Import components directly to avoid circular dependencies
+import ThemeToggle from './components/ThemeToggle';
+import SwipeableChat from './components/SwipeableChat';
+import InviteModal from './components/InviteModal';
 import ChatSecurityStatus from './components/ChatSecurityStatus';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
@@ -73,15 +95,37 @@ function LoginView({ onLogin, inviteCode }) {
 
   // Check if this might be the first user (no accounts exist)
   useEffect(() => {
-    // Simple check - if in production and no stored auth, show setup hint
-    if (window.location.hostname !== 'localhost' && !localStorage.getItem('gun/')) {
-      setShowFirstUserSetup(true);
+    try {
+      // Remove console logs that might crash mobile
+      // console.log('LoginView mounted - Reset button should be visible');
+      
+      // Check for reset parameter in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('reset') === 'true') {
+        // Auto-reset if ?reset=true is in URL
+        try {
+          resetDatabase();
+          alert('Database has been reset! Redirecting to setup...');
+          window.location.href = '?setup=admin';
+        } catch (error) {
+          alert('Failed to reset: ' + error.message);
+        }
+      }
+      
+      // Simple check - if in production and no stored auth, show setup hint
+      if (window.location.hostname !== 'localhost' && !localStorage.getItem('gun/')) {
+        setShowFirstUserSetup(true);
+      }
+    } catch (error) {
+      // Silent fail - no console logging
     }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    // Remove console log that might crash
+    // console.log('Login form submitted with username:', username);
 
     // Input validation
     if (!username || !password) {
@@ -180,6 +224,59 @@ function LoginView({ onLogin, inviteCode }) {
         <p className="invite-only-notice">
           This is an invite-only chat. You need an invite link from an existing member to join.
         </p>
+        
+        {/* Reset Database Button - Made more prominent for mobile */}
+        <div style={{ 
+          marginTop: '20px', 
+          paddingTop: '20px', 
+          borderTop: '2px solid #ff0000',
+          textAlign: 'center'
+        }}>
+          <p style={{ 
+            color: '#ff9999', 
+            fontSize: '14px', 
+            marginBottom: '10px' 
+          }}>
+            Having login issues? Reset your local database:
+          </p>
+          <button 
+            type="button"
+            onClick={() => {
+              if (confirm('This will clear all local Gun database data. Are you sure?')) {
+                try {
+                  resetDatabase();
+                  alert('Database reset completed! The page will now reload.');
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 500);
+                } catch (error) {
+                  alert('Failed to reset database: ' + error.message);
+                }
+              }
+            }}
+            style={{ 
+              background: '#ff0000',
+              border: '2px solid #ff6666',
+              color: 'white',
+              fontSize: '16px',
+              padding: '12px 24px',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              width: '100%',
+              maxWidth: '250px'
+            }}
+          >
+            🗑️ Reset Database
+          </button>
+          <p style={{ 
+            color: '#999', 
+            fontSize: '12px', 
+            marginTop: '10px' 
+          }}>
+            After reset, visit: {window.location.origin}?setup=admin
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -316,17 +413,16 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // const [friendsLoading, setFriendsLoading] = useState(true); // Not used currently
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
-  // Using module-level timeout manager instead of useRef for production stability
-
+  
   // Connection state for selected friend
-  const { connectionState, attemptWebRTCConnection } = useConnectionState(
+  const { connectionState, checkConnection } = useConnectionState(
     selectedFriend?.publicKey
   );
 
   // Cleanup auth timeouts on unmount
   useEffect(() => {
     return () => {
-      timeoutManager.clearAuthTimeout();
+      globalTimeoutManager.clearAuthTimeout();
     };
   }, []);
 
@@ -394,7 +490,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   useEffect(() => {
     loadFriends();
 
-    // Gun P2P already initialized in main flow
+    // Gun messaging already initialized in main flow
     // Update own presence
     debugLogger.debug('gun', '📍 Updating presence...');
     hybridGunService.updatePresence('online');
@@ -704,7 +800,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 <ChatSecurityStatus 
                   friend={selectedFriend}
                   connectionState={connectionState}
-                  onAttemptP2P={attemptWebRTCConnection}
+                  onCheckConnection={checkConnection}
                 />
               </div>
               <ThemeToggle />
@@ -761,13 +857,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                           fontSize: screen.isTiny ? '9px' : '10px'
                         }}
                         title={
-                          msg.deliveryMethod === 'webrtc' ? '🔐 Direct P2P (Encrypted)' :
+                          msg.deliveryMethod === 'gun' ? '🔐 Gun.js (Encrypted)' :
                           msg.deliveryMethod === 'gun' ? 
                             (selectedFriend?.epub ? '🔒 Via Relay (Encrypted)' : '⚠️ Via Relay (Not Encrypted)') :
                           '📱 Local'
                         }
                       >
-                        {msg.deliveryMethod === 'webrtc' ? (
+                        {msg.deliveryMethod === 'gun' ? (
                           <span style={{ color: '#00ff00' }}>⬤</span>
                         ) : msg.deliveryMethod === 'gun' ? (
                           <span style={{ color: selectedFriend?.epub ? '#ffaa00' : '#ff0000' }}>
@@ -825,7 +921,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 marginBottom: '4px'
               }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#00ff00' }}>⬤</span> P2P Direct
+                  <span style={{ color: '#00ff00' }}>⬤</span> Gun.js Relay
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span style={{ color: '#ffaa00' }}>◆</span> Relay (Encrypted)
@@ -913,6 +1009,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 }
 
 // Main App Component - Fixed invite handling
+// Make resetDatabase available globally for debugging
+if (typeof window !== 'undefined') {
+  window.resetGunDB = resetDatabase;
+  // Don't log to console - might crash mobile
+  // console.log('Reset function available: window.resetGunDB()');
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -921,9 +1024,16 @@ function App() {
   const [initError, setInitError] = useState(null);
   const [isAdminSetup, setIsAdminSetup] = useState(false);
   const loadFriendsRef = useRef(null);
+  
+  // Get mobile configuration
+  const mobileConfig = getMobileConfig();
+  // Don't log - might crash
+  // if (mobileConfig.isMobile) {
+  //   console.log('📱 Mobile device detected - using optimized settings');
+  // }
 
-  // Production-safe timeout manager
-  const timeoutManager = useRef(createTimeoutManager()).current;
+  // Use the global timeout manager
+  const timeoutManager = globalTimeoutManager;
 
   // Version indicator for deployment verification
   useEffect(() => {
@@ -942,7 +1052,7 @@ function App() {
 
     if (import.meta.env.DEV) {
       debugLogger.info('info', '🔧 Development Mode - Debug tools available');
-      debugLogger.info('info', '💡 Type: p2pDebug.diagnose() for P2P diagnostics');
+      debugLogger.info('info', '💡 Gun.js messaging system ready');
     }
   }, []);
 
@@ -955,10 +1065,10 @@ function App() {
   useEffect(() => {
     const initServices = async () => {
       try {
-        await hybridGunService.initialize();
-        await friendsService.initialize();
+        // Services are initialized in the main init useEffect below
+        // This is just for test helpers
 
-        // P2P debugging removed - using Gun.js only
+        // Gun.js relay messaging
 
         // Add test helper to window for debugging
         window.testMessage = async (message = 'Test message from console!') => {
@@ -985,7 +1095,7 @@ function App() {
           }
         };
 
-        // WebRTC test function removed - using Gun.js only
+        // Gun.js test functions available
 
         // console.log('✅ Services initialized');
         // console.log('💡 Test helpers available:');
@@ -1041,21 +1151,30 @@ function App() {
           debugLogger.info('📧 Invite code detected:', code);
         }
 
-        // Initialize Gun
+        // Initialize Gun services once
         gunAuthService.initialize();
-        hybridGunService.initialize();
+        
+        // Only initialize hybridGunService on desktop
+        const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
+        if (!isMobile) {
+          hybridGunService.initialize();
+        }
 
         // Check for existing session
         const currentUser = gunAuthService.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
 
-          // Initialize Gun P2P for messaging
+          // Initialize Gun messaging for private chats
           try {
-            await gunOnlyP2P.initialize(currentUser.pub);
-            debugLogger.debug('gun', '✅ Gun P2P initialized');
+            debugLogger.debug('gun', '🚀 Initializing Gun messaging for existing session...');
+            if (gunMessaging && gunMessaging.initialize) {
+              await gunMessaging.initialize(currentUser.pub);
+            }
+            // Gun messaging initialized
           } catch (error) {
-            debugLogger.error('❌ Failed to initialize P2P:', error);
+            console.error('❌ Failed to initialize messaging:', error);
+            // Don't block app loading on messaging init failure
           }
 
           // Initialize message service
@@ -1089,17 +1208,22 @@ function App() {
     // console.log('🔐 Authentication successful:', authUser);
 
     // Clear any existing auth-related timeouts to prevent memory leaks
-    timeoutManager.clearAuthTimeout();
+    if (timeoutManager && timeoutManager.clearAuthTimeout) {
+      timeoutManager.clearAuthTimeout();
+    }
 
     setUser(authUser);
 
-    // Initialize Gun P2P for messaging
+    // Initialize Gun messaging
     try {
-      // Initialize Gun P2P messaging
-      await gunOnlyP2P.initialize(authUser.pub);
-      debugLogger.debug('gun', '✅ Gun P2P initialized');
+      // Initialize Gun relay messaging
+      if (gunMessaging && gunMessaging.initialize) {
+        await gunMessaging.initialize(authUser.pub);
+        debugLogger.debug('gun', '✅ Gun messaging initialized');
+      }
     } catch (error) {
-      debugLogger.error('❌ Failed to initialize P2P:', error);
+      console.error('❌ Failed to initialize messaging:', error);
+      // Don't block app loading on messaging init failure
     }
 
     // Initialize presence service and set online
@@ -1118,7 +1242,8 @@ function App() {
       // console.log('📦 Invite code:', codeToUse);
 
       // Small delay to ensure services are ready
-      timeoutManager.setAuthTimeout(async () => {
+      if (timeoutManager && timeoutManager.setAuthTimeout) {
+        timeoutManager.setAuthTimeout(async () => {
           try {
             const result = await friendsService.acceptInvite(codeToUse);
             // console.log('✅ Invite acceptance result:', result);
@@ -1146,13 +1271,16 @@ function App() {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         }, 4000); // 4 second delay to ensure Gun.js is ready for new users
+      }
     }
   };
 
   // Handle logout
   const handleLogout = () => {
     // Clear any pending auth timeouts to prevent memory leaks
-    timeoutManager.clearAuthTimeout();
+    if (timeoutManager && timeoutManager.clearAuthTimeout) {
+      timeoutManager.clearAuthTimeout();
+    }
 
     gunAuthService.logout();
     hybridGunService.cleanup();

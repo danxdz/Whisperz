@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisperz - Simple Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .auth-form, .chat-container {
+            padding: 20px;
+        }
+        
+        input, button, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .error {
+            color: red;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .success {
+            color: green;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .message.own {
+            background: #e3f2fd;
+            text-align: right;
+        }
+        
+        .message-header {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .friends-list {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .friend-item {
+            padding: 8px;
+            margin: 4px 0;
+            background: #f0f0f0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .friend-item:hover {
+            background: #e0e0e0;
+        }
+        
+        .friend-item.selected {
+            background: #667eea;
+            color: white;
+        }
+        
+        .status {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .reset-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .reset-btn {
+            background: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Whisperz Chat</h1>
+            <p id="status">Simple & Secure</p>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="authSection" class="auth-form">
+            <h2 id="authTitle">Login</h2>
+            <input type="text" id="username" placeholder="Username" maxlength="20">
+            <input type="password" id="password" placeholder="Password">
+            <input type="text" id="nickname" placeholder="Nickname (for registration)" class="hidden">
+            <button id="authBtn" onclick="handleAuth()">Login</button>
+            <button id="toggleAuth" onclick="toggleAuthMode()">Switch to Register</button>
+            <div id="authMessage"></div>
+            
+            <div class="reset-section">
+                <p>Having issues?</p>
+                <button class="reset-btn" onclick="resetDatabase()">Reset Database</button>
+            </div>
+        </div>
+        
+        <!-- Chat Interface -->
+        <div id="chatSection" class="chat-container hidden">
+            <div class="status">
+                Logged in as: <strong id="currentUser">-</strong>
+                <button onclick="logout()" style="float: right; padding: 4px 8px;">Logout</button>
+            </div>
+            
+            <h3>Friends</h3>
+            <div class="friends-list" id="friendsList">
+                <p>No friends yet. Share your invite code!</p>
+            </div>
+            
+            <input type="text" id="friendCode" placeholder="Enter friend's invite code">
+            <button onclick="addFriend()">Add Friend</button>
+            
+            <h3>Your Invite Code</h3>
+            <input type="text" id="myInviteCode" readonly onclick="this.select()">
+            
+            <h3>Messages</h3>
+            <div class="chat-messages" id="messages">
+                <p>Select a friend to start chatting</p>
+            </div>
+            
+            <textarea id="messageInput" placeholder="Type a message..." rows="2"></textarea>
+            <button onclick="sendMessage()">Send</button>
+            
+            <div id="chatMessage"></div>
+        </div>
+    </div>
+    
+    <!-- Load Gun.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
+    
+    <script>
+        // Configuration
+        const GUN_RELAY = 'https://gun-relay-nchb.onrender.com/gun';
+        
+        // Initialize Gun
+        let gun, user, currentUser = null, selectedFriend = null;
+        let isRegistering = false;
+        
+        function initGun() {
+            // Simple Gun initialization
+            gun = Gun({
+                peers: [GUN_RELAY],
+                localStorage: false, // Disable for simplicity
+                file: false
+            });
+            user = gun.user();
+            
+            // Check for existing session
+            user.recall({sessionStorage: true});
+            user.on('auth', function() {
+                currentUser = user.is;
+                showChat();
+            });
+        }
+        
+        // Initialize on load
+        initGun();
+        
+        // Auth functions
+        function toggleAuthMode() {
+            isRegistering = !isRegistering;
+            const authTitle = document.getElementById('authTitle');
+            const authBtn = document.getElementById('authBtn');
+            const toggleBtn = document.getElementById('toggleAuth');
+            const nicknameInput = document.getElementById('nickname');
+            
+            if (isRegistering) {
+                authTitle.textContent = 'Register';
+                authBtn.textContent = 'Register';
+                toggleBtn.textContent = 'Switch to Login';
+                nicknameInput.classList.remove('hidden');
+            } else {
+                authTitle.textContent = 'Login';
+                authBtn.textContent = 'Login';
+                toggleBtn.textContent = 'Switch to Register';
+                nicknameInput.classList.add('hidden');
+            }
+        }
+        
+        function handleAuth() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const nickname = document.getElementById('nickname').value || username;
+            const messageDiv = document.getElementById('authMessage');
+            
+            if (!username || !password) {
+                messageDiv.innerHTML = '<div class="error">Please fill in all fields</div>';
+                return;
+            }
+            
+            if (isRegistering) {
+                // Register new user
+                user.create(username, password, function(ack) {
+                    if (ack.err) {
+                        messageDiv.innerHTML = '<div class="error">Registration failed: ' + ack.err + '</div>';
+                    } else {
+                        // Auto-login after registration
+                        user.auth(username, password, function(ack) {
+                            if (ack.err) {
+                                messageDiv.innerHTML = '<div class="error">Login failed: ' + ack.err + '</div>';
+                            } else {
+                                // Save nickname
+                                user.get('profile').put({nickname: nickname, username: username});
+                                currentUser = user.is;
+                                showChat();
+                            }
+                        });
+                    }
+                });
+            } else {
+                // Login existing user
+                user.auth(username, password, function(ack) {
+                    if (ack.err) {
+                        messageDiv.innerHTML = '<div class="error">Login failed: ' + ack.err + '</div>';
+                    } else {
+                        currentUser = user.is;
+                        showChat();
+                    }
+                });
+            }
+        }
+        
+        function showChat() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('chatSection').classList.remove('hidden');
+            document.getElementById('status').textContent = 'Connected';
+            
+            // Load user profile
+            user.get('profile').once(function(profile) {
+                document.getElementById('currentUser').textContent = profile?.nickname || currentUser.alias;
+            });
+            
+            // Show invite code
+            document.getElementById('myInviteCode').value = currentUser.pub;
+            
+            // Load friends
+            loadFriends();
+            
+            // Listen for new messages
+            listenForMessages();
+        }
+        
+        function loadFriends() {
+            const friendsList = document.getElementById('friendsList');
+            friendsList.innerHTML = '';
+            
+            user.get('friends').map().once(function(friend, key) {
+                if (friend && friend.nickname) {
+                    const friendDiv = document.createElement('div');
+                    friendDiv.className = 'friend-item';
+                    friendDiv.textContent = friend.nickname;
+                    friendDiv.onclick = function() {
+                        selectFriend(key, friend);
+                        document.querySelectorAll('.friend-item').forEach(f => f.classList.remove('selected'));
+                        friendDiv.classList.add('selected');
+                    };
+                    friendsList.appendChild(friendDiv);
+                }
+            });
+        }
+        
+        function selectFriend(friendKey, friendData) {
+            selectedFriend = {key: friendKey, data: friendData};
+            loadMessages();
+        }
+        
+        function addFriend() {
+            const friendCode = document.getElementById('friendCode').value;
+            if (!friendCode) return;
+            
+            // Get friend's profile
+            gun.user(friendCode).get('profile').once(function(profile) {
+                if (profile) {
+                    // Add to friends list
+                    user.get('friends').get(friendCode).put({
+                        nickname: profile.nickname || 'Unknown',
+                        username: profile.username,
+                        pub: friendCode,
+                        added: Date.now()
+                    });
+                    
+                    document.getElementById('friendCode').value = '';
+                    loadFriends();
+                    
+                    document.getElementById('chatMessage').innerHTML = '<div class="success">Friend added!</div>';
+                } else {
+                    document.getElementById('chatMessage').innerHTML = '<div class="error">User not found</div>';
+                }
+            });
+        }
+        
+        function loadMessages() {
+            if (!selectedFriend) return;
+            
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            // Create conversation ID
+            const conversationId = [currentUser.pub, selectedFriend.key].sort().join('_');
+            
+            // Load messages
+            gun.get('conversations').get(conversationId).get('messages').map().once(function(msg, key) {
+                if (msg && msg.text) {
+                    displayMessage(msg);
+                }
+            });
+        }
+        
+        function displayMessage(msg) {
+            const messagesDiv = document.getElementById('messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message' + (msg.from === currentUser.pub ? ' own' : '');
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'message-header';
+            headerDiv.textContent = new Date(msg.timestamp).toLocaleTimeString();
+            
+            const textDiv = document.createElement('div');
+            textDiv.textContent = msg.text;
+            
+            msgDiv.appendChild(headerDiv);
+            msgDiv.appendChild(textDiv);
+            messagesDiv.appendChild(msgDiv);
+            
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function sendMessage() {
+            if (!selectedFriend) {
+                document.getElementById('chatMessage').innerHTML = '<div class="error">Please select a friend</div>';
+                return;
+            }
+            
+            const messageInput = document.getElementById('messageInput');
+            const text = messageInput.value.trim();
+            if (!text) return;
+            
+            const conversationId = [currentUser.pub, selectedFriend.key].sort().join('_');
+            const messageId = Gun.node.Soul.uuid();
+            
+            const message = {
+                text: text,
+                from: currentUser.pub,
+                to: selectedFriend.key,
+                timestamp: Date.now()
+            };
+            
+            // Store message
+            gun.get('conversations').get(conversationId).get('messages').get(messageId).put(message);
+            
+            // Also send to friend's inbox for notification
+            gun.get('inbox').get(selectedFriend.key).get(messageId).put(message);
+            
+            messageInput.value = '';
+            displayMessage(message);
+        }
+        
+        function listenForMessages() {
+            // Listen for new messages in inbox
+            gun.get('inbox').get(currentUser.pub).map().on(function(msg, key) {
+                if (msg && msg.text && msg.from === selectedFriend?.key) {
+                    displayMessage(msg);
+                    // Clean up inbox
+                    gun.get('inbox').get(currentUser.pub).get(key).put(null);
+                }
+            });
+        }
+        
+        function logout() {
+            user.leave();
+            currentUser = null;
+            selectedFriend = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('chatSection').classList.add('hidden');
+            document.getElementById('status').textContent = 'Logged out';
+        }
+        
+        function resetDatabase() {
+            if (confirm('This will clear all local data. Are you sure?')) {
+                // Clear all storage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Try to clear IndexedDB
+                if (window.indexedDB) {
+                    indexedDB.deleteDatabase('radata');
+                }
+                
+                alert('Database reset! Page will reload.');
+                location.reload();
+            }
+        }
+        
+        // Handle Enter key in message input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
