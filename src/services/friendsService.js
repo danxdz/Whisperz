@@ -446,13 +446,16 @@ class FriendsService {
         // Get current user's nickname
         const currentUserNickname = await this.getUserNickname() || user.alias || 'Anonymous';
 
+        // Ensure nickname is not undefined to prevent errors
+        const safeNickname = inviteData.nickname || 'Anonymous';
+
         // console.log('🤝 Creating bidirectional friendship...');
         // console.log('Current user:', user.pub, currentUserNickname);
-        // console.log('Inviter:', inviteData.from, inviteData.nickname);
+        // console.log('Inviter:', inviteData.from, safeNickname);
 
         // Add friend for current user (the one accepting the invite)
         // Pass epub from invite data for encryption to work
-        await this.addFriend(inviteData.from, inviteData.nickname, inviteData.epub);
+        await this.addFriend(inviteData.from, safeNickname, inviteData.epub);
         // console.log('✅ Step 1: Added inviter as friend for current user');
 
         // Add current user as friend for the inviter
@@ -466,7 +469,7 @@ class FriendsService {
             fromEpub: inviteData.epub,  // Inviter's encryption key
             toPublicKey: user.pub,
             toEpub: user.epub || user.is?.epub,  // Our encryption key for inviter to use (try both formats)
-            fromNickname: inviteData.nickname,
+            fromNickname: safeNickname,
             toNickname: currentUserNickname,
             addedAt: Date.now(),
             conversationId: conversationId,
@@ -507,7 +510,7 @@ class FriendsService {
           success: true,
           friend: {
             publicKey: inviteData.from,
-            nickname: inviteData.nickname,
+            nickname: safeNickname,
             conversationId: conversationId
           }
         });

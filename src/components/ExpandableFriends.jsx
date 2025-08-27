@@ -99,11 +99,11 @@ function ExpandableFriends({ friends, selectedFriend, onSelectFriend, currentUse
   });
 
   const filteredFriends = friends.filter(friend =>
-    friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+    friend.nickname && friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const displayedFriends = showOnlineOnly ?
-    onlineFriends.filter(f => f.nickname.toLowerCase().includes(searchTerm.toLowerCase())) :
+    onlineFriends.filter(f => f.nickname && f.nickname.toLowerCase().includes(searchTerm.toLowerCase())) :
     filteredFriends;
 
   const renderFriend = (friend, isOnline) => {

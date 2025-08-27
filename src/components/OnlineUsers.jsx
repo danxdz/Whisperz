@@ -27,7 +27,7 @@ function OnlineUsers({ friends, selectedFriend, onSelectFriend, currentUser, onl
   // Filter friends based on online status and search
   const filteredFriends = friends.filter(friend => {
     const isOnline = onlineStatus[friend.publicKey]?.online;
-    const matchesSearch = friend.nickname.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = friend.nickname && friend.nickname.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (showOnlineOnly) {
       return isOnline && matchesSearch;

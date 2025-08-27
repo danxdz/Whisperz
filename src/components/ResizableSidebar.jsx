@@ -131,7 +131,7 @@ function ResizableSidebar({
   );
 
   const filteredFriends = friends.filter(friend =>
-    friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+    friend.nickname && friend.nickname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle friend actions

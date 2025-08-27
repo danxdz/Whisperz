@@ -101,7 +101,7 @@ function DiscoverModule({ currentUser, onUserSelect }) {
   };
 
   const filteredUsers = onlineUsers.filter(user =>
-    user.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+    user.nickname && user.nickname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
