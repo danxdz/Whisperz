@@ -5,6 +5,7 @@
 
 import gunAuthService from '../services/gunAuthService';
 import hybridGunService from '../services/hybridGunService';
+import friendsService from '../services/friendsService';
 // WebRTC removed - using Gun.js only
 
 class OnlineStatusManager {
@@ -112,7 +113,6 @@ class OnlineStatusManager {
   // Check all friends status
   async checkAllFriendsStatus() {
     try {
-      const { default: friendsService } = await import('../services/friendsService');
       const friends = await friendsService.getFriends();
 
       for (const friend of friends) {
