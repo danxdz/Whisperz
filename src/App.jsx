@@ -1,31 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
-import gunAuthService from './services/gunAuthService';
-import gunMessaging from './services/gunMessaging';
-import hybridGunService from './services/hybridGunService';
-import friendsService from './services/friendsService';
-import messageService from './services/messageService';
-import presenceService from './services/presenceService';
-import consoleCapture from './utils/consoleCapture';
-import debugLogger from './utils/debugLogger';
 
 // Import utilities first (no dependencies)
 import resetDatabase from './utils/resetDatabase';
 import { getMobileConfig } from './utils/mobileDetect';
 
-// Import logging (depends on nothing) - already imported above
+// Import logging (depends on nothing)
+import debugLogger from './utils/debugLogger';
+import consoleCapture from './utils/consoleCapture';
 
-// Import basic services first
+// Import basic services
 import gunAuthService from './services/gunAuthService';
+import gunMessaging from './services/gunMessaging';
 import hybridGunService from './services/hybridGunService';
+import friendsService from './services/friendsService';
+import messageService from './services/messageService';
 import presenceService from './services/presenceService';
 
 // Import onlineStatusFix after basic services (it depends on them)
 import onlineStatusManager from './utils/onlineStatusFix';
-
-// Import remaining services
-import messageService from './services/messageService';
-import friendsService from './services/friendsService';
-import gunMessaging from './services/gunMessaging';
 
 // Production-safe timeout manager using closure
 const createTimeoutManager = () => {
