@@ -68,7 +68,7 @@ class ConsoleCapture {
 
     // Check for debugLogger prefixes
     if (message.includes('[DEBUG]')) actualType = 'debug';
-    else if (message.includes('[P2P]')) actualType = 'p2p';
+    else if (message.includes('[GUN]')) actualType = 'gun';
     else if (message.includes('[GUN]')) actualType = 'gun';
     // WebRTC detection removed - using Gun.js only
     else if (message.includes('❌') || message.includes('Error') || message.includes('Failed')) actualType = 'error';

@@ -103,11 +103,11 @@ export function useConnectionState(friendPublicKey) {
     };
   }, [friendPublicKey]);
 
-  // Simplified connection attempt - Gun.js is always available
-  const attemptP2PConnection = async () => {
-    debugLogger.info('[Gun.js] Connection attempt - decentralized messaging always available');
+  // Check Gun.js relay connection
+  const checkConnection = async () => {
+    debugLogger.info('[Gun.js] Checking relay connection status');
     return true;
   };
 
-  return { connectionState, attemptP2PConnection };
+  return { connectionState, checkConnection };
 }

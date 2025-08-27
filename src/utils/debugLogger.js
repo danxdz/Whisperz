@@ -14,7 +14,7 @@ class DebugLogger {
       warn: localStorage.getItem('debug_warn') !== 'false',
       info: localStorage.getItem('debug_info') !== 'false', // Default to true
       debug: localStorage.getItem('debug_debug') === 'true',
-      p2p: localStorage.getItem('debug_p2p') !== 'false', // Default to true for P2P
+      gun: localStorage.getItem('debug_gun') !== 'false', // Default to true for Gun.js
       gun: localStorage.getItem('debug_gun') === 'true'
     };
 
@@ -98,9 +98,9 @@ class DebugLogger {
     }
   }
 
-  p2p(message, ...args) {
-    if (this.enabled && this.levels.p2p) {
-      console.log('[P2P]', message, ...args);
+  gun(message, ...args) {
+    if (this.enabled && this.levels.gun) {
+      console.log('[GUN]', message, ...args);
     }
   }
 

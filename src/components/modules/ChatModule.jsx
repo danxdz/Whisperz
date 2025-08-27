@@ -6,7 +6,7 @@ import securityUtils from '../../utils/securityUtils.js';
 
 /**
  * ChatModule - IRC-style chat interface
- * Clean, minimal P2P private chat
+ * Clean, minimal private chat via Gun.js relay
  */
 function ChatModule({ selectedFriend, currentUser }) {
   const [messages, setMessages] = useState([]);
@@ -150,7 +150,7 @@ function ChatModule({ selectedFriend, currentUser }) {
             fontSize: '12px',
             color: connectionStatus === 'connected' ? '#00ff00' : '#606060'
           }}>
-            [{connectionStatus === 'connected' ? 'DIRECT P2P' : 'VIA RELAY'}]
+            [GUN RELAY]
           </span>
         </div>
         <div style={{ fontSize: '12px', color: '#606060' }}>
@@ -273,7 +273,7 @@ function ChatModule({ selectedFriend, currentUser }) {
           fontSize: '11px',
           color: '#606060'
         }}>
-          Press Enter to send • {connectionStatus === 'connected' ? 'Direct P2P connection' : 'Messages via Gun relay'}
+          Press Enter to send • Messages via Gun relay
         </div>
       </div>
     </div>

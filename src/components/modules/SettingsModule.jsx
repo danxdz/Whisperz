@@ -305,11 +305,11 @@ function SettingsModule({ currentUser, onLogout }) {
                 <strong style={{ color: '#e0e0e0' }}>Whisperz v2.1.0</strong>
               </p>
               <p style={{ marginBottom: '15px' }}>
-                A decentralized P2P chat application built with Gun.js.
+                A decentralized chat application built with Gun.js relay network.
               </p>
               <p style={{ marginBottom: '15px' }}>
                 • End-to-end encrypted messaging<br />
-                • Peer-to-peer connections<br />
+                • Decentralized Gun.js relay network<br />
                 • No central server required<br />
                 • Open source and privacy-focused
               </p>

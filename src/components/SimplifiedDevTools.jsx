@@ -42,17 +42,16 @@ function SimplifiedDevTools({ isVisible, onClose }) {
   };
 
   const loadConnectionInfo = () => {
-    const gunPeers = gunAuthService.gun?._.opt?.peers || {};
-    const connectedRelays = Object.keys(gunPeers).filter(url => {
-      const peer = gunPeers[url];
-      return peer && peer.wire && !peer.wire.closed;
+    const gunRelays = gunAuthService.gun?._.opt?.peers || {};
+    const connectedRelays = Object.keys(gunRelays).filter(url => {
+      const relay = gunRelays[url];
+      return relay && relay.wire && !relay.wire.closed;
     });
 
     setConnectionInfo({
-      gunReady: false, // Gun.js status
-      peerId: 'Gun.js only',
-      connectedPeers: 0, // Decentralized
-      gunRelays: connectedRelays.length
+      gunReady: connectedRelays.length > 0,
+      relayStatus: 'Gun.js Relay',
+      connectedRelays: connectedRelays.length
     });
   };
 
@@ -172,9 +171,9 @@ function SimplifiedDevTools({ isVisible, onClose }) {
                 Connections
               </h4>
               <div style={{ fontSize: '13px', color: colors.textSecondary }}>
-                <div>Gun.js: {connectionInfo.gunRelays > 0 ? '✅' : '❌'}</div>
-                <div>P2P Peers: {connectionInfo.connectedPeers}</div>
-                <div>Gun Relays: {connectionInfo.gunRelays}</div>
+                <div>Gun.js: {connectionInfo.gunReady ? '✅' : '❌'}</div>
+                <div>Status: {connectionInfo.relayStatus}</div>
+                <div>Connected Relays: {connectionInfo.connectedRelays}</div>
               </div>
             </div>
 

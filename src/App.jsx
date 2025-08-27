@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import gunAuthService from './services/gunAuthService';
 
-import gunOnlyP2P from './services/gunOnlyP2P';
+import gunMessaging from './services/gunMessaging';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
-// p2pDebugger removed - using Gun.js only
+// Using Gun.js relay for all messaging
 import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
@@ -342,7 +342,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Using module-level timeout manager instead of useRef for production stability
 
   // Connection state for selected friend
-  const { connectionState, attemptP2PConnection } = useConnectionState(
+  const { connectionState, checkConnection } = useConnectionState(
     selectedFriend?.publicKey
   );
 
@@ -417,7 +417,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   useEffect(() => {
     loadFriends();
 
-    // Gun P2P already initialized in main flow
+    // Gun messaging already initialized in main flow
     // Update own presence
     debugLogger.debug('gun', '📍 Updating presence...');
     hybridGunService.updatePresence('online');
@@ -727,7 +727,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 <ChatSecurityStatus 
                   friend={selectedFriend}
                   connectionState={connectionState}
-                  onAttemptP2P={attemptP2PConnection}
+                  onCheckConnection={checkConnection}
                 />
               </div>
               <ThemeToggle />
@@ -848,7 +848,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 marginBottom: '4px'
               }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#00ff00' }}>⬤</span> P2P Direct
+                  <span style={{ color: '#00ff00' }}>⬤</span> Gun.js Relay
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span style={{ color: '#ffaa00' }}>◆</span> Relay (Encrypted)
@@ -965,7 +965,7 @@ function App() {
 
     if (import.meta.env.DEV) {
       debugLogger.info('info', '🔧 Development Mode - Debug tools available');
-      debugLogger.info('info', '💡 Type: p2pDebug.diagnose() for P2P diagnostics');
+      debugLogger.info('info', '💡 Gun.js messaging system ready');
     }
   }, []);
 
@@ -981,7 +981,7 @@ function App() {
         await hybridGunService.initialize();
         await friendsService.initialize();
 
-        // P2P debugging removed - using Gun.js only
+        // Gun.js relay messaging
 
         // Add test helper to window for debugging
         window.testMessage = async (message = 'Test message from console!') => {
@@ -1073,13 +1073,13 @@ function App() {
         if (currentUser) {
           setUser(currentUser);
 
-          // Initialize Gun P2P for private chats
+          // Initialize Gun messaging for private chats
           try {
-            debugLogger.debug('p2p', '🚀 Initializing Gun P2P for existing session...');
-            await gunOnlyP2P.initialize(currentUser.pub);
-            // Gun P2P initialized
+            debugLogger.debug('gun', '🚀 Initializing Gun messaging for existing session...');
+            await gunMessaging.initialize(currentUser.pub);
+            // Gun messaging initialized
           } catch (error) {
-            debugLogger.error('❌ Failed to initialize P2P:', error);
+            debugLogger.error('❌ Failed to initialize messaging:', error);
           }
 
           // Initialize message service
@@ -1117,13 +1117,13 @@ function App() {
 
     setUser(authUser);
 
-    // Initialize Gun P2P for messaging
+    // Initialize Gun messaging
     try {
-      // Initialize Gun P2P messaging
-      await gunOnlyP2P.initialize(authUser.pub);
-      debugLogger.debug('gun', '✅ Gun P2P initialized');
+      // Initialize Gun relay messaging
+      await gunMessaging.initialize(authUser.pub);
+      debugLogger.debug('gun', '✅ Gun messaging initialized');
     } catch (error) {
-      debugLogger.error('❌ Failed to initialize P2P:', error);
+      debugLogger.error('❌ Failed to initialize messaging:', error);
     }
 
     // Initialize presence service and set online
