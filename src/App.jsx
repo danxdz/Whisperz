@@ -76,6 +76,20 @@ function LoginView({ onLogin, inviteCode }) {
   // Check if this might be the first user (no accounts exist)
   useEffect(() => {
     console.log('LoginView mounted - Reset button should be visible');
+    
+    // Check for reset parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reset') === 'true') {
+      // Auto-reset if ?reset=true is in URL
+      try {
+        resetDatabase();
+        alert('Database has been reset! Redirecting to setup...');
+        window.location.href = '?setup=admin';
+      } catch (error) {
+        alert('Failed to reset: ' + error.message);
+      }
+    }
+    
     // Simple check - if in production and no stored auth, show setup hint
     if (window.location.hostname !== 'localhost' && !localStorage.getItem('gun/')) {
       setShowFirstUserSetup(true);
@@ -184,33 +198,58 @@ function LoginView({ onLogin, inviteCode }) {
         <p className="invite-only-notice">
           This is an invite-only chat. You need an invite link from an existing member to join.
         </p>
-        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        
+        {/* Reset Database Button - Made more prominent for mobile */}
+        <div style={{ 
+          marginTop: '20px', 
+          paddingTop: '20px', 
+          borderTop: '2px solid #ff0000',
+          textAlign: 'center'
+        }}>
+          <p style={{ 
+            color: '#ff9999', 
+            fontSize: '14px', 
+            marginBottom: '10px' 
+          }}>
+            Having login issues? Reset your local database:
+          </p>
           <button 
             type="button"
             onClick={() => {
-              console.log('Reset button clicked');
               if (confirm('This will clear all local Gun database data. Are you sure?')) {
                 try {
                   resetDatabase();
-                  console.log('Database reset completed');
+                  alert('Database reset completed! The page will now reload.');
                   setTimeout(() => {
                     window.location.reload();
-                  }, 1000);
+                  }, 500);
                 } catch (error) {
-                  console.error('Reset failed:', error);
                   alert('Failed to reset database: ' + error.message);
                 }
               }
             }}
             style={{ 
-              background: 'rgba(255, 0, 0, 0.2)', 
-              border: '1px solid rgba(255, 0, 0, 0.5)',
-              fontSize: '12px',
-              padding: '8px 16px'
+              background: '#ff0000',
+              border: '2px solid #ff6666',
+              color: 'white',
+              fontSize: '16px',
+              padding: '12px 24px',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              width: '100%',
+              maxWidth: '250px'
             }}
           >
             🗑️ Reset Database
           </button>
+          <p style={{ 
+            color: '#999', 
+            fontSize: '12px', 
+            marginTop: '10px' 
+          }}>
+            After reset, visit: {window.location.origin}?setup=admin
+          </p>
         </div>
       </div>
     </div>
