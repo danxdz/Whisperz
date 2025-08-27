@@ -1,17 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
+// Import services first
 import gunAuthService from './services/gunAuthService';
-
 import gunMessaging from './services/gunMessaging';
 import hybridGunService from './services/hybridGunService';
 import friendsService from './services/friendsService';
 import messageService from './services/messageService';
-// Using Gun.js relay for all messaging
-import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
-import debugLogger from './utils/debugLogger';
-import consoleCapture from './utils/consoleCapture';
+
+// Import utilities after services
+import onlineStatusManager from './utils/onlineStatusFix';
 import resetDatabase from './utils/resetDatabase';
 import { getMobileConfig } from './utils/mobileDetect';
+
+// Import logging utilities last to avoid circular dependencies
+import debugLogger from './utils/debugLogger';
+import consoleCapture from './utils/consoleCapture';
+
 import './index.css';
 
 // Production-safe timeout manager using closure
@@ -32,7 +36,10 @@ const createTimeoutManager = () => {
   };
 };
 // import encryptionService from './services/encryptionService'; // Not used currently
-import { ThemeToggle, SwipeableChat, InviteModal } from './components';
+// Import components directly to avoid circular dependencies
+import ThemeToggle from './components/ThemeToggle';
+import SwipeableChat from './components/SwipeableChat';
+import InviteModal from './components/InviteModal';
 import ChatSecurityStatus from './components/ChatSecurityStatus';
 import { useTheme } from './contexts/ThemeContext';
 import { useResponsive } from './hooks/useResponsive';
