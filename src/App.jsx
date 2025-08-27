@@ -8,8 +8,24 @@ import messageService from './services/messageService';
 // Using Gun.js relay for all messaging
 import onlineStatusManager from './utils/onlineStatusFix';
 import presenceService from './services/presenceService';
-import consoleCapture from './utils/consoleCapture';
-import debugLogger from './utils/debugLogger';
+// Disable console capture and debug logger to prevent crashes
+// import consoleCapture from './utils/consoleCapture';
+// import debugLogger from './utils/debugLogger';
+
+// Create stub objects to prevent crashes
+const debugLogger = {
+  debug: () => {},
+  info: () => {},
+  error: () => {},
+  warn: () => {}
+};
+
+const consoleCapture = {
+  start: () => {},
+  stop: () => {},
+  clear: () => {},
+  getHistory: () => []
+};
 import resetDatabase from './utils/resetDatabase';
 import { getMobileConfig } from './utils/mobileDetect';
 import './index.css';
@@ -77,7 +93,8 @@ function LoginView({ onLogin, inviteCode }) {
   // Check if this might be the first user (no accounts exist)
   useEffect(() => {
     try {
-      console.log('LoginView mounted - Reset button should be visible');
+      // Remove console logs that might crash mobile
+      // console.log('LoginView mounted - Reset button should be visible');
       
       // Check for reset parameter in URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -97,14 +114,15 @@ function LoginView({ onLogin, inviteCode }) {
         setShowFirstUserSetup(true);
       }
     } catch (error) {
-      console.error('LoginView useEffect error:', error);
+      // Silent fail - no console logging
     }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    console.log('Login form submitted with username:', username);
+    // Remove console log that might crash
+    // console.log('Login form submitted with username:', username);
 
     // Input validation
     if (!username || !password) {
@@ -992,7 +1010,8 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 // Make resetDatabase available globally for debugging
 if (typeof window !== 'undefined') {
   window.resetGunDB = resetDatabase;
-  console.log('Reset function available: window.resetGunDB()');
+  // Don't log to console - might crash mobile
+  // console.log('Reset function available: window.resetGunDB()');
 }
 
 function App() {
@@ -1006,9 +1025,10 @@ function App() {
   
   // Get mobile configuration
   const mobileConfig = getMobileConfig();
-  if (mobileConfig.isMobile) {
-    console.log('📱 Mobile device detected - using optimized settings');
-  }
+  // Don't log - might crash
+  // if (mobileConfig.isMobile) {
+  //   console.log('📱 Mobile device detected - using optimized settings');
+  // }
 
   // Production-safe timeout manager
   const timeoutManager = useRef(createTimeoutManager()).current;

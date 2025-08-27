@@ -22,14 +22,14 @@ class GunAuthService {
     const instance = import.meta.env.VITE_GUN_INSTANCE || localStorage.getItem('gun_instance') || '';
     const finalRelay = instance ? `${gunRelay}?instance=${instance}` : gunRelay;
 
-    // Initialization logs moved to debug level
-    if (localStorage.getItem('debug_gun') === 'true') {
-      console.log('🔫 Initializing Gun.js');
-      console.log('🌐 Relay:', finalRelay);
-      if (instance) {
-        console.log('📦 Instance:', instance);
-      }
-    }
+    // Disable all console logs to prevent crashes
+    // if (localStorage.getItem('debug_gun') === 'true') {
+    //   console.log('🔫 Initializing Gun.js');
+    //   console.log('🌐 Relay:', finalRelay);
+    //   if (instance) {
+    //     console.log('📦 Instance:', instance);
+    //   }
+    // }
 
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
@@ -55,7 +55,7 @@ class GunAuthService {
         memory: true  // Use memory only on mobile
       });
     } catch (error) {
-      console.error('Failed to initialize Gun.js:', error);
+      // Silent fail - no console logging
       // Fallback to minimal configuration
       this.gun = Gun({
         peers: [finalRelay],
