@@ -104,10 +104,10 @@ export function useConnectionState(friendPublicKey) {
   }, [friendPublicKey]);
 
   // Simplified connection attempt - Gun.js is always available
-  const attemptWebRTCConnection = async () => {
+  const attemptP2PConnection = async () => {
     debugLogger.info('[Gun.js] Connection attempt - decentralized messaging always available');
     return true;
   };
 
-  return { connectionState, attemptWebRTCConnection };
+  return { connectionState, attemptP2PConnection };
 }

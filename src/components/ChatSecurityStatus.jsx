@@ -63,16 +63,7 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
       // Check connection type and encryption
       const connType = connectionState?.status || 'offline';
       
-      if (connType === 'webrtc') {
-        isEncrypted = true;
-        details.push({
-          type: 'success',
-          icon: '🔐',
-          text: 'P2P Direct (E2E Encrypted)',
-          tooltip: 'Messages sent directly, fully encrypted'
-        });
-        securityLevel = hasEncryptionKey ? 'maximum' : 'partial';
-      } else if (connType === 'gun') {
+      if (connType === 'gun') {
         isEncrypted = hasEncryptionKey;
         details.push({
           type: isEncrypted ? 'success' : 'warning',
@@ -169,8 +160,8 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
       gap: '8px',
       ...style
     }}>
-      {/* P2P Connect Button - only show if not already P2P and friend is online */}
-      {connectionState?.isOnline && connectionState?.status !== 'webrtc' && onAttemptP2P && (
+      {/* P2P Connect Button - Gun.js is always connected */}
+      {false && (
         <button
           onClick={onAttemptP2P}
           style={{
@@ -258,8 +249,7 @@ const ChatSecurityStatus = ({ friend, connectionState, onAttemptP2P, style = {} 
           color: colors.textSecondary,
           fontWeight: '500'
         }}>
-          {securityStatus.connectionType === 'webrtc' ? 'P2P' :
-           securityStatus.connectionType === 'gun' ? 'RELAY' :
+          {securityStatus.connectionType === 'gun' ? 'GUN' :
            securityStatus.connectionType === 'connecting' ? '...' :
            'OFF'}
         </span>

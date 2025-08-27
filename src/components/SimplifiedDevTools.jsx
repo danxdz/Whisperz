@@ -49,7 +49,7 @@ function SimplifiedDevTools({ isVisible, onClose }) {
     });
 
     setConnectionInfo({
-      webrtcReady: false, // WebRTC removed
+      gunReady: false, // Gun.js status
       peerId: 'Gun.js only',
       connectedPeers: 0, // Decentralized
       gunRelays: connectedRelays.length
@@ -172,7 +172,7 @@ function SimplifiedDevTools({ isVisible, onClose }) {
                 Connections
               </h4>
               <div style={{ fontSize: '13px', color: colors.textSecondary }}>
-                <div>WebRTC: {connectionInfo.webrtcReady ? '✅' : '❌'}</div>
+                <div>Gun.js: {connectionInfo.gunRelays > 0 ? '✅' : '❌'}</div>
                 <div>P2P Peers: {connectionInfo.connectedPeers}</div>
                 <div>Gun Relays: {connectionInfo.gunRelays}</div>
               </div>

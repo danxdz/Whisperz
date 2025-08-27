@@ -33,7 +33,7 @@ function ChatModule({ selectedFriend, currentUser }) {
       }
     });
 
-    // Check WebRTC connection
+    // Check Gun.js connection
     checkConnection();
 
     return () => {

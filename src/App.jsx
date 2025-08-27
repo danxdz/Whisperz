@@ -342,7 +342,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Using module-level timeout manager instead of useRef for production stability
 
   // Connection state for selected friend
-  const { connectionState, attemptWebRTCConnection } = useConnectionState(
+  const { connectionState, attemptP2PConnection } = useConnectionState(
     selectedFriend?.publicKey
   );
 
@@ -727,7 +727,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 <ChatSecurityStatus 
                   friend={selectedFriend}
                   connectionState={connectionState}
-                  onAttemptP2P={attemptWebRTCConnection}
+                  onAttemptP2P={attemptP2PConnection}
                 />
               </div>
               <ThemeToggle />
@@ -784,13 +784,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                           fontSize: screen.isTiny ? '9px' : '10px'
                         }}
                         title={
-                          msg.deliveryMethod === 'webrtc' ? '🔐 Direct P2P (Encrypted)' :
+                          msg.deliveryMethod === 'gun' ? '🔐 Gun.js (Encrypted)' :
                           msg.deliveryMethod === 'gun' ? 
                             (selectedFriend?.epub ? '🔒 Via Relay (Encrypted)' : '⚠️ Via Relay (Not Encrypted)') :
                           '📱 Local'
                         }
                       >
-                        {msg.deliveryMethod === 'webrtc' ? (
+                        {msg.deliveryMethod === 'gun' ? (
                           <span style={{ color: '#00ff00' }}>⬤</span>
                         ) : msg.deliveryMethod === 'gun' ? (
                           <span style={{ color: selectedFriend?.epub ? '#ffaa00' : '#ff0000' }}>
@@ -1008,7 +1008,7 @@ function App() {
           }
         };
 
-        // WebRTC test function removed - using Gun.js only
+        // Gun.js test functions available
 
         // console.log('✅ Services initialized');
         // console.log('💡 Test helpers available:');

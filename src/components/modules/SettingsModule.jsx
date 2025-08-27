@@ -305,7 +305,7 @@ function SettingsModule({ currentUser, onLogout }) {
                 <strong style={{ color: '#e0e0e0' }}>Whisperz v2.1.0</strong>
               </p>
               <p style={{ marginBottom: '15px' }}>
-                A decentralized P2P chat application built with Gun.js and WebRTC.
+                A decentralized P2P chat application built with Gun.js.
               </p>
               <p style={{ marginBottom: '15px' }}>
                 • End-to-end encrypted messaging<br />
@@ -315,7 +315,7 @@ function SettingsModule({ currentUser, onLogout }) {
               </p>
               <p style={{ marginBottom: '15px' }}>
                 <strong style={{ color: '#e0e0e0' }}>Technologies:</strong><br />
-                React, Gun.js, WebRTC, PeerJS
+                React, Gun.js, SEA (Security, Encryption, Authorization)
               </p>
               <p>
                 <strong style={{ color: '#e0e0e0' }}>License:</strong> MIT
