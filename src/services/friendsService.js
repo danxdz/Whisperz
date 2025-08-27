@@ -1045,6 +1045,27 @@ class FriendsService {
     return null;
   }
 
+  // Update friend's encryption key
+  async updateFriendEpub(publicKey, epub) {
+    if (!epub) return;
+
+    const friendData = this.friends.get(publicKey);
+    if (friendData) {
+      // Update local friend data
+      friendData.epub = epub;
+      this.friends.set(publicKey, friendData);
+
+      // Update in Gun database
+      const user = gunAuthService.getCurrentUser();
+      if (user) {
+        gunAuthService.user.get('friends').get(publicKey).put({
+          ...friendData,
+          epub: epub
+        });
+      }
+    }
+  }
+
   // Notify friend listeners
   notifyFriendListeners(event, data) {
     this.friendListeners.forEach(listener => {

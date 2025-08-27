@@ -849,17 +849,23 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                           fontSize: screen.isTiny ? '9px' : '10px'
                         }}
                         title={
-                          msg.deliveryMethod === 'gun' ? '🔐 Gun.js (Encrypted)' :
-                          msg.deliveryMethod === 'gun' ? 
-                            (selectedFriend?.epub ? '🔒 Via Relay (Encrypted)' : '⚠️ Via Relay (Not Encrypted)') :
+                          msg.deliveryMethod === 'gun' ?
+                            (msg.encryptionStatus === 'encrypted' ? '🔒 Via Relay (Encrypted)' :
+                             msg.encryptionStatus === 'unencrypted' ? '⚠️ Via Relay (Not Encrypted)' :
+                             msg.encryptionStatus === 'encryption_failed' ? '❌ Via Relay (Encryption Failed)' :
+                             '🔐 Gun.js (Status Unknown)') :
                           '📱 Local'
                         }
                       >
                         {msg.deliveryMethod === 'gun' ? (
-                          <span style={{ color: '#00ff00' }}>⬤</span>
-                        ) : msg.deliveryMethod === 'gun' ? (
-                          <span style={{ color: selectedFriend?.epub ? '#ffaa00' : '#ff0000' }}>
-                            {selectedFriend?.epub ? '◆' : '◇'}
+                          <span style={{
+                            color: msg.encryptionStatus === 'encrypted' ? '#ffaa00' :
+                                   msg.encryptionStatus === 'unencrypted' ? '#ff0000' :
+                                   msg.encryptionStatus === 'encryption_failed' ? '#ff6600' : '#666666'
+                          }}>
+                            {msg.encryptionStatus === 'encrypted' ? '◆' :
+                             msg.encryptionStatus === 'unencrypted' ? '◇' :
+                             msg.encryptionStatus === 'encryption_failed' ? '⚠️' : '?'}
                           </span>
                         ) : null}
                       </span>
@@ -913,13 +919,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 marginBottom: '4px'
               }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#00ff00' }}>⬤</span> Gun.js Relay
+                  <span style={{ color: '#ffaa00' }}>◆</span> Encrypted
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#ffaa00' }}>◆</span> Relay (Encrypted)
+                  <span style={{ color: '#ff0000' }}>◇</span> Not Encrypted
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#ff0000' }}>◇</span> Relay (Not Encrypted)
+                  <span style={{ color: '#ff6600' }}>⚠️</span> Encryption Failed
                 </span>
               </div>
               <div style={{ display: 'flex', gap: screen.isTiny ? '4px' : '8px' }}>

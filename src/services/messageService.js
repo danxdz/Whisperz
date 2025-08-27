@@ -32,6 +32,7 @@ class MessageService {
       timestamp: Date.now(),
       conversationId: friend.conversationId,
       deliveryMethod: 'gun',
+      encryptionStatus: encryptionStatus,
       ...metadata
     };
 
@@ -39,16 +40,36 @@ class MessageService {
 
     // Encrypt message using epub (encryption public key)
     let encryptedMessage;
+    let encryptionStatus = 'encrypted';
+
     try {
       const friendData = await friendsService.getFriend(recipientPublicKey);
-      const encryptionKey = friendData?.epub || recipientPublicKey;
 
-      console.log('🔐 Encrypting message for:', encryptionKey);
-      encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);
-      console.log('✅ Message encrypted successfully');
+      if (!friendData?.epub) {
+        // Friend doesn't have encryption key - try to get current user data
+        const currentUser = gunAuthService.getCurrentUser();
+        if (currentUser?.epub) {
+          // Update friend data with current epub if available
+          await friendsService.updateFriendEpub(recipientPublicKey, currentUser.epub);
+          console.log('🔄 Updated friend with encryption key');
+        }
+      }
+
+      const encryptionKey = friendData?.epub;
+
+      if (!encryptionKey) {
+        console.warn('⚠️ No encryption key available for friend, sending unencrypted');
+        encryptedMessage = message;
+        encryptionStatus = 'unencrypted';
+      } else {
+        console.log('🔐 Encrypting message for:', encryptionKey);
+        encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);
+        console.log('✅ Message encrypted successfully');
+      }
     } catch (error) {
       console.error('❌ Failed to encrypt message:', error);
       encryptedMessage = message; // Fallback to unencrypted
+      encryptionStatus = 'encryption_failed';
     }
 
     try {
