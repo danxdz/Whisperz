@@ -849,23 +849,13 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                           fontSize: screen.isTiny ? '9px' : '10px'
                         }}
                         title={
-                          msg.deliveryMethod === 'gun' ?
-                            (msg.encryptionStatus === 'encrypted' ? '🔒 Via Relay (Encrypted)' :
-                             msg.encryptionStatus === 'unencrypted' ? '⚠️ Via Relay (Not Encrypted)' :
-                             msg.encryptionStatus === 'encryption_failed' ? '❌ Via Relay (Encryption Failed)' :
-                             '🔐 Gun.js (Status Unknown)') :
+                          msg.deliveryMethod === 'gun' ? '🔒 Via Relay (Encrypted)' :
                           '📱 Local'
                         }
                       >
                         {msg.deliveryMethod === 'gun' ? (
-                          <span style={{
-                            color: msg.encryptionStatus === 'encrypted' ? '#ffaa00' :
-                                   msg.encryptionStatus === 'unencrypted' ? '#ff0000' :
-                                   msg.encryptionStatus === 'encryption_failed' ? '#ff6600' : '#666666'
-                          }}>
-                            {msg.encryptionStatus === 'encrypted' ? '◆' :
-                             msg.encryptionStatus === 'unencrypted' ? '◇' :
-                             msg.encryptionStatus === 'encryption_failed' ? '⚠️' : '?'}
+                          <span style={{ color: '#ffaa00' }}>
+                            ◆
                           </span>
                         ) : null}
                       </span>
@@ -919,13 +909,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
                 marginBottom: '4px'
               }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#ffaa00' }}>◆</span> Encrypted
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#ff0000' }}>◇</span> Not Encrypted
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: '#ff6600' }}>⚠️</span> Encryption Failed
+                  <span style={{ color: '#ffaa00' }}>◆</span> All Messages Encrypted
                 </span>
               </div>
               <div style={{ display: 'flex', gap: screen.isTiny ? '4px' : '8px' }}>
