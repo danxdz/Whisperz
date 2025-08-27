@@ -54,7 +54,7 @@ class GunMessaging {
           return;
         }
 
-        console.log('📨 Received message from:', message.from);
+        // console.log('📨 Received message from:', message.from);
 
         // Decrypt message if encrypted
         this.handleMessage(message.from, message);
@@ -126,7 +126,7 @@ class GunMessaging {
         .get(messageId)
         .put(message);
 
-      console.log('📤 Sent message to:', friendPublicKey);
+      // console.log('📤 Sent message to:', friendPublicKey);
 
       // Also store in conversation for history
       const conversationId = this.getConversationId(user.pub, friendPublicKey);
@@ -141,7 +141,7 @@ class GunMessaging {
 
       return true;
     } catch (error) {
-      console.error('❌ Failed to send message:', error);
+      // console.error('❌ Failed to send message:', error);
       return false;
     }
   }
@@ -162,7 +162,7 @@ class GunMessaging {
 
       return encrypted;
     } catch (error) {
-      console.error('Failed to encrypt message:', error);
+      // console.error('Failed to encrypt message:', error);
       // Return unencrypted as fallback
       return content;
     }
@@ -184,7 +184,7 @@ class GunMessaging {
 
       return decrypted || encryptedContent;
     } catch (error) {
-      console.error('Failed to decrypt message:', error);
+      // console.error('Failed to decrypt message:', error);
       // Return as-is if decryption fails
       return encryptedContent;
     }
@@ -205,14 +205,14 @@ class GunMessaging {
         decrypted: true
       };
 
-      console.log('📥 Processing message from:', from);
+      // console.log('📥 Processing message from:', from);
 
       // Notify all message handlers
       this.messageHandlers.forEach(handler => {
         handler(from, processedMessage);
       });
     } catch (error) {
-      console.error('Failed to handle message:', error);
+      // console.error('Failed to handle message:', error);
     }
   }
 
@@ -270,7 +270,7 @@ class GunMessaging {
     this.messageHandlers.clear();
     this.connectionStatus.clear();
     this.isInitialized = false;
-    console.log('💥 Gun messaging service destroyed');
+    // console.log('💥 Gun messaging service destroyed');
   }
 }
 
