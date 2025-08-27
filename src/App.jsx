@@ -1,22 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
-// Import services first
-import gunAuthService from './services/gunAuthService';
-import gunMessaging from './services/gunMessaging';
-import hybridGunService from './services/hybridGunService';
-import friendsService from './services/friendsService';
-import messageService from './services/messageService';
-import presenceService from './services/presenceService';
+import './index.css';
 
-// Import utilities after services
-import onlineStatusManager from './utils/onlineStatusFix';
+// Import utilities first (no dependencies)
 import resetDatabase from './utils/resetDatabase';
 import { getMobileConfig } from './utils/mobileDetect';
 
-// Import logging utilities last to avoid circular dependencies
+// Import logging (depends on nothing)
 import debugLogger from './utils/debugLogger';
 import consoleCapture from './utils/consoleCapture';
 
-import './index.css';
+// Import basic services first
+import gunAuthService from './services/gunAuthService';
+import hybridGunService from './services/hybridGunService';
+import presenceService from './services/presenceService';
+
+// Import onlineStatusFix after basic services (it depends on them)
+import onlineStatusManager from './utils/onlineStatusFix';
+
+// Import remaining services
+import messageService from './services/messageService';
+import friendsService from './services/friendsService';
+import gunMessaging from './services/gunMessaging';
 
 // Production-safe timeout manager using closure
 const createTimeoutManager = () => {
@@ -35,6 +39,9 @@ const createTimeoutManager = () => {
     }
   };
 };
+
+// Create a module-level timeout manager instance
+const globalTimeoutManager = createTimeoutManager();
 // import encryptionService from './services/encryptionService'; // Not used currently
 // Import components directly to avoid circular dependencies
 import ThemeToggle from './components/ThemeToggle';
@@ -402,9 +409,6 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   
-  // Create local timeout manager for this component
-  const timeoutManager = useRef(createTimeoutManager()).current;
-
   // Connection state for selected friend
   const { connectionState, checkConnection } = useConnectionState(
     selectedFriend?.publicKey
@@ -413,7 +417,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   // Cleanup auth timeouts on unmount
   useEffect(() => {
     return () => {
-      timeoutManager.clearAuthTimeout();
+      globalTimeoutManager.clearAuthTimeout();
     };
   }, []);
 
@@ -1023,8 +1027,8 @@ function App() {
   //   console.log('📱 Mobile device detected - using optimized settings');
   // }
 
-  // Production-safe timeout manager
-  const timeoutManager = useRef(createTimeoutManager()).current;
+  // Use the global timeout manager
+  const timeoutManager = globalTimeoutManager;
 
   // Version indicator for deployment verification
   useEffect(() => {
