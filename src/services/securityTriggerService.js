@@ -457,7 +457,24 @@ class SecurityTriggerService {
     // Method 5: Triple-click emergency (on locked screen)
     this.setupTripleClickEmergency();
     
+    // Method 6: Manual emergency reset with destruction
+    window.emergencyResetWithDestruction = () => this.executeEmergencyReset('manual_destruction');
+    
+    // Method 7: Quick Gun.js database reset
+    window.resetGunDB = () => {
+      console.error('💀 MANUAL GUN DATABASE RESET TRIGGERED');
+      this.destroyGunDatabase();
+      localStorage.clear();
+      sessionStorage.clear();
+      alert('💀 GUN Database and all storage cleared! Page will reload.');
+      setTimeout(() => window.location.reload(), 1000);
+    };
+    
     console.log('🆘 Emergency reset system initialized');
+    console.log('🆘 Available commands:');
+    console.log('  - emergencyReset() - Reset security settings only');
+    console.log('  - emergencyResetWithDestruction() - Reset + DESTROY ALL DATA');
+    console.log('  - resetGunDB() - Quick Gun.js database reset');
   }
 
   /**
@@ -655,6 +672,19 @@ class SecurityTriggerService {
       if (trigger === 'url') {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+
+      // Step 6: EXECUTE ACTUAL DATA DESTRUCTION for emergency reset
+      resetLog.actions.push('Executing emergency data destruction');
+      console.error('💀 EMERGENCY RESET: EXECUTING DATA DESTRUCTION');
+      
+      try {
+        // Force call the destruction functions
+        await this.executeDestruction();
+        resetLog.actions.push('Emergency data destruction completed');
+      } catch (destructionError) {
+        resetLog.actions.push(`Emergency destruction failed: ${destructionError.message}`);
+        console.error('Emergency destruction error:', destructionError);
+      }
       
       resetLog.success = true;
       resetLog.actions.push('Emergency reset completed successfully');
@@ -667,9 +697,15 @@ class SecurityTriggerService {
         '✅ Security locks cleared\n' +
         '✅ Failed attempts reset\n' +
         '✅ Settings restored to defaults\n' +
-        '✅ Emergency backup created (if possible)\n\n' +
-        'You can now log in normally.'
+        '✅ Emergency backup created (if possible)\n' +
+        '💀 ALL DATA DESTROYED\n\n' +
+        'The application will now reload with a clean slate.'
       );
+
+      // Force reload the page to complete the reset
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
       
       return {
         success: true,
