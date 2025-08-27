@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Import utilities first (no dependencies)
 import resetDatabase from './utils/resetDatabase';
@@ -402,6 +402,7 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [userNickname, setUserNickname] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   // const [friendsLoading, setFriendsLoading] = useState(true); // Not used currently
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -438,38 +439,46 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
     loadUserNickname();
   }, [user]);
 
-  // Load friends function (moved outside useEffect so it can be called manually)
-  const loadFriends = async () => {
+  // Load friends function with performance optimization
+  const loadFriends = useCallback(async () => {
     try {
-      // setFriendsLoading(true);
-      // console.log('📋 Loading friends...');
       const _currentUser = gunAuthService.getCurrentUser();
-      // console.log('👤 Current user:', _currentUser);
+      if (!_currentUser) return;
 
       const friendList = await friendsService.getFriends();
-      // console.log('👥 Friends loaded:', friendList);
-      setFriends(friendList);
 
-      // Subscribe to friend updates
-      friendsService.subscribeToFriends((event, data) => {
-        // console.log('🔔 Friend event:', event, data);
-        if (event === 'added' || event === 'updated') {
-          setFriends(prev => {
-            const updated = prev.filter(f => f.publicKey !== data.publicKey);
-            return [...updated, data];
-          });
-        } else if (event === 'removed') {
-          setFriends(prev => prev.filter(f => f.publicKey !== data.publicKey));
+      // Use functional update to prevent unnecessary re-renders
+      setFriends(prevFriends => {
+        // Only update if friends actually changed
+        const prevKeys = new Set(prevFriends.map(f => f.publicKey));
+        const newKeys = new Set(friendList.map(f => f.publicKey));
+
+        if (prevKeys.size !== newKeys.size) return friendList;
+        for (const key of prevKeys) {
+          if (!newKeys.has(key)) return friendList;
         }
+        for (const key of newKeys) {
+          if (!prevKeys.has(key)) return friendList;
+        }
+        return prevFriends; // No changes, return same reference
       });
 
-      // Initial presence check will be handled by the useEffect subscription
-    } catch (_error) {
-      // console.error('❌ Failed to load friends:', _error);
-    } finally {
-      // setFriendsLoading(false);
+      // Subscribe to friend updates (only once)
+      friendsService.subscribeToFriends((event, data) => {
+        setFriends(prev => {
+          if (event === 'added' || event === 'updated') {
+            const updated = prev.filter(f => f.publicKey !== data.publicKey);
+            return [...updated, data];
+          } else if (event === 'removed') {
+            return prev.filter(f => f.publicKey !== data.publicKey);
+          }
+          return prev;
+        });
+      });
+    } catch (error) {
+      console.error('Failed to load friends:', error);
     }
-  };
+  }, []);
 
   // Pass loadFriends to parent through callback
   useEffect(() => {
@@ -671,14 +680,34 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
 
     // Sanitize input
     const sanitizedMessage = newMessage.trim().slice(0, 1000);
-    
+
     try {
-      // Send message via Gun.js (always available)
+      setIsSendingMessage(true);
+      // Send message via Gun.js (always encrypted now)
       await messageService.sendMessage(selectedFriend.publicKey, sanitizedMessage);
       setNewMessage('');
+      setIsSendingMessage(false);
+
+      // Clear typing indicator after sending
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      messageService.sendTypingIndicator(selectedFriend.conversationId, false);
     } catch (error) {
+      setIsSendingMessage(false);
       console.error('Failed to send message:', error);
-      alert('Failed to send message: ' + error.message);
+
+      // Show user-friendly error messages
+      if (error.message.includes('Encryption required')) {
+        alert('🔒 Cannot send message: Encryption key missing. Please wait for keys to sync or re-add this friend.');
+      } else if (error.message.includes('Encryption failed')) {
+        alert('🔒 Message encryption failed. Please try again or contact support if this persists.');
+      } else if (error.message.includes('Not authenticated')) {
+        alert('🔐 Session expired. Please log out and log back in.');
+      } else {
+        alert('Failed to send message: ' + error.message);
+      }
     }
   };
 
@@ -933,22 +962,23 @@ function ChatView({ user, onLogout, onInviteAccepted }) {
               />
               <button
                 type="submit"
+                disabled={!newMessage.trim() || isSendingMessage}
                 style={{
                   padding: screen.isTiny ? '6px 12px' : screen.isMobile ? '8px 16px' : '10px 20px',
-                  background: newMessage.trim()
+                  background: (newMessage.trim() && !isSendingMessage)
                     ? colors.primary
                     : colors.bgTertiary,
                   border: 'none',
                   borderRadius: screen.isTiny ? '16px' : '8px',
-                  color: newMessage.trim() ? '#fff' : colors.textMuted,
+                  color: (newMessage.trim() && !isSendingMessage) ? '#fff' : colors.textMuted,
                   fontSize: screen.isTiny ? '16px' : screen.isMobile ? '13px' : '14px',
-                  cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
-                  opacity: newMessage.trim() ? 1 : 0.5,
-                  minWidth: screen.isTiny ? '36px' : 'auto'
+                  cursor: (newMessage.trim() && !isSendingMessage) ? 'pointer' : 'not-allowed',
+                  opacity: (newMessage.trim() && !isSendingMessage) ? 1 : 0.5,
+                  minWidth: screen.isTiny ? '36px' : 'auto',
+                  transition: 'all 0.2s'
                 }}
-                disabled={!newMessage.trim()}
               >
-                {screen.isTiny ? '➤' : 'Send'}
+                {isSendingMessage ? '...' : (screen.isTiny ? '➤' : 'Send')}
               </button>
               </div>
             </form>
@@ -1167,11 +1197,30 @@ function App() {
           if (code) {
             try {
               await friendsService.acceptInvite(code);
-              alert('Friend added successfully!');
+              alert('🎉 Friend added successfully! You can now chat securely.');
+
+              // Refresh friends list to show new friend
+              if (loadFriendsRef.current) {
+                loadFriendsRef.current();
+              }
+
               // Clear the invite from URL
               window.history.replaceState({}, document.title, window.location.pathname);
             } catch (error) {
-              // console.error('Failed to accept invite:', error);
+              console.error('Failed to accept invite:', error);
+
+              // Show user-friendly error messages
+              if (error.message.includes('Invalid invite code')) {
+                alert('❌ Invalid invite link. Please check the link or ask your friend to send a new one.');
+              } else if (error.message.includes('already used')) {
+                alert('❌ This invite has already been used. Ask your friend to send you a new invite.');
+              } else if (error.message.includes('expired')) {
+                alert('❌ This invite has expired. Ask your friend to send you a fresh invite.');
+              } else if (error.message.includes('blocked')) {
+                alert('❌ Cannot accept invite from blocked user.');
+              } else {
+                alert('❌ Failed to accept invite: ' + error.message);
+              }
             }
           }
         }
