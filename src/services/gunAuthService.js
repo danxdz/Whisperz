@@ -34,22 +34,36 @@ class GunAuthService {
     // Detect if mobile for optimizations
     const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
 
-    this.gun = Gun({
-      peers: [finalRelay], // Use configured relay with optional instance
-      localStorage: true,
-      radisk: true,
-      multicast: false,  // Disabled for battery saving
-      axe: false,        // Disabled to reduce memory usage
-      ws: {
-        reconnect: true,
-        reconnectDelay: isMobile ? 3000 : 1000,  // Longer delay on mobile to save battery
-        pingInterval: isMobile ? 30000 : 10000   // Less frequent pings on mobile
-      },
-      // Mobile optimizations
-      file: isMobile ? 'radata-mobile' : 'radata',
-      batch: isMobile ? 100 : 10,  // Batch more updates on mobile
-      throttle: isMobile ? 100 : 10  // Throttle updates on mobile
-    });
+    try {
+      this.gun = Gun({
+        peers: [finalRelay], // Use configured relay with optional instance
+        localStorage: !isMobile,  // Disable localStorage on mobile to prevent crashes
+        radisk: !isMobile,        // Disable radisk on mobile
+        multicast: false,         // Disabled for battery saving
+        axe: false,               // Disabled to reduce memory usage
+        ws: {
+          reconnect: true,
+          reconnectDelay: isMobile ? 5000 : 1000,  // Longer delay on mobile
+          pingInterval: isMobile ? 60000 : 10000,  // Much less frequent pings on mobile
+          timeout: isMobile ? 30000 : 20000        // Longer timeout on mobile
+        },
+        // Mobile optimizations - use memory only
+        file: false,  // Disable file storage on mobile
+        localStorage: false,  // Force disable localStorage
+        batch: isMobile ? 500 : 10,  // Batch more updates on mobile
+        throttle: isMobile ? 500 : 10,  // Throttle updates on mobile
+        memory: true  // Use memory only on mobile
+      });
+    } catch (error) {
+      console.error('Failed to initialize Gun.js:', error);
+      // Fallback to minimal configuration
+      this.gun = Gun({
+        peers: [finalRelay],
+        localStorage: false,
+        file: false,
+        memory: true
+      });
+    }
 
     // Test connection to peers
     setTimeout(() => {

@@ -11,6 +11,7 @@ import presenceService from './services/presenceService';
 import consoleCapture from './utils/consoleCapture';
 import debugLogger from './utils/debugLogger';
 import resetDatabase from './utils/resetDatabase';
+import { getMobileConfig } from './utils/mobileDetect';
 import './index.css';
 
 // Production-safe timeout manager using closure
@@ -75,24 +76,28 @@ function LoginView({ onLogin, inviteCode }) {
 
   // Check if this might be the first user (no accounts exist)
   useEffect(() => {
-    console.log('LoginView mounted - Reset button should be visible');
-    
-    // Check for reset parameter in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('reset') === 'true') {
-      // Auto-reset if ?reset=true is in URL
-      try {
-        resetDatabase();
-        alert('Database has been reset! Redirecting to setup...');
-        window.location.href = '?setup=admin';
-      } catch (error) {
-        alert('Failed to reset: ' + error.message);
+    try {
+      console.log('LoginView mounted - Reset button should be visible');
+      
+      // Check for reset parameter in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('reset') === 'true') {
+        // Auto-reset if ?reset=true is in URL
+        try {
+          resetDatabase();
+          alert('Database has been reset! Redirecting to setup...');
+          window.location.href = '?setup=admin';
+        } catch (error) {
+          alert('Failed to reset: ' + error.message);
+        }
       }
-    }
-    
-    // Simple check - if in production and no stored auth, show setup hint
-    if (window.location.hostname !== 'localhost' && !localStorage.getItem('gun/')) {
-      setShowFirstUserSetup(true);
+      
+      // Simple check - if in production and no stored auth, show setup hint
+      if (window.location.hostname !== 'localhost' && !localStorage.getItem('gun/')) {
+        setShowFirstUserSetup(true);
+      }
+    } catch (error) {
+      console.error('LoginView useEffect error:', error);
     }
   }, []);
 
@@ -998,6 +1003,12 @@ function App() {
   const [initError, setInitError] = useState(null);
   const [isAdminSetup, setIsAdminSetup] = useState(false);
   const loadFriendsRef = useRef(null);
+  
+  // Get mobile configuration
+  const mobileConfig = getMobileConfig();
+  if (mobileConfig.isMobile) {
+    console.log('📱 Mobile device detected - using optimized settings');
+  }
 
   // Production-safe timeout manager
   const timeoutManager = useRef(createTimeoutManager()).current;
