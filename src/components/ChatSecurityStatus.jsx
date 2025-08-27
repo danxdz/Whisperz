@@ -18,9 +18,7 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
     details: []
   });
   const [showDetails, setShowDetails] = useState(false);
-  const [encryptionMode, setEncryptionMode] = useState(
-    localStorage.getItem('encryption_mode') || 'auto'
-  );
+  // Encryption is now always mandatory - no mode selection needed
 
   useEffect(() => {
     if (!friend) {
@@ -62,18 +60,26 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
 
       // Check connection type and encryption
       const connType = connectionState?.status || 'offline';
-      
+
       if (connType === 'gun') {
         isEncrypted = hasEncryptionKey;
-        details.push({
-          type: isEncrypted ? 'success' : 'warning',
-          icon: isEncrypted ? '🔒' : '⚠️',
-          text: isEncrypted ? 'Gun Relay (E2E Encrypted)' : 'Gun Relay (Unencrypted)',
-          tooltip: isEncrypted 
-            ? 'Messages routed through relay, but encrypted'
-            : 'Messages routed through relay WITHOUT encryption!'
-        });
-        securityLevel = hasEncryptionKey ? 'high' : 'low';
+        if (hasEncryptionKey) {
+          details.push({
+            type: 'success',
+            icon: '🔒',
+            text: 'Gun Relay (E2E Encrypted)',
+            tooltip: 'Messages routed through relay with end-to-end encryption'
+          });
+          securityLevel = 'high';
+        } else {
+          details.push({
+            type: 'error',
+            icon: '🚨',
+            text: 'Encryption Key Missing',
+            tooltip: 'Cannot send messages - encryption key required'
+          });
+          securityLevel = 'critical';
+        }
       } else if (connType === 'connecting') {
         details.push({
           type: 'info',
@@ -146,7 +152,6 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
       case 'maximum': return 'Maximum Security';
       case 'high': return 'Encrypted';
       case 'partial': return 'Partial Security';
-      case 'low': return 'Not Encrypted';
       case 'critical': return 'Keys Missing';
       case 'pending': return 'Connecting...';
       default: return 'Offline';
@@ -184,31 +189,24 @@ const ChatSecurityStatus = ({ friend, connectionState, onCheckConnection, style 
         </button>
       )}
       
-      {/* Encryption Mode Toggle */}
-      <button
-        onClick={() => {
-          const newMode = encryptionMode === 'auto' ? 'always' : 'auto';
-          setEncryptionMode(newMode);
-          localStorage.setItem('encryption_mode', newMode);
-        }}
+      {/* Encryption Status - Always Encrypted */}
+      <div
         style={{
           padding: '6px 10px',
-          background: encryptionMode === 'always' ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-          border: `1px solid ${encryptionMode === 'always' ? '#00ff00' : '#666'}`,
+          background: 'rgba(0, 255, 0, 0.2)',
+          border: '1px solid #00ff00',
           borderRadius: '6px',
-          color: encryptionMode === 'always' ? '#00ff00' : '#999',
+          color: '#00ff00',
           fontSize: '11px',
-          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
-          transition: 'all 0.2s',
-          fontWeight: encryptionMode === 'always' ? '600' : '400'
+          fontWeight: '600'
         }}
-        title={encryptionMode === 'always' ? 'Always Encrypt: All messages encrypted' : 'Auto Mode: Encryption when available'}
+        title="All messages are always encrypted"
       >
-        {encryptionMode === 'always' ? '🔒 Always Encrypt' : '🔓 Auto Encrypt'}
-      </button>
+        🔒 Always Encrypted
+      </div>
       
       {/* Main Security Indicator */}
       <div
