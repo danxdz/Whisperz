@@ -5,7 +5,7 @@ import hybridGunService from '../services/hybridGunService';
 // WebRTC removed - using Gun.js only
 import backupService from '../services/backupService';
 // p2pDebugger removed - using Gun.js only
-import consoleCapture from '../utils/consoleCapture';
+// import consoleCapture from '../utils/consoleCapture'; // Temporarily disabled to fix init error
 import { useTheme } from '../contexts/ThemeContext';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -63,19 +63,19 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
     loadOnlineUsers();
 
     // Load console logs
-    const logs = consoleCapture.getLogs();
-    setConsoleLogs(logs);
+    // const logs = consoleCapture.getLogs(); // Temporarily disabled
+    // setConsoleLogs(logs); // Temporarily disabled
 
     // Subscribe to new console logs
-    const unsubscribe = consoleCapture.subscribe((log) => {
-      if (log.type === 'clear') {
-        setConsoleLogs([]);
-      } else {
-        setConsoleLogs(prev => [...prev, log].slice(-200)); // Keep last 200 logs
-      }
-    });
+    // const unsubscribe = consoleCapture.subscribe((log) => { // Temporarily disabled
+    //   if (log.type === 'clear') {
+    //     setConsoleLogs([]);
+    //   } else {
+    //     setConsoleLogs(prev => [...prev, log].slice(-200)); // Keep last 200 logs
+    //   }
+    // }); // Temporarily disabled
 
-    return () => unsubscribe();
+    // return () => unsubscribe(); // Temporarily disabled
   }, [isVisible, loadStats]);
 
   // P2P logs now go directly to console - no need to track them
@@ -551,7 +551,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
   // Render Status Tab - Consolidated system information
   const renderStatusTab = () => {
-    const stats = consoleCapture.getStats();
+    // const stats = consoleCapture.getStats(); // Temporarily disabled
 
     return (
       <div style={{ padding: screen.isTiny ? '8px' : '12px' }}>
@@ -1054,7 +1054,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
             {/* Clear button */}
             <button
               onClick={() => {
-                consoleCapture.clear();
+                // consoleCapture.clear(); // Temporarily disabled
                 setConsoleLogs([]);
               }}
               style={{
@@ -1100,7 +1100,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
 
             {/* Export button */}
             <button
-              onClick={() => consoleCapture.download()}
+              onClick={() => {/* consoleCapture.download() */}} // Temporarily disabled
               style={{
                 padding: '4px 8px',
                 background: colors.bgTertiary,
@@ -1417,7 +1417,7 @@ function EnhancedDevTools({ isVisible, onClose, isMobilePanel = false }) {
               Reload App
             </button>
             <button
-              onClick={() => consoleCapture.download()}
+              onClick={() => {/* consoleCapture.download() */}} // Temporarily disabled
               style={{
                 padding: '6px 12px',
                 background: colors.bgTertiary,
