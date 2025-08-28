@@ -55,7 +55,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [inviteCode, setInviteCode] = useState(null);
   const [initError, setInitError] = useState(null);
-  // const [isAdminSetup, setIsAdminSetup] = useState(false); // Not currently used
+  const [isAdminSetup, setIsAdminSetup] = useState(false);
   const loadFriendsRef = useRef(null);
   
   // Get mobile configuration
