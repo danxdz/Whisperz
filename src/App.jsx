@@ -313,6 +313,7 @@ function App() {
       <AuthContainer
         onAuthSuccess={handleAuth}
         inviteCode={inviteCode}
+        isAdminSetup={isAdminSetup}
       />
     );
   }

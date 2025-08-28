@@ -6,12 +6,19 @@ import RegisterView from './RegisterView';
  * AuthContainer Component
  * Handles authentication flow and mode switching
  */
-function AuthContainer({ onAuthSuccess, inviteCode }) {
+function AuthContainer({ onAuthSuccess, inviteCode, isAdminSetup: isAdminSetupProp }) {
   const [authMode, setAuthMode] = useState('login');
-  const [isAdminSetup, setIsAdminSetup] = useState(false);
+  const [isAdminSetup, setIsAdminSetup] = useState(isAdminSetupProp || false);
 
   // Check for admin setup on mount
   useEffect(() => {
+    // If admin setup is passed from parent, use it
+    if (isAdminSetupProp) {
+      setAuthMode('register');
+      setIsAdminSetup(true);
+      return;
+    }
+    
     const urlParams = new URLSearchParams(window.location.search);
     const setupMode = urlParams.get('setup');
 
@@ -23,7 +30,7 @@ function AuthContainer({ onAuthSuccess, inviteCode }) {
     } else if (inviteCode) {
       setAuthMode('register');
     }
-  }, [inviteCode]);
+  }, [inviteCode, isAdminSetupProp]);
 
   const handleAuth = (user, inviteCodeFromReg = null) => {
     onAuthSuccess(user, inviteCodeFromReg || inviteCode);
