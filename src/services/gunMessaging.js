@@ -1,6 +1,8 @@
 // Gun.js relay-based messaging service
 // All messages go through Gun.js relay network
 
+import Gun from 'gun/gun';
+import 'gun/sea';
 import gunAuthService from './gunAuthService';
 import securityUtils from '../utils/securityUtils.js';
 
@@ -148,8 +150,18 @@ class GunMessaging {
   // Encrypt message for friend
   async encryptForFriend(friendPublicKey, content) {
     try {
+      // Check if Gun is initialized
+      if (!gunAuthService.gun) {
+        // Return unencrypted if Gun not ready
+        return content;
+      }
+      
       // Use Gun's SEA to encrypt directly with public key
       const user = gunAuthService.getCurrentUser();
+      if (!user) {
+        return content;
+      }
+      
       // Try to get epub from Gun directly
       const friendUser = await new Promise((resolve) => {
         gunAuthService.gun.user(friendPublicKey).get('epub').once((epub) => {
@@ -159,8 +171,8 @@ class GunMessaging {
       });
       
       const keyToUse = friendUser || friendPublicKey;
-      const secret = await gunAuthService.gun.SEA.secret(keyToUse, user);
-      const encrypted = await gunAuthService.gun.SEA.encrypt(content, secret);
+      const secret = await Gun.SEA.secret(keyToUse, user);
+      const encrypted = await Gun.SEA.encrypt(content, secret);
 
       return encrypted;
     } catch (error) {
@@ -173,8 +185,17 @@ class GunMessaging {
   // Decrypt message from friend
   async decryptFromFriend(friendPublicKey, encryptedContent) {
     try {
+      // Check if Gun is initialized
+      if (!gunAuthService.gun) {
+        return encryptedContent;
+      }
+      
       // Use Gun's SEA to decrypt directly with public key
       const user = gunAuthService.getCurrentUser();
+      if (!user) {
+        return encryptedContent;
+      }
+      
       // Try to get epub from Gun directly
       const friendUser = await new Promise((resolve) => {
         gunAuthService.gun.user(friendPublicKey).get('epub').once((epub) => {
@@ -184,8 +205,8 @@ class GunMessaging {
       });
       
       const keyToUse = friendUser || friendPublicKey;
-      const secret = await gunAuthService.gun.SEA.secret(keyToUse, user);
-      const decrypted = await gunAuthService.gun.SEA.decrypt(encryptedContent, secret);
+      const secret = await Gun.SEA.secret(keyToUse, user);
+      const decrypted = await Gun.SEA.decrypt(encryptedContent, secret);
 
       return decrypted || encryptedContent;
     } catch (error) {
