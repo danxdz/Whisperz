@@ -21,6 +21,12 @@ export { default as ResizableSidebar } from './ResizableSidebar';
 export { default as SwipeableChat } from './SwipeableChat';
 export { default as InviteModal } from './InviteModal';
 
+// Newly extracted components
+export { default as AuthContainer } from './AuthContainer';
+export { default as MainChatInterface } from './MainChatInterface';
+export { default as LoadingScreen } from './LoadingScreen';
+export { default as ErrorScreen } from './ErrorScreen';
+
 // Future components can be added here as they are extracted:
 // export { default as RegisterView } from './RegisterView';
 // export { default as ChatView } from './ChatView';

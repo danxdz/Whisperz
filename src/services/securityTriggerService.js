@@ -162,24 +162,34 @@ class SecurityTriggerService {
 
     try {
       // Step 1: Multiple overwrites of sensitive localStorage data
+      console.error('💀 Step 1: Overwriting localStorage with random data');
       destructionLog.actions.push('Overwriting localStorage with random data');
       await this.overwriteLocalStorage(10); // 10 passes
+      console.error('💀 Step 1 COMPLETE: localStorage overwritten');
       
       // Step 2: Clear all storage mechanisms
+      console.error('💀 Step 2: Clearing all browser storage');
       destructionLog.actions.push('Clearing all browser storage');
       this.clearAllStorage();
+      console.error('💀 Step 2 COMPLETE: All storage cleared');
       
       // Step 3: Overwrite memory with garbage
+      console.error('💀 Step 3: Overwriting memory with garbage data');
       destructionLog.actions.push('Overwriting memory with garbage data');
       this.overwriteMemory();
+      console.error('💀 Step 3 COMPLETE: Memory overwritten');
       
       // Step 4: Clear Gun.js database
+      console.error('💀 Step 4: Destroying Gun.js database');
       destructionLog.actions.push('Destroying Gun.js database');
       await this.destroyGunDatabase();
+      console.error('💀 Step 4 COMPLETE: Gun.js database destroyed');
       
       // Step 5: Force browser cache clear
+      console.error('💀 Step 5: Clearing browser caches');
       destructionLog.actions.push('Clearing browser caches');
       this.clearBrowserCaches();
+      console.error('💀 Step 5 COMPLETE: Browser caches cleared');
       
       // Final log (before everything is destroyed)
       console.error('💀 DESTRUCTION COMPLETE - ALL DATA WIPED');
@@ -299,31 +309,122 @@ class SecurityTriggerService {
   }
 
   /**
-   * Destroy Gun.js database
+   * Destroy Gun.js database by overwriting with fake data
    */
   async destroyGunDatabase() {
     try {
+      console.error('💀 Destroying Gun.js database with fake data overwrite');
+      
       // If Gun.js is available, try to wipe it
       if (gunAuthService.gun) {
         // Wipe user data
         const user = gunAuthService.getCurrentUser();
         if (user) {
+          console.error('💀 Overwriting user data with fake data');
           gunAuthService.gun.get('~' + user.pub).put(null);
         }
         
         // Clear Gun's storage
         if (gunAuthService.gun._.opt.store) {
+          console.error('💀 Clearing Gun.js internal storage');
           gunAuthService.gun._.opt.store.clear();
         }
       }
       
+      // Overwrite IndexedDB with fake data
+      if (window.indexedDB) {
+        console.error('💀 Overwriting IndexedDB with fake data');
+        await this.overwriteIndexedDBWithFakeData();
+      }
+      
       // Call global reset if available
       if (window.resetGunDB) {
+        console.error('💀 Calling global Gun.js reset');
         window.resetGunDB();
       }
       
+      console.error('💀 Gun.js database destruction complete');
+      
     } catch (error) {
       console.error('Error destroying Gun database:', error);
+    }
+  }
+
+  /**
+   * Overwrite IndexedDB with fake data to make recovery impossible
+   */
+  async overwriteIndexedDBWithFakeData() {
+    try {
+      const dbNames = ['gun', 'gundb', 'whisperz', 'app', 'gunjs'];
+      
+      for (const dbName of dbNames) {
+        try {
+          // Delete existing database
+          await indexedDB.deleteDatabase(dbName);
+          
+          // Create new database with fake data
+          const request = indexedDB.open(dbName, 1);
+          
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            
+            // Create fake object stores
+            const fakeStores = ['users', 'friends', 'messages', 'conversations', 'data'];
+            
+            fakeStores.forEach(storeName => {
+              if (!db.objectStoreNames.contains(storeName)) {
+                const store = db.createObjectStore(storeName, { keyPath: 'id' });
+                
+                // Add fake data
+                const fakeData = {
+                  id: `fake_${Date.now()}_${Math.random().toString(36)}`,
+                  type: 'DECOY_DATA',
+                  timestamp: new Date().toISOString(),
+                  message: 'This is fake data created during emergency destruction',
+                  fake: true,
+                  overwritten: true
+                };
+                
+                store.add(fakeData);
+              }
+            });
+          };
+          
+          request.onsuccess = (event) => {
+            const db = event.target.result;
+            
+            // Add more fake data to each store
+            const transaction = db.transaction(db.objectStoreNames, 'readwrite');
+            
+            db.objectStoreNames.forEach(storeName => {
+              const store = transaction.objectStore(storeName);
+              
+              // Add multiple fake entries
+              for (let i = 0; i < 10; i++) {
+                const fakeEntry = {
+                  id: `decoy_${i}_${Date.now()}_${Math.random().toString(36)}`,
+                  type: 'FAKE_ENTRY',
+                  timestamp: new Date().toISOString(),
+                  content: `Fake content ${i} - Original data destroyed during emergency reset`,
+                  fake: true,
+                  overwritten: true,
+                  decoy: true
+                };
+                
+                store.add(fakeEntry);
+              }
+            });
+            
+            db.close();
+          };
+          
+        } catch (dbError) {
+          console.error(`Error overwriting database ${dbName}:`, dbError);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error overwriting IndexedDB:', error);
     }
   }
 
@@ -458,23 +559,39 @@ class SecurityTriggerService {
     this.setupTripleClickEmergency();
     
     // Method 6: Manual emergency reset with destruction
-    window.emergencyResetWithDestruction = () => this.executeEmergencyReset('manual_destruction');
-    
-    // Method 7: Quick Gun.js database reset
-    window.resetGunDB = () => {
-      console.error('💀 MANUAL GUN DATABASE RESET TRIGGERED');
-      this.destroyGunDatabase();
-      localStorage.clear();
-      sessionStorage.clear();
-      alert('💀 GUN Database and all storage cleared! Page will reload.');
-      setTimeout(() => window.location.reload(), 1000);
+    window.emergencyResetWithDestruction = () => {
+      console.error('🆘 MANUAL EMERGENCY RESET WITH DESTRUCTION TRIGGERED');
+      this.executeEmergencyReset('manual_destruction');
     };
     
-    console.log('🆘 Emergency reset system initialized');
-    console.log('🆘 Available commands:');
-    console.log('  - emergencyReset() - Reset security settings only');
-    console.log('  - emergencyResetWithDestruction() - Reset + DESTROY ALL DATA');
-    console.log('  - resetGunDB() - Quick Gun.js database reset');
+         // Method 7: Quick Gun.js database reset
+     window.resetGunDB = () => {
+       console.error('💀 MANUAL GUN DATABASE RESET TRIGGERED');
+       this.destroyGunDatabase();
+       localStorage.clear();
+       sessionStorage.clear();
+       alert('💀 GUN Database and all storage cleared! Page will reload.');
+       setTimeout(() => window.location.reload(), 1000);
+     };
+     
+     // Method 8: Clean up fake data after emergency reset
+     window.cleanupFakeData = () => {
+       console.log('🧹 MANUAL FAKE DATA CLEANUP TRIGGERED');
+       this.cleanupFakeData().then(result => {
+         if (result.success) {
+           alert('🧹 Fake data cleaned up successfully!');
+         } else {
+           alert('❌ Fake data cleanup failed: ' + result.error);
+         }
+       });
+     };
+    
+         console.log('🆘 Emergency reset system initialized');
+     console.log('🆘 Available commands:');
+     console.log('  - emergencyReset() - Reset security settings only');
+     console.log('  - emergencyResetWithDestruction() - Reset + DESTROY ALL DATA');
+     console.log('  - resetGunDB() - Quick Gun.js database reset');
+     console.log('  - cleanupFakeData() - Clean up fake data after emergency reset');
   }
 
   /**
@@ -789,6 +906,50 @@ class SecurityTriggerService {
       ],
       currentStatus: this.getStatus()
     };
+  }
+
+  /**
+   * Clean up fake data after emergency reset (for recovery)
+   */
+  async cleanupFakeData() {
+    try {
+      console.log('🧹 Cleaning up fake data after emergency reset');
+      
+      if (window.indexedDB) {
+        const dbNames = ['gun', 'gundb', 'whisperz', 'app', 'gunjs'];
+        
+        for (const dbName of dbNames) {
+          try {
+            // Delete databases with fake data
+            await indexedDB.deleteDatabase(dbName);
+            console.log(`🧹 Deleted fake database: ${dbName}`);
+          } catch (dbError) {
+            console.log(`🧹 Database ${dbName} already deleted or doesn't exist`);
+          }
+        }
+      }
+      
+      // Clear any remaining fake data from localStorage
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        try {
+          const value = localStorage.getItem(key);
+          if (value && (value.includes('FAKE_ENTRY') || value.includes('DECOY_DATA'))) {
+            localStorage.removeItem(key);
+            console.log(`🧹 Removed fake data: ${key}`);
+          }
+        } catch (error) {
+          // Ignore errors
+        }
+      });
+      
+      console.log('🧹 Fake data cleanup complete');
+      return { success: true, message: 'Fake data cleaned up successfully' };
+      
+    } catch (error) {
+      console.error('Error cleaning up fake data:', error);
+      return { success: false, error: error.message };
+    }
   }
 }
 

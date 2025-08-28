@@ -1,4 +1,6 @@
 // WebCrypto-based AES-GCM encryption service
+import CryptoJS from 'crypto-js';
+
 class EncryptionService {
   constructor() {
     this.derivedKeys = new Map();
@@ -363,9 +365,9 @@ class EncryptionService {
   // Clear sensitive data from memory
   clearSensitiveData() {
     this.derivedKeys.clear();
-    // Force garbage collection hint
-    if (global.gc) {
-      global.gc();
+    // Force garbage collection hint (browser-safe)
+    if (typeof globalThis !== 'undefined' && globalThis.gc) {
+      globalThis.gc();
     }
   }
 

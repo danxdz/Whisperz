@@ -41,6 +41,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Status Messages** - Success/error notifications for all actions
 - **Responsive Design** - Optimized DevTools interface for all screen sizes
 
+## [2.1.4] - 2024-08-29
+
+### 🚀 Major Architecture Improvement
+- **Monolithic App.jsx Refactoring** - Split 1645-line file into 4 focused components (80% size reduction)
+- **AuthContainer Component** - Dedicated authentication flow management
+- **MainChatInterface Component** - Comprehensive chat UI and messaging logic
+- **LoadingScreen Component** - Professional loading state handling
+- **ErrorScreen Component** - Centralized error management with retry functionality
+- **Modular Architecture** - Improved maintainability, testability, and developer experience
+- **Component Separation** - Clear separation of concerns and responsibilities
+- **Performance Optimization** - Smaller components for better rendering efficiency
+
+### 🛠️ Code Quality Enhancements
+- **Export Statement Fixes** - Corrected all component export statements
+- **Import Consistency** - Standardized import patterns across modules
+- **Component Organization** - Better file structure and component relationships
+- **Developer Productivity** - Easier debugging and feature development
+- **Future-Proof Architecture** - Scalable foundation for new features
+
+### 📚 Documentation Updates
+- **README Enhancement** - Added architecture section highlighting modular improvements
+- **Code Comments** - Comprehensive documentation for new component structure
+- **Developer Guide** - Clear guidance for working with modular components
+
 ## [Unreleased]
 
 ### Added

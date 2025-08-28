@@ -2,6 +2,7 @@ import hybridGunService from './hybridGunService';
 import gunAuthService from './gunAuthService';
 import friendsService from './friendsService';
 import securityUtils from '../utils/securityUtils.js';
+import debugLogger from '../utils/debugLogger.js';
 
 // Message service for handling all message operations
 class MessageService {

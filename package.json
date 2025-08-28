@@ -1,7 +1,7 @@
 {
   "name": "whisperz",
   "private": true,
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "Secure decentralized P2P chat application with Gun.js only",
   "author": "Whisperz Team",
   "license": "MIT",
@@ -30,6 +30,7 @@
     "reinstall": "npm run clean && npm install"
   },
   "dependencies": {
+    "crypto-js": "^4.2.0",
     "gun": "0.2020.1241",
     "qrcode.react": "^4.2.0",
     "react": "18.3.1",

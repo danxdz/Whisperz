@@ -1,19 +1,17 @@
 import React from 'react';
-// WebRTC removed - using Gun.js only
-import gunAuthService from '../services/gunAuthService';
 
 /**
  * WebRTCStatus Component
- * Shows WebRTC connection status and provides reconnection controls
+ * Shows Gun.js connection status (WebRTC removed)
  */
 function WebRTCStatus({ compact = false }) {
-  // WebRTC removed - show Gun.js status instead
+  // Show Gun.js status instead
   const getStatusColor = () => {
     return '#00ff00'; // Always green for Gun.js
   };
 
   const getStatusText = () => {
-    return 'Gun.js Ready'; // WebRTC removed - Gun.js is always ready
+    return 'Gun.js Ready'; // Gun.js is always ready
   };
 
   if (compact) {
@@ -34,25 +32,9 @@ function WebRTCStatus({ compact = false }) {
           height: '8px',
           borderRadius: '50%',
           background: getStatusColor(),
-          animation: isConnecting ? 'pulse 1s infinite' : 'none',
+          animation: 'none',
         }} />
-        <span>WebRTC: {getStatusText()}</span>
-        {!isConnected && !isConnecting && (
-          <button
-            onClick={reconnect}
-            style={{
-              padding: '2px 6px',
-              background: 'rgba(0, 255, 0, 0.2)',
-              border: '1px solid #00ff00',
-              borderRadius: '3px',
-              color: '#00ff00',
-              fontSize: '10px',
-              cursor: 'pointer',
-            }}
-          >
-            Retry
-          </button>
-        )}
+        <span>Gun.js: {getStatusText()}</span>
       </div>
     );
   }
@@ -68,7 +50,7 @@ function WebRTCStatus({ compact = false }) {
       fontSize: '14px',
     }}>
       <h3 style={{ margin: '0 0 10px 0', color: getStatusColor() }}>
-        📡 WebRTC Status
+        📡 Decentralized Network Status
       </h3>
 
       <div style={{ display: 'grid', gap: '8px' }}>
@@ -78,88 +60,22 @@ function WebRTCStatus({ compact = false }) {
             height: '12px',
             borderRadius: '50%',
             background: getStatusColor(),
-            animation: isConnecting ? 'pulse 1s infinite' : 'none',
+            animation: 'none',
           }} />
           <strong>Status:</strong> {getStatusText()}
         </div>
 
-        {peerId && (
-          <div>
-            <strong>Peer ID:</strong>
-            <div style={{
-              marginTop: '4px',
-              padding: '4px 8px',
-              background: 'rgba(0, 0, 0, 0.5)',
-              borderRadius: '4px',
-              fontSize: '11px',
-              wordBreak: 'break-all',
-              userSelect: 'text',
-            }}>
-              {peerId}
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div style={{ color: '#ff6666' }}>
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
         <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0, 255, 0, 0.2)' }}>
           <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>
-            WebRTC enables direct peer-to-peer messaging when both users are online.
-            Messages fall back to Gun.js storage when peers can't connect directly.
+            Gun.js provides decentralized peer-to-peer messaging through a mesh network.
+            Messages are always encrypted and stored securely across the network.
           </div>
 
-          {!isConnected && !isConnecting && (
-            <button
-              onClick={reconnect}
-              style={{
-                width: '100%',
-                padding: '8px',
-                background: 'rgba(0, 255, 0, 0.2)',
-                border: '1px solid #00ff00',
-                borderRadius: '4px',
-                color: '#00ff00',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-              }}
-            >
-              🔄 Reconnect WebRTC
-            </button>
-          )}
-
-          {isConnecting && (
-            <div style={{ textAlign: 'center', color: '#ffff00' }}>
-              Establishing connection...
-            </div>
-          )}
-
-          {isConnected && (
-            <div style={{ textAlign: 'center', color: '#00ff00' }}>
-              ✅ Ready for P2P messaging
-            </div>
-          )}
+          <div style={{ textAlign: 'center', color: '#00ff00' }}>
+            ✅ Always connected to decentralized network
+          </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes pulse {
-          0% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.5;
-            transform: scale(1.1);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
     </div>
   );
 }
