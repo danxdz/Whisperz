@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 // Import utilities first (no dependencies)
-import resetDatabase from './utils/resetDatabase';
+// import resetDatabase from './utils/resetDatabase'; // Not currently used in App.jsx
 import { getMobileConfig } from './utils/mobileDetect';
 
 // Import logging (depends on nothing)
@@ -41,10 +41,10 @@ const createTimeoutManager = () => {
 const globalTimeoutManager = createTimeoutManager();
 
 // Import modular components
-import AuthContainer from './components/AuthContainer';
-import MainChatInterface from './components/MainChatInterface';
-import LoadingScreen from './components/LoadingScreen';
-import ErrorScreen from './components/ErrorScreen';
+import { AuthContainer } from './components/index';
+import { MainChatInterface } from './components/index';
+import { LoadingScreen } from './components/index';
+import { ErrorScreen } from './components/index';
 
 /**
  * Main App Component
@@ -55,11 +55,11 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [inviteCode, setInviteCode] = useState(null);
   const [initError, setInitError] = useState(null);
-  const [isAdminSetup, setIsAdminSetup] = useState(false);
+  // const [isAdminSetup, setIsAdminSetup] = useState(false); // Not currently used
   const loadFriendsRef = useRef(null);
-
+  
   // Get mobile configuration
-  const mobileConfig = getMobileConfig();
+  // const mobileConfig = getMobileConfig(); // Not currently used
 
   // Use the global timeout manager
   const timeoutManager = globalTimeoutManager;
@@ -254,34 +254,34 @@ function App() {
     // Initialize message service
     messageService.initialize();
 
-    // Handle invite if present (from registration or from URL)
-    const codeToUse = inviteCodeFromReg || inviteCode;
-    if (codeToUse) {
-      // Small delay to ensure services are ready
-      if (timeoutManager && timeoutManager.setAuthTimeout) {
-        timeoutManager.setAuthTimeout(async () => {
-          try {
-            const result = await friendsService.acceptInvite(codeToUse);
+            // Handle invite if present (from registration or from URL)
+        const codeToUse = inviteCodeFromReg || inviteCode;
+        if (codeToUse) {
+          // Small delay to ensure services are ready
+          if (timeoutManager && timeoutManager.setAuthTimeout) {
+            timeoutManager.setAuthTimeout(async () => {
+              try {
+                const result = await friendsService.acceptInvite(codeToUse);
 
-            if (result.alreadyFriends) {
+                if (result.alreadyFriends) {
               // Don't show alert if already friends
-            } else {
-              alert('🎉 Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
-            }
+                } else {
+                  alert('🎉 Friend added successfully! You are now connected with ' + (result.friend?.nickname || 'your friend'));
+                }
 
-            // Refresh friends list
-            if (typeof loadFriendsRef.current === 'function') {
-              loadFriendsRef.current();
-            }
-          } catch (error) {
-            if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
-              alert('❌ Failed to accept invite: ' + error.message);
-            }
-          } finally {
-            setInviteCode(null);
-            // Clear the invite from URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
+                // Refresh friends list
+                if (typeof loadFriendsRef.current === 'function') {
+                  loadFriendsRef.current();
+                }
+              } catch (error) {
+                if (!error.message.includes('already used') || !error.message.includes(authUser.pub)) {
+                  alert('❌ Failed to accept invite: ' + error.message);
+                }
+              } finally {
+                setInviteCode(null);
+                // Clear the invite from URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
         }, 4000);
       }
     }

@@ -117,14 +117,14 @@ function MainChatInterface({ user, onLogout, onInviteAccepted }) {
 
     // Update own presence
     debugLogger.debug('gun', '📍 Updating presence...');
-    presenceService.updatePresence('online');
+    presenceService.setOnline();
 
     // Handle page visibility
     const handleVisibility = () => {
       if (document.hidden) {
-        presenceService.updatePresence('away');
+        // Keep online when tab is hidden, just don't update
       } else {
-        presenceService.updatePresence('online');
+        presenceService.setOnline();
       }
     };
 
@@ -132,7 +132,7 @@ function MainChatInterface({ user, onLogout, onInviteAccepted }) {
 
     // Handle beforeunload
     const handleUnload = () => {
-      presenceService.updatePresence('offline');
+      presenceService.setOffline();
     };
     window.addEventListener('beforeunload', handleUnload);
 
