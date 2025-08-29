@@ -392,13 +392,31 @@ class GunAuthService {
       console.log('🔑 Gun.SEA Debug:');
       console.log('  Current user epub:', user.epub);
       console.log('  Recipient epub:', recipientEpub);
+      
+      // Check if user has required keys
+      if (!user.epriv) {
+        console.error('  ❌ Missing user.epriv (encryption private key)');
+        throw new Error('Current user missing encryption private key');
+      }
+      
+      // Validate epub format (should be base64-like string with a dot)
+      if (!recipientEpub.includes('.')) {
+        console.error('  ❌ Invalid epub format (missing dot separator)');
+        throw new Error('Invalid recipient encryption key format');
+      }
 
       // Use recipientEpub (encryption public key) instead of pub for proper Gun.SEA secret generation
       const secret = await Gun.SEA.secret(recipientEpub, user);
       console.log('  Secret generated:', !!secret);
 
       if (!secret) {
-        throw new Error('Failed to generate encryption secret');
+        // This usually means the keys are incompatible or corrupted
+        console.error('  ❌ Gun.SEA.secret returned null/undefined');
+        console.error('  Possible causes:');
+        console.error('  1. Recipient epub is not a valid Gun encryption key');
+        console.error('  2. Current user object is missing required SEA keys');
+        console.error('  3. Keys are from different Gun instances/versions');
+        throw new Error('Failed to generate encryption secret - keys may be incompatible');
       }
 
       return secret;
