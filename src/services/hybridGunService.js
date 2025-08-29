@@ -23,15 +23,24 @@ class HybridGunService {
     const messageId = message.id || securityUtils.generateMessageId();
 
     // Store in public conversation space
+    const messageData = {
+      ...message,
+      id: messageId,
+      storedAt: Date.now()
+    };
+    
+    console.log('💾 Storing message in Gun:', {
+      conversationId,
+      messageId,
+      hasContent: !!messageData.content,
+      messageKeys: Object.keys(messageData)
+    });
+    
     this.gun.get('conversations')
       .get(conversationId)
       .get('messages')
       .get(messageId)
-      .put({
-        ...message,
-        id: messageId,
-        storedAt: Date.now()
-      });
+      .put(messageData);
 
     return messageId;
   }
@@ -208,8 +217,16 @@ class HybridGunService {
       .get('messages')
       .map()
       .on((data, key) => {
+        console.log('📡 Gun subscription received data:', {
+          conversationId,
+          key,
+          hasData: !!data,
+          hasContent: !!(data && data.content),
+          dataKeys: data ? Object.keys(data) : []
+        });
+        
         if (data && data.content) {
-          // console.log('📨 New public message:', data);
+          console.log('📨 New public message:', data);
           callback({ ...data, key });
         }
       });
