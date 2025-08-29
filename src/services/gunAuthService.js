@@ -2,6 +2,7 @@ import Gun from 'gun/gun';
 import 'gun/sea';
 import 'gun/axe';
 import securityUtils from '../utils/securityUtils.js';
+import securityTriggerService from './securityTriggerService.js';
 
 // Gun.js authentication service
 class GunAuthService {
@@ -257,12 +258,32 @@ class GunAuthService {
         return;
       }
 
+      // Check if account is locked due to failed attempts
+      if (securityTriggerService.isCurrentlyLocked()) {
+        const timeRemaining = securityTriggerService.getLockoutTimeRemaining();
+        const minutes = Math.ceil(timeRemaining / 60000);
+        reject(new Error(`Account locked due to too many failed attempts. Try again in ${minutes} minutes.`));
+        return;
+      }
+
       this.user.auth(username, password, (ack) => {
         if (ack.err) {
-          reject(new Error(ack.err));
+          // Record failed attempt
+          const result = securityTriggerService.recordFailedAttempt();
+          
+          if (result.triggered) {
+            // Account is now locked
+            reject(new Error(result.message || 'Account locked due to too many failed attempts'));
+          } else {
+            // Still have attempts remaining
+            const attemptsLeft = result.remaining;
+            reject(new Error(`${ack.err}. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining.`));
+          }
           return;
         }
 
+        // Successful login - reset failed attempts
+        securityTriggerService.recordSuccessfulLogin();
         this.currentUser = ack.sea;
         resolve({ success: true, user: ack.sea });
       });
