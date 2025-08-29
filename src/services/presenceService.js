@@ -47,14 +47,16 @@ class PresenceService {
 
     this.isOnline = true;
 
+    const now = Date.now();
     const presence = {
       status: 'online',
-      lastSeen: Date.now(),
-      timestamp: Date.now()
+      lastSeen: now,
+      timestamp: now
     };
 
     // Update presence in Gun.js only (no WebRTC peers)
     gunAuthService.gun.get('presence').get(user.pub).put(presence);
+    console.log('✅ Presence set to online:', presence);
     debugLogger.debug('presence', '📍 Presence set to online');
 
     // Status set to online

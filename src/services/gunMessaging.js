@@ -71,21 +71,25 @@ class GunMessaging {
     const user = gunAuthService.getCurrentUser();
     if (!user) return;
 
-    // Broadcast presence every 30 seconds
+    // Broadcast presence with consistent fields
     const broadcastPresence = () => {
+      const now = Date.now();
       const presence = {
         status: 'online',
-        timestamp: Date.now(),
+        timestamp: now,
+        lastSeen: now,  // Add lastSeen field that presenceService expects
         gunRelayConnected: this.isConnectedToRelay()
       };
 
       gun.get('presence').get(user.pub).put(presence);
-      // Broadcasting presence
+      console.log('📍 Presence broadcast:', presence);
     };
 
     // Broadcast presence once on initialization
     broadcastPresence();
-    // No need for periodic broadcasting - only on login/visibility change
+    
+    // Set up periodic broadcast every 30 seconds to maintain online status
+    this.presenceInterval = setInterval(broadcastPresence, 30000);
   }
 
   // Check if connected to Gun relay
