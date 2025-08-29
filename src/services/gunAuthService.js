@@ -29,12 +29,18 @@ class GunAuthService {
       const newInstance = data.instance;
       const timestamp = data.timestamp;
       
-      console.log('📡 Received instance data from server:', {
-        instance: newInstance,
-        timestamp: timestamp,
-        resetBy: data.resetBy,
-        message: data.message
-      });
+      // Only log if instance is different or first time
+      const isFirstTime = !storedInstance;
+      const hasChanged = storedInstance && storedInstance !== newInstance;
+      
+      if (isFirstTime || hasChanged) {
+        console.log('📡 Received instance data from server:', {
+          instance: newInstance,
+          timestamp: timestamp,
+          resetBy: data.resetBy,
+          message: data.message
+        });
+      }
 
       // Check if this is a different instance
       if (storedInstance && storedInstance !== newInstance) {
@@ -83,7 +89,7 @@ class GunAuthService {
         localStorage.setItem('whisperz_current_instance', newInstance);
         localStorage.setItem('whisperz_last_reset', String(timestamp || Date.now()));
       } else {
-        console.log('✅ Instance unchanged:', newInstance);
+        // Silent - instance unchanged, no need to log every 30 seconds
       }
     };
 
