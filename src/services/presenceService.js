@@ -84,15 +84,15 @@ class PresenceService {
 
   /**
    * Start heartbeat to keep presence alive
-   * Minimal heartbeat every 2 minutes to stay online
+   * Heartbeat every 20 seconds to stay online
    */
   startHeartbeat() {
-    // Minimal heartbeat to prevent appearing offline
+    // Regular heartbeat to maintain online status
     this.heartbeatInterval = setInterval(() => {
       if (this.isOnline) {
         this.setOnline();
       }
-    }, 60000); // Every 1 minute (more frequent to prevent status flipping)
+    }, 20000); // Every 20 seconds (must be less than timeout)
   }
 
   /**
@@ -174,10 +174,9 @@ class PresenceService {
   handlePresenceUpdate(publicKey, data) {
     const now = Date.now();
 
-    // Check if presence is fresh (within 40 seconds)
-    const isOnline = data.status === 'online' &&
-                    data.lastSeen &&
-                    (now - data.lastSeen) < 40000;
+    // Gun persists state - trust the status field directly
+    // Users set "online" when active and "offline" when leaving
+    const isOnline = data.status === 'online';
 
     const status = {
       online: isOnline,
