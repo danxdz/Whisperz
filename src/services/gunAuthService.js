@@ -12,6 +12,93 @@ class GunAuthService {
     this.listeners = new Map();
   }
 
+  // Initialize instance change detection for server resets
+  initInstanceChangeDetection() {
+    if (!this.gun) return;
+
+    // Get the current instance from localStorage
+    const storedInstance = localStorage.getItem('whisperz_current_instance');
+    
+    console.log('🔍 Initializing instance change detection...');
+    console.log('📦 Stored instance:', storedInstance || 'none');
+
+    // Handler for instance changes
+    const handleInstanceChange = (data) => {
+      if (!data || !data.instance) return;
+
+      const newInstance = data.instance;
+      const timestamp = data.timestamp;
+      
+      console.log('📡 Received instance data from server:', {
+        instance: newInstance,
+        timestamp: timestamp,
+        resetBy: data.resetBy,
+        message: data.message
+      });
+
+      // Check if this is a different instance
+      if (storedInstance && storedInstance !== newInstance) {
+        console.log('🔄 INSTANCE CHANGED!');
+        console.log(`📦 Old: ${storedInstance}`);
+        console.log(`📦 New: ${newInstance}`);
+        console.log('🧹 Clearing local data and reloading...');
+
+        // Store the new instance before clearing
+        const tempInstance = newInstance;
+        
+        // Clear all local storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Store the new instance
+        localStorage.setItem('whisperz_current_instance', tempInstance);
+        localStorage.setItem('whisperz_last_reset', String(timestamp || Date.now()));
+        
+        // Clear IndexedDB databases
+        if (window.indexedDB) {
+          const databases = ['gun', 'radata', 'radata-mobile'];
+          databases.forEach(db => {
+            try {
+              indexedDB.deleteDatabase(db);
+              console.log(`🗑️ Deleted IndexedDB: ${db}`);
+            } catch (e) {
+              console.error(`Failed to delete ${db}:`, e);
+            }
+          });
+        }
+
+        // Show notification to user
+        if (window.alert) {
+          alert('🔄 Server has been reset! The app will reload with fresh data.');
+        }
+
+        // Reload the page after a short delay
+        setTimeout(() => {
+          console.log('🔄 Reloading application...');
+          window.location.reload();
+        }, 1000);
+      } else if (!storedInstance) {
+        // First time - just store the instance
+        console.log('📝 Storing initial instance:', newInstance);
+        localStorage.setItem('whisperz_current_instance', newInstance);
+        localStorage.setItem('whisperz_last_reset', String(timestamp || Date.now()));
+      } else {
+        console.log('✅ Instance unchanged:', newInstance);
+      }
+    };
+
+    // Listen for instance changes from the server
+    // Use both .once() and .on() to handle offline peers
+    
+    // Check current value (for peers that were offline during reset)
+    this.gun.get('_whisperz_system').get('config').once(handleInstanceChange);
+    
+    // Listen for future changes (for online peers)
+    this.gun.get('_whisperz_system').get('config').on(handleInstanceChange);
+    
+    console.log('✅ Instance change detection initialized');
+  }
+
   // Initialize Gun instance with peers
   initialize(peers = []) {
     // Gun relay configuration - can be overridden by environment variable
@@ -94,6 +181,9 @@ class GunAuthService {
       this.currentUser = this.user.is;
       this.notifyListeners('auth', this.currentUser);
     });
+
+    // Initialize instance change detection for server resets
+    this.initInstanceChangeDetection();
 
     return this.gun;
   }

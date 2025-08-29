@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisperz Reset Detection Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #4ade80;
+            border-bottom: 2px solid #4ade80;
+            padding-bottom: 10px;
+        }
+        .status {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4ade80;
+        }
+        .log {
+            background: #0a0a0a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 2px solid transparent;
+        }
+        .log-entry.info { border-left-color: #3b82f6; }
+        .log-entry.success { border-left-color: #4ade80; }
+        .log-entry.warning { border-left-color: #f59e0b; }
+        .log-entry.error { border-left-color: #ef4444; }
+        button {
+            background: #4ade80;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover {
+            background: #22c55e;
+        }
+        .config {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        input {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            padding: 8px;
+            border-radius: 4px;
+            width: 100%;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Whisperz Reset Detection Test</h1>
+    
+    <div class="config">
+        <h3>Configuration</h3>
+        <label>Gun Relay URL:</label>
+        <input type="text" id="relayUrl" value="https://gun-relay-nchb.onrender.com/gun" />
+        <button onclick="connect()">Connect</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+        <button onclick="clearLocalData()">Clear Local Data</button>
+    </div>
+
+    <div class="status">
+        <h3>Current Status</h3>
+        <p><strong>Connection:</strong> <span id="connectionStatus">Not connected</span></p>
+        <p><strong>Current Instance:</strong> <span id="currentInstance">Unknown</span></p>
+        <p><strong>Last Reset:</strong> <span id="lastReset">Never</span></p>
+        <p><strong>Stored Instance:</strong> <span id="storedInstance">None</span></p>
+    </div>
+
+    <div class="log" id="logContainer">
+        <div class="log-entry info">Waiting for connection...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+    <script>
+        let gun = null;
+        let logContainer = document.getElementById('logContainer');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type}] ${message}`);
+        }
+
+        function updateStatus() {
+            const storedInstance = localStorage.getItem('whisperz_current_instance');
+            const lastReset = localStorage.getItem('whisperz_last_reset');
+            
+            document.getElementById('storedInstance').textContent = storedInstance || 'None';
+            
+            if (lastReset) {
+                const date = new Date(parseInt(lastReset));
+                document.getElementById('lastReset').textContent = date.toLocaleString();
+            }
+        }
+
+        function connect() {
+            const relayUrl = document.getElementById('relayUrl').value;
+            
+            if (!relayUrl) {
+                log('Please enter a relay URL', 'error');
+                return;
+            }
+
+            log(`Connecting to ${relayUrl}...`, 'info');
+            document.getElementById('connectionStatus').textContent = 'Connecting...';
+
+            try {
+                // Initialize Gun
+                gun = Gun({
+                    peers: [relayUrl],
+                    localStorage: true,
+                    radisk: true
+                });
+
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                log('Connected to Gun relay', 'success');
+
+                // Get stored instance
+                const storedInstance = localStorage.getItem('whisperz_current_instance');
+                log(`Stored instance: ${storedInstance || 'none'}`, 'info');
+
+                // Handler for instance changes
+                const handleInstanceChange = (data) => {
+                    if (!data || !data.instance) {
+                        log('Received empty instance data', 'warning');
+                        return;
+                    }
+
+                    const newInstance = data.instance;
+                    const timestamp = data.timestamp;
+                    
+                    log(`📡 Received instance data:`, 'info');
+                    log(`  - Instance: ${newInstance}`, 'info');
+                    log(`  - Timestamp: ${timestamp}`, 'info');
+                    log(`  - Reset By: ${data.resetBy || 'unknown'}`, 'info');
+                    log(`  - Message: ${data.message || 'none'}`, 'info');
+
+                    document.getElementById('currentInstance').textContent = newInstance;
+
+                    // Check if this is a different instance
+                    if (storedInstance && storedInstance !== newInstance) {
+                        log('🔄 INSTANCE CHANGED!', 'warning');
+                        log(`Old: ${storedInstance}`, 'warning');
+                        log(`New: ${newInstance}`, 'warning');
+                        
+                        if (confirm('Server instance has changed! This means the server was reset. Clear local data and reload?')) {
+                            // Store the new instance before clearing
+                            const tempInstance = newInstance;
+                            
+                            // Clear all local storage
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            
+                            // Store the new instance
+                            localStorage.setItem('whisperz_current_instance', tempInstance);
+                            localStorage.setItem('whisperz_last_reset', String(timestamp || Date.now()));
+                            
+                            log('Local data cleared, reloading...', 'success');
+                            
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        }
+                    } else if (!storedInstance) {
+                        // First time - just store the instance
+                        log(`Storing initial instance: ${newInstance}`, 'success');
+                        localStorage.setItem('whisperz_current_instance', newInstance);
+                        localStorage.setItem('whisperz_last_reset', String(timestamp || Date.now()));
+                        updateStatus();
+                    } else {
+                        log(`Instance unchanged: ${newInstance}`, 'info');
+                    }
+                };
+
+                // Listen for instance changes from the server
+                log('Setting up instance change listeners...', 'info');
+                
+                // Check current value (for peers that were offline during reset)
+                gun.get('_whisperz_system').get('config').once((data) => {
+                    log('Checking current instance (once)...', 'info');
+                    handleInstanceChange(data);
+                });
+                
+                // Listen for future changes (for online peers)
+                gun.get('_whisperz_system').get('config').on((data) => {
+                    log('Instance update received (on)...', 'info');
+                    handleInstanceChange(data);
+                });
+                
+                log('✅ Instance change detection initialized', 'success');
+                updateStatus();
+
+            } catch (error) {
+                log(`Connection failed: ${error.message}`, 'error');
+                document.getElementById('connectionStatus').textContent = 'Failed';
+            }
+        }
+
+        function clearLogs() {
+            logContainer.innerHTML = '<div class="log-entry info">Logs cleared</div>';
+        }
+
+        function clearLocalData() {
+            if (confirm('Clear all local data? This will remove stored instance information.')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                log('Local data cleared', 'success');
+                updateStatus();
+                document.getElementById('currentInstance').textContent = 'Unknown';
+            }
+        }
+
+        // Update status on load
+        updateStatus();
+
+        // Auto-connect if we have a stored instance
+        if (localStorage.getItem('whisperz_current_instance')) {
+            log('Found stored instance, auto-connecting...', 'info');
+            setTimeout(connect, 500);
+        }
+    </script>
+</body>
+</html>
