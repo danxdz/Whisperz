@@ -24,7 +24,13 @@ class GunAuthService {
 
     // Handler for instance changes
     const handleInstanceChange = (data) => {
-      if (!data || !data.instance) return;
+      // Debug: Log raw data received
+      console.log('🔍 Raw data received from Gun:', data);
+      
+      if (!data || !data.instance) {
+        console.log('⚠️ No instance data in received object');
+        return;
+      }
 
       const newInstance = data.instance;
       const timestamp = data.timestamp;
