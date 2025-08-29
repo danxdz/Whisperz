@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Instance Monitor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #e0e0e0;
+        }
+        h1 { color: #4ade80; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #4ade80;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+        }
+        .status-label { color: #888; }
+        .status-value { 
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+        .online { color: #4ade80; }
+        .offline { color: #ef4444; }
+        .pending { color: #f59e0b; }
+        button {
+            background: #4ade80;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover { background: #22c55e; }
+        button.danger {
+            background: #ef4444;
+            color: #fff;
+        }
+        button.danger:hover { background: #dc2626; }
+        .log {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+        }
+        .log-success { color: #4ade80; }
+        .log-error { color: #ef4444; }
+        .log-warning { color: #f59e0b; }
+        .log-info { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Live Instance Monitor</h1>
+    
+    <div class="grid">
+        <div class="card">
+            <h3>📡 Connection Status</h3>
+            <div class="status-item">
+                <span class="status-label">Gun Relay:</span>
+                <span class="status-value" id="relayUrl">https://gun-relay-nchb.onrender.com/gun</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Connection:</span>
+                <span class="status-value" id="connectionStatus">
+                    <span class="offline">Not Connected</span>
+                </span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Last Update:</span>
+                <span class="status-value" id="lastUpdate">Never</span>
+            </div>
+            <div style="margin-top: 15px;">
+                <button onclick="connect()">Connect</button>
+                <button onclick="disconnect()" class="danger">Disconnect</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📦 Instance Information</h3>
+            <div class="status-item">
+                <span class="status-label">Server Instance:</span>
+                <span class="status-value" id="serverInstance">Unknown</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Stored Instance:</span>
+                <span class="status-value" id="storedInstance">None</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Reset By:</span>
+                <span class="status-value" id="resetBy">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Timestamp:</span>
+                <span class="status-value" id="timestamp">-</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🧪 Test Actions</h3>
+            <button onclick="checkHttpInstance()">Check HTTP /instance</button>
+            <button onclick="clearLocalData()" class="danger">Clear Local Data</button>
+            <button onclick="simulateReset()">Simulate Reset</button>
+            <button onclick="forceRefresh()">Force Refresh</button>
+            <div class="log" id="actionLog"></div>
+        </div>
+
+        <div class="card">
+            <h3>📊 Live Feed</h3>
+            <div class="log" id="liveLog"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+    <script>
+        let gun = null;
+        let updateCount = 0;
+        let isConnected = false;
+
+        function log(message, type = 'info', target = 'liveLog') {
+            const logEl = document.getElementById(target);
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateUI() {
+            const stored = localStorage.getItem('whisperz_current_instance');
+            document.getElementById('storedInstance').textContent = stored || 'None';
+        }
+
+        function connect() {
+            if (isConnected) {
+                log('Already connected', 'warning', 'actionLog');
+                return;
+            }
+
+            const relayUrl = 'https://gun-relay-nchb.onrender.com/gun';
+            log('Connecting to Gun relay...', 'info');
+            
+            gun = Gun({
+                peers: [relayUrl],
+                localStorage: true,
+                radisk: true
+            });
+
+            isConnected = true;
+            document.getElementById('connectionStatus').innerHTML = '<span class="online">Connected</span>';
+            log('Connected successfully', 'success');
+
+            // Monitor instance changes
+            gun.get('_whisperz_system').get('config').on((data) => {
+                updateCount++;
+                const time = new Date().toLocaleTimeString();
+                document.getElementById('lastUpdate').textContent = time;
+                
+                if (data && data.instance) {
+                    document.getElementById('serverInstance').textContent = data.instance;
+                    document.getElementById('resetBy').textContent = data.resetBy || 'unknown';
+                    
+                    if (data.timestamp) {
+                        const date = new Date(data.timestamp);
+                        document.getElementById('timestamp').textContent = date.toLocaleString();
+                    }
+                    
+                    const stored = localStorage.getItem('whisperz_current_instance');
+                    
+                    if (updateCount === 1) {
+                        log(`Initial instance: ${data.instance}`, 'success');
+                    } else if (stored && stored !== data.instance) {
+                        log(`🚨 INSTANCE CHANGED! ${stored} → ${data.instance}`, 'error');
+                        log('Would trigger reset here!', 'warning');
+                    } else if (updateCount % 10 === 0) {
+                        log(`Heartbeat #${updateCount}: ${data.instance}`, 'info');
+                    }
+                    
+                    if (!stored) {
+                        localStorage.setItem('whisperz_current_instance', data.instance);
+                        updateUI();
+                    }
+                } else {
+                    log('Received empty data', 'warning');
+                }
+            });
+
+            // Also check once
+            gun.get('_whisperz_system').get('config').once((data) => {
+                if (data && data.instance) {
+                    log(`Once check: ${data.instance}`, 'info');
+                }
+            });
+        }
+
+        function disconnect() {
+            if (!isConnected) {
+                log('Not connected', 'warning', 'actionLog');
+                return;
+            }
+            
+            // Gun doesn't have a clean disconnect, but we can stop listening
+            isConnected = false;
+            gun = null;
+            document.getElementById('connectionStatus').innerHTML = '<span class="offline">Disconnected</span>';
+            log('Disconnected', 'info', 'actionLog');
+        }
+
+        async function checkHttpInstance() {
+            try {
+                log('Checking HTTP /instance endpoint...', 'info', 'actionLog');
+                const response = await fetch('https://gun-relay-nchb.onrender.com/instance');
+                const data = await response.json();
+                log(`HTTP Instance: ${data.instance}`, 'success', 'actionLog');
+                log(`Timestamp: ${new Date(data.timestamp).toLocaleString()}`, 'info', 'actionLog');
+            } catch (error) {
+                log(`HTTP check failed: ${error.message}`, 'error', 'actionLog');
+            }
+        }
+
+        function clearLocalData() {
+            if (confirm('Clear all local data?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                updateUI();
+                log('Local data cleared', 'success', 'actionLog');
+            }
+        }
+
+        function simulateReset() {
+            const newInstance = `test-${Date.now()}`;
+            log(`Simulating reset to: ${newInstance}`, 'warning', 'actionLog');
+            
+            if (gun) {
+                // This won't actually change the server, just for testing
+                log('Note: This is just a simulation, not changing server', 'info', 'actionLog');
+            } else {
+                log('Connect first to simulate', 'error', 'actionLog');
+            }
+        }
+
+        function forceRefresh() {
+            if (gun) {
+                gun.get('_whisperz_system').get('config').once((data) => {
+                    if (data && data.instance) {
+                        log(`Force refresh: ${data.instance}`, 'success', 'actionLog');
+                    } else {
+                        log('No data received on force refresh', 'warning', 'actionLog');
+                    }
+                });
+            } else {
+                log('Not connected', 'error', 'actionLog');
+            }
+        }
+
+        // Auto-connect on load
+        window.addEventListener('load', () => {
+            updateUI();
+            setTimeout(connect, 500);
+        });
+
+        // Update UI every second
+        setInterval(updateUI, 1000);
+    </script>
+</body>
+</html>
