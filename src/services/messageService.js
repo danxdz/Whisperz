@@ -13,11 +13,89 @@ class MessageService {
 
   // Initialize message service
   initialize() {
-    // Message service initialized - ready for Gun.js messaging
     console.log('📨 Message service initialized');
   }
 
-  // Send message via Gun.js only (simplified)
+  async resolveFriendEpub(publicKey) {
+    const friend = await friendsService.getFriend(publicKey);
+    if (friend?.epub) {
+      return friend.epub;
+    }
+
+    const epub = await friendsService.getUserEpub(publicKey);
+    if (epub) {
+      await friendsService.updateFriendEpub(publicKey, epub);
+    }
+    return epub;
+  }
+
+  async decryptConversationMessage(rawMessage) {
+    if (!rawMessage) return null;
+
+    if (rawMessage.content) {
+      return rawMessage;
+    }
+
+    if (!rawMessage.encrypted || !rawMessage.payload) {
+      return null;
+    }
+
+    const currentUser = gunAuthService.getCurrentUser();
+    if (!currentUser) {
+      return null;
+    }
+
+    const peerPublicKey = rawMessage.from === currentUser.pub ? rawMessage.to : rawMessage.from;
+    if (!peerPublicKey) {
+      return null;
+    }
+
+    const peerEpub = await this.resolveFriendEpub(peerPublicKey);
+    if (!peerEpub) {
+      debugLogger.warn('Missing peer epub for message decryption', { peerPublicKey });
+      return null;
+    }
+
+    try {
+      const decrypted = await gunAuthService.decryptFrom(rawMessage.payload, peerEpub);
+      if (!decrypted?.content) {
+        return null;
+      }
+
+      return {
+        ...decrypted,
+        id: decrypted.id || rawMessage.id,
+        from: decrypted.from || rawMessage.from,
+        to: decrypted.to || rawMessage.to,
+        timestamp: decrypted.timestamp || rawMessage.timestamp,
+        conversationId: decrypted.conversationId || rawMessage.conversationId,
+        deliveryMethod: 'gun',
+        encryptionStatus: 'encrypted'
+      };
+    } catch (error) {
+      debugLogger.error('Failed to decrypt conversation message', {
+        error: error.message,
+        messageId: rawMessage.id,
+        peerPublicKey
+      });
+      return null;
+    }
+  }
+
+
+  resolveConversationId(currentUserPublicKey, friendOrPublicKey) {
+    const friendPublicKey = typeof friendOrPublicKey === 'string'
+      ? friendOrPublicKey
+      : friendOrPublicKey?.publicKey;
+
+    if (!currentUserPublicKey || !friendPublicKey) {
+      throw new Error('Missing public key(s) required to resolve conversation ID');
+    }
+
+    return friendsService.generateConversationId(currentUserPublicKey, friendPublicKey);
+  }
+
+  // Send message via Gun.js only
   async sendMessage(recipientPublicKey, content, metadata = {}) {
     const user = gunAuthService.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -25,9 +103,7 @@ class MessageService {
     const friend = await friendsService.getFriend(recipientPublicKey);
     if (!friend) throw new Error('Not a friend');
 
-    // Encrypt message using epub (encryption public key)
-    let encryptedMessage;
-    let encryptionStatus = 'encrypted'; // Default to encrypted
+    const conversationId = this.resolveConversationId(user.pub, recipientPublicKey);
 
     const message = {
       id: securityUtils.generateMessageId(),
@@ -35,106 +111,48 @@ class MessageService {
       from: user.pub,
       to: recipientPublicKey,
       timestamp: Date.now(),
-      conversationId: friend.conversationId,
+      conversationId,
       deliveryMethod: 'gun',
-      encryptionStatus: encryptionStatus,
+      encryptionStatus: 'encrypted',
       ...metadata
     };
 
-    console.log('📤 Sending message via Gun.js:', message);
+    const peerEpub = await this.resolveFriendEpub(recipientPublicKey);
 
-    try {
-      let friendData = await friendsService.getFriend(recipientPublicKey);
-      let encryptionKey = friendData?.epub;
-
-      // If friend doesn't have epub, try to retrieve it from their Gun user data
-      if (!encryptionKey) {
-        console.log('🔍 Retrieving encryption key for friend...');
-        encryptionKey = await friendsService.getUserEpub(recipientPublicKey);
-
-        if (encryptionKey) {
-          // Update friend data with the retrieved epub
-          await friendsService.updateFriendEpub(recipientPublicKey, encryptionKey);
-          console.log('✅ Retrieved and stored encryption key for friend');
-        }
-      }
-
-      if (!encryptionKey) {
-        throw new Error('🔒 Encryption required: Cannot retrieve friend\'s encryption key. They may need to log out and log back in, or re-add them as a friend.');
-      } else {
-        console.log('🔐 Encrypting message for:', encryptionKey);
-        encryptedMessage = await gunAuthService.encryptFor(message, encryptionKey);
-        console.log('✅ Message encrypted successfully');
-      }
-    } catch (error) {
-      console.error('❌ Failed to encrypt message:', error);
-      throw new Error(`🔒 Encryption failed: ${error.message}. Message not sent for security reasons.`);
-    }
-
-    try {
-      // Store message in Gun.js for delivery
-      await hybridGunService.storeMessage(friend.conversationId, encryptedMessage);
-      console.log('📦 Message stored in Gun.js');
-
-      // Store in local conversation history
-      await hybridGunService.storeMessageHistory(friend.conversationId, message);
-
-      // Notify handlers
-      this.notifyHandlers('sent', message);
-
-      return message;
-    } catch (error) {
-      console.error('❌ Failed to send message:', error);
-      throw error;
-    }
-  }
-
-  // Handle incoming Gun.js message
-  async handleIncomingMessage(conversationId, encryptedMessage) {
-    try {
-      // Decrypt message using epub (encryption public key)
-      let message = encryptedMessage;
-      if (message.from) {
-        try {
-          // Use epub from friend data for proper Gun.SEA decryption
-          const friendData = await friendsService.getFriend(message.from);
-          const encryptionKey = friendData?.epub || message.from; // Fallback to pub if epub not available
-          message = await gunAuthService.decryptFrom(encryptedMessage, encryptionKey);
-          console.log('✅ Message decrypted successfully');
-        } catch (error) {
-          console.error('❌ Failed to decrypt message:', error);
-          // Use encrypted message as fallback
-          message = encryptedMessage;
-        }
-      }
-
-      // Validate message
-      if (!message.content || !message.from) {
-        // console.warn('Invalid message received:', message);
-        return;
-      }
-
-      // Get friend info
-      const friend = await friendsService.getFriend(message.from);
-      if (!friend) {
-        // console.warn('Message from non-friend:', message.from);
-        return;
-      }
-
-      // Store in history with delivery method
-      await hybridGunService.storeMessageHistory(friend.conversationId, {
+    let transportMessage;
+    if (!peerEpub) {
+      transportMessage = {
         ...message,
-        received: true,
-        receivedAt: Date.now(),
-        deliveryMethod: 'gun' // Message came via Gun.js
-      });
-
-      // Notify handlers
-      this.notifyHandlers('received', message);
-
-    } catch (error) {
-      // console.error('Error handling incoming message:', error);
+        encrypted: false,
+        encryptionStatus: 'plaintext-fallback'
+      };
+    } else {
+      try {
+        const encryptedPayload = await gunAuthService.encryptFor(message, peerEpub);
+        transportMessage = {
+          id: message.id,
+          from: message.from,
+          to: message.to,
+          timestamp: message.timestamp,
+          conversationId: message.conversationId,
+          encrypted: true,
+          payload: encryptedPayload,
+          deliveryMethod: 'gun'
+        };
+      } catch (error) {
+        transportMessage = {
+          ...message,
+          encrypted: false,
+          encryptionStatus: 'plaintext-fallback'
+        };
+      }
     }
+
+    await hybridGunService.storeMessage(message.conversationId, transportMessage);
+    await hybridGunService.storeMessageHistory(message.conversationId, message);
+
+    this.notifyHandlers('sent', message);
+    return message;
   }
 
   // Check for offline messages
@@ -145,63 +163,67 @@ class MessageService {
       const messages = await hybridGunService.getOfflineMessages();
 
       for (const msg of messages) {
-        // Decrypt and process using epub (encryption public key)
-        let decrypted;
-        try {
-          // Use epub from friend data for proper Gun.SEA decryption
-          const friendData = await friendsService.getFriend(msg.from);
-          const encryptionKey = friendData?.epub || msg.from; // Fallback to pub if epub not available
-          decrypted = await gunAuthService.decryptFrom(msg, encryptionKey);
-        } catch (error) {
-          debugLogger.error('Failed to decrypt offline message:', error);
-          decrypted = msg;
+        const decrypted = await this.decryptConversationMessage(msg);
+        if (!decrypted) {
+          hybridGunService.markMessageDelivered(msg.key);
+          continue;
         }
 
-        // Get friend info
         const friend = await friendsService.getFriend(decrypted.from);
         if (friend) {
-          // Store in history
           await hybridGunService.storeMessageHistory(friend.conversationId, {
             ...decrypted,
             received: true,
             receivedAt: Date.now(),
             wasOffline: true,
-            deliveryMethod: 'gun' // Message came via Gun relay
+            deliveryMethod: 'gun'
           });
 
-          // Notify handlers
           this.notifyHandlers('received', decrypted);
         }
 
-        // Mark as delivered
         hybridGunService.markMessageDelivered(msg.key);
       }
     } catch (error) {
-      // console.error('Error checking offline messages:', error);
+      debugLogger.error('Error checking offline messages', error);
     }
   }
 
-  // Get conversation history
+  // Get conversation history (normalized to readable messages)
   async getConversationHistory(conversationId, limit = 50) {
-    return await hybridGunService.getMessageHistory(conversationId, limit);
+    const history = await hybridGunService.getMessageHistory(conversationId, limit * 2);
+
+    const normalized = [];
+    for (const entry of history) {
+      const parsed = await this.decryptConversationMessage(entry);
+      if (parsed?.content) {
+        normalized.push(parsed);
+      }
+    }
+
+    return normalized
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .slice(-limit);
   }
 
-  // Subscribe to conversation
+  // Subscribe to conversation updates (returns readable/decrypted messages)
   subscribeToConversation(conversationId, callback) {
-    return hybridGunService.subscribeToConversation(conversationId, callback);
+    return hybridGunService.subscribeToConversation(conversationId, async (rawMessage) => {
+      const parsed = await this.decryptConversationMessage(rawMessage);
+      if (parsed?.content) {
+        callback(parsed);
+      }
+    });
   }
 
   // Send typing indicator
   sendTypingIndicator(conversationId, isTyping = true) {
-    // Clear existing timer
     if (this.typingTimers.has(conversationId)) {
       clearTimeout(this.typingTimers.get(conversationId));
     }
 
-    // Set typing status
     hybridGunService.setTypingIndicator(conversationId, isTyping);
 
-    // Auto-stop typing after 3 seconds
     if (isTyping) {
       const timer = setTimeout(() => {
         hybridGunService.setTypingIndicator(conversationId, false);
@@ -228,7 +250,7 @@ class MessageService {
       try {
         handler(event, data);
       } catch (error) {
-        // console.error('Message handler error:', error);
+        debugLogger.error('Message handler error', error);
       }
     });
   }
@@ -258,60 +280,45 @@ class MessageService {
 
   // Store offline message with queue limits
   async storeOfflineMessage(recipientPub, message) {
-    try {
-      const MAX_OFFLINE_MESSAGES = 100; // Limit per recipient
-      const MAX_MESSAGE_SIZE = 10000; // 10KB max per message
+    const MAX_OFFLINE_MESSAGES = 100;
+    const MAX_MESSAGE_SIZE = 10000;
 
-      // Check message size
-      const messageSize = JSON.stringify(message).length;
-      if (messageSize > MAX_MESSAGE_SIZE) {
-        // console.warn('Message too large for offline storage:', messageSize);
-        throw new Error('Message exceeds maximum size limit');
-      }
+    const messageSize = JSON.stringify(message).length;
+    if (messageSize > MAX_MESSAGE_SIZE) {
+      throw new Error('Message exceeds maximum size limit');
+    }
 
-      // Get existing offline messages for this recipient
-      const offlineRef = hybridGunService.gun
-        .get('offline_messages')
-        .get(recipientPub);
+    const offlineRef = hybridGunService.gun
+      .get('offline_messages')
+      .get(recipientPub);
 
-      // Count existing messages
-      let messageCount = 0;
-      await new Promise((resolve) => {
-        offlineRef.map().once(() => {
-          messageCount++;
-        });
-        setTimeout(resolve, 500);
+    let messageCount = 0;
+    await new Promise((resolve) => {
+      offlineRef.map().once(() => {
+        messageCount++;
+      });
+      setTimeout(resolve, 500);
+    });
+
+    if (messageCount >= MAX_OFFLINE_MESSAGES) {
+      const messages = [];
+      offlineRef.map().once((data, key) => {
+        if (data) messages.push({ key, timestamp: data.timestamp });
       });
 
-      // Check queue limit
-      if (messageCount >= MAX_OFFLINE_MESSAGES) {
-        // console.warn(`Offline message queue full for ${recipientPub} (${messageCount} messages)`);
-        // Remove oldest messages if queue is full
-        const messages = [];
-        offlineRef.map().once((data, key) => {
-          if (data) messages.push({ key, timestamp: data.timestamp });
+      setTimeout(() => {
+        messages.sort((a, b) => a.timestamp - b.timestamp);
+        const toRemove = messages.slice(0, 10);
+        toRemove.forEach(msg => {
+          offlineRef.get(msg.key).put(null);
         });
-
-        // Sort by timestamp and remove oldest
-        setTimeout(() => {
-          messages.sort((a, b) => a.timestamp - b.timestamp);
-          const toRemove = messages.slice(0, 10); // Remove 10 oldest
-          toRemove.forEach(msg => {
-            offlineRef.get(msg.key).put(null);
-          });
-        }, 500);
-      }
-
-      // Store the message
-      const messageId = securityUtils.generateMessageId();
-      offlineRef.get(messageId).put(message);
-
-      // console.log(`📥 Stored offline message for ${recipientPub} (queue: ${messageCount + 1}/${MAX_OFFLINE_MESSAGES})`);
-    } catch (error) {
-      // console.error('Failed to store offline message:', error);
-      throw error;
+      }, 500);
     }
+
+    const messageId = securityUtils.generateMessageId();
+    offlineRef.get(messageId).put(message);
   }
+
 }
 
 export default new MessageService();

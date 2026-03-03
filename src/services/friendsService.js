@@ -198,10 +198,7 @@ class FriendsService {
       // Check if the verified data matches what we expect
       const isValid = verified === dataToVerify;
 
-      if (!isValid) {
-      }
-        //   expected: dataToVerify,
-        //   got: verified
+      return isValid;
     } catch (_error) {
       // console.error('Error verifying invite signature:', error);
       return false;
@@ -435,7 +432,7 @@ class FriendsService {
         // No need to connect to peers - everyone uses the same relay now
         debugLogger.info('gun', '🌐 Using default relay - no peer exchange needed');
         // Create bidirectional friendship FIRST (before marking as used)
-        const conversationId = securityUtils.generateConversationId();
+        const conversationId = this.generateConversationId(inviteData.from, user.pub);
 
         // Get current user's nickname
         const currentUserNickname = await this.getUserNickname() || user.alias || 'Anonymous';
@@ -1002,7 +999,7 @@ class FriendsService {
                     epub: friendEpub || null,  // CRITICAL: Include encryption key
                     nickname: friendNickname || 'Unknown',
                     addedAt: data.addedAt,
-                    conversationId: data.conversationId
+                    conversationId: data.conversationId || this.generateConversationId(currentUser.pub, friendKey)
                   };
 
                   // console.log('➕ Adding friend from public space:', friendData);
@@ -1084,7 +1081,7 @@ class FriendsService {
               publicKey: friendKey,
               nickname: friendNickname,
               addedAt: data.addedAt,
-              conversationId: data.conversationId
+              conversationId: data.conversationId || this.generateConversationId(currentUser.pub, friendKey)
             };
 
             this.friends.set(friendKey, friendData);
@@ -1136,6 +1133,10 @@ class FriendsService {
 
   // Generate conversation ID
   generateConversationId(pub1, pub2) {
+    if (!pub1 || !pub2) {
+      throw new Error('Cannot generate conversation ID without both public keys');
+    }
+
     // Sort public keys to ensure consistent ID
     const sorted = [pub1, pub2].sort();
     return `conv_${sorted[0]}_${sorted[1]}`;
