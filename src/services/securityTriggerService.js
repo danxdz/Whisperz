@@ -543,55 +543,76 @@ class SecurityTriggerService {
    * Emergency Reset System - Multiple triggers for when everything goes wrong
    */
   initializeEmergencyReset() {
-    // Method 1: Console command (always available)
-    window.emergencyReset = () => this.executeEmergencyReset('console');
+    const emergencyTriggersEnabled =
+      import.meta.env.DEV || import.meta.env.VITE_ENABLE_EMERGENCY_COMMANDS === 'true';
+
+    // Ensure globals are not accidentally left available when disabled
+    if (!emergencyTriggersEnabled) {
+      delete window.emergencyReset;
+      delete window.emergencyResetWithDestruction;
+      delete window.resetGunDB;
+      delete window.cleanupFakeData;
+    }
+
+    // Method 1: Console command (development-only unless explicitly enabled)
+    if (emergencyTriggersEnabled) {
+      window.emergencyReset = () => this.executeEmergencyReset('console');
+    }
+
+    if (emergencyTriggersEnabled) {
+      // Method 2: Konami code (↑↑↓↓←→←→BA)
+      this.setupKonamiCode();
+
+      // Method 3: URL parameter trigger
+      this.checkURLTrigger();
+
+      // Method 4: localStorage emergency key
+      this.checkEmergencyKey();
+
+      // Method 5: Triple-click emergency (on locked screen)
+      this.setupTripleClickEmergency();
+    }
     
-    // Method 2: Konami code (↑↑↓↓←→←→BA)
-    this.setupKonamiCode();
-    
-    // Method 3: URL parameter trigger
-    this.checkURLTrigger();
-    
-    // Method 4: localStorage emergency key
-    this.checkEmergencyKey();
-    
-    // Method 5: Triple-click emergency (on locked screen)
-    this.setupTripleClickEmergency();
-    
-    // Method 6: Manual emergency reset with destruction
-    window.emergencyResetWithDestruction = () => {
-      console.error('🆘 MANUAL EMERGENCY RESET WITH DESTRUCTION TRIGGERED');
-      this.executeEmergencyReset('manual_destruction');
-    };
-    
-         // Method 7: Quick Gun.js database reset
-     window.resetGunDB = () => {
-       console.error('💀 MANUAL GUN DATABASE RESET TRIGGERED');
-       this.destroyGunDatabase();
-       localStorage.clear();
-       sessionStorage.clear();
-       alert('💀 GUN Database and all storage cleared! Page will reload.');
-       setTimeout(() => window.location.reload(), 1000);
-     };
-     
-     // Method 8: Clean up fake data after emergency reset
-     window.cleanupFakeData = () => {
-       console.log('🧹 MANUAL FAKE DATA CLEANUP TRIGGERED');
-       this.cleanupFakeData().then(result => {
-         if (result.success) {
-           alert('🧹 Fake data cleaned up successfully!');
-         } else {
-           alert('❌ Fake data cleanup failed: ' + result.error);
-         }
-       });
-     };
-    
-         console.log('🆘 Emergency reset system initialized');
-     console.log('🆘 Available commands:');
-     console.log('  - emergencyReset() - Reset security settings only');
-     console.log('  - emergencyResetWithDestruction() - Reset + DESTROY ALL DATA');
-     console.log('  - resetGunDB() - Quick Gun.js database reset');
-     console.log('  - cleanupFakeData() - Clean up fake data after emergency reset');
+    // Methods 6-8: Manual emergency console commands
+    if (emergencyTriggersEnabled) {
+      window.emergencyResetWithDestruction = () => {
+        console.error('🆘 MANUAL EMERGENCY RESET WITH DESTRUCTION TRIGGERED');
+        this.executeEmergencyReset('manual_destruction');
+      };
+
+      window.resetGunDB = () => {
+        console.error('💀 MANUAL GUN DATABASE RESET TRIGGERED');
+        this.destroyGunDatabase();
+        localStorage.clear();
+        sessionStorage.clear();
+        alert('💀 GUN Database and all storage cleared! Page will reload.');
+        setTimeout(() => window.location.reload(), 1000);
+      };
+
+      window.cleanupFakeData = () => {
+        console.log('🧹 MANUAL FAKE DATA CLEANUP TRIGGERED');
+        this.cleanupFakeData().then(result => {
+          if (result.success) {
+            alert('🧹 Fake data cleaned up successfully!');
+          } else {
+            alert('❌ Fake data cleanup failed: ' + result.error);
+          }
+        });
+      };
+    }
+
+    if (import.meta.env.DEV) {
+      console.log('🆘 Emergency reset system initialized');
+      if (emergencyTriggersEnabled) {
+        console.log('🆘 Available commands:');
+        console.log('  - emergencyReset() - Reset security settings only');
+        console.log('  - emergencyResetWithDestruction() - Reset + DESTROY ALL DATA');
+        console.log('  - resetGunDB() - Quick Gun.js database reset');
+        console.log('  - cleanupFakeData() - Clean up fake data after emergency reset');
+      } else {
+        console.log('🆘 Emergency triggers are disabled (set VITE_ENABLE_EMERGENCY_COMMANDS=true to enable)');
+      }
+    }
   }
 
   /**
