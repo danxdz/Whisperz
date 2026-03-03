@@ -215,8 +215,9 @@ class GunAuthService {
           return;
         }
 
-        // Auto-login after registration
-        this.login(username, password)
+        // Auto-login after registration. Bypass lockout checks here so a
+        // freshly-created account is not blocked by stale local lock state.
+        this.login(username, password, { bypassLockout: true })
           .then(async (loginResult) => {
             // Set user profile data with proper await
             const profileData = {
@@ -251,7 +252,9 @@ class GunAuthService {
   }
 
   // Login existing user
-  async login(username, password) {
+  async login(username, password, options = {}) {
+    const { bypassLockout = false } = options;
+
     return new Promise((resolve, reject) => {
       if (!this.user) {
         reject(new Error('Gun not initialized'));
@@ -259,7 +262,7 @@ class GunAuthService {
       }
 
       // Check if account is locked due to failed attempts
-      if (securityTriggerService.isCurrentlyLocked()) {
+      if (!bypassLockout && securityTriggerService.isCurrentlyLocked()) {
         const timeRemaining = securityTriggerService.getLockoutTimeRemaining();
         const minutes = Math.ceil(timeRemaining / 60000);
         reject(new Error(`Account locked due to too many failed attempts. Try again in ${minutes} minutes.`));
@@ -268,6 +271,11 @@ class GunAuthService {
 
       this.user.auth(username, password, (ack) => {
         if (ack.err) {
+          if (bypassLockout) {
+            reject(new Error(ack.err));
+            return;
+          }
+
           // Record failed attempt
           const result = securityTriggerService.recordFailedAttempt();
           
