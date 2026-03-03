@@ -198,10 +198,7 @@ class FriendsService {
       // Check if the verified data matches what we expect
       const isValid = verified === dataToVerify;
 
-      if (!isValid) {
-      }
-        //   expected: dataToVerify,
-        //   got: verified
+      return isValid;
     } catch (_error) {
       // console.error('Error verifying invite signature:', error);
       return false;
@@ -1136,6 +1133,10 @@ class FriendsService {
 
   // Generate conversation ID
   generateConversationId(pub1, pub2) {
+    if (!pub1 || !pub2) {
+      throw new Error('Cannot generate conversation ID without both public keys');
+    }
+
     // Sort public keys to ensure consistent ID
     const sorted = [pub1, pub2].sort();
     return `conv_${sorted[0]}_${sorted[1]}`;

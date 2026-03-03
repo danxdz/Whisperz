@@ -87,6 +87,11 @@ class MessageService {
     if (friend?.conversationId) {
       return friend.conversationId;
     }
+
+    if (!currentUserPublicKey || !friend?.publicKey) {
+      throw new Error('Missing public key(s) required to resolve conversation ID');
+    }
+
     return friendsService.generateConversationId(currentUserPublicKey, friend.publicKey);
   }
 
