@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import messageService from '../../services/messageService';
-import gunAuthService from '../../services/gunAuthService';
+import friendsService from '../../services/friendsService';
 // WebRTC removed - using Gun.js only
-import securityUtils from '../../utils/securityUtils.js';
 
 /**
  * ChatModule - IRC-style chat interface
@@ -12,9 +11,14 @@ function ChatModule({ selectedFriend, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+
+  const getConversationId = () => {
+    if (!selectedFriend || !currentUser?.pub) return null;
+    return selectedFriend.conversationId || friendsService.generateConversationId(currentUser.pub, selectedFriend.publicKey);
+  };
 
   useEffect(() => {
     if (!selectedFriend) {
@@ -22,30 +26,44 @@ function ChatModule({ selectedFriend, currentUser }) {
       return;
     }
 
+    const conversationId = getConversationId();
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+
     loadMessages();
 
-    // Subscribe to incoming messages
-    const unsubscribe = messageService.onMessage((message) => {
-      if (message.from === selectedFriend.publicKey ||
-          message.to === selectedFriend.publicKey) {
-        setMessages(prev => [...prev, message]);
+    const unsubscribeConversation = messageService.subscribeToConversation(
+      conversationId,
+      (message) => {
+        if (message.from !== selectedFriend.publicKey && message.to !== selectedFriend.publicKey) {
+          return;
+        }
+
+        setMessages((prev) => {
+          if (prev.some((existing) => existing.id === message.id)) {
+            return prev;
+          }
+          return [...prev, message].sort((a, b) => a.timestamp - b.timestamp);
+        });
         scrollToBottom();
       }
-    });
+    );
 
-    // Check Gun.js connection
     checkConnection();
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubscribeConversation) unsubscribeConversation();
     };
-  }, [selectedFriend]);
+  }, [selectedFriend, currentUser?.pub]);
 
   const loadMessages = async () => {
-    if (!selectedFriend || !selectedFriend.conversationId) return;
+    const conversationId = getConversationId();
+    if (!selectedFriend || !conversationId) return;
 
     try {
-      const history = await messageService.getConversationHistory(selectedFriend.conversationId);
+      const history = await messageService.getConversationHistory(conversationId);
       setMessages(history || []);
       scrollToBottom();
     } catch (error) {
@@ -63,17 +81,14 @@ function ChatModule({ selectedFriend, currentUser }) {
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedFriend) return;
 
-    const message = {
-      content: newMessage,
-      from: currentUser.pub,
-      to: selectedFriend.publicKey,
-      timestamp: Date.now(),
-      id: securityUtils.generateMessageId()
-    };
-
     try {
-      await messageService.sendMessage(selectedFriend.publicKey, newMessage);
-      setMessages(prev => [...prev, message]);
+      const sentMessage = await messageService.sendMessage(selectedFriend.publicKey, newMessage);
+      setMessages((prev) => {
+        if (prev.some((existing) => existing.id === sentMessage.id)) {
+          return prev;
+        }
+        return [...prev, sentMessage].sort((a, b) => a.timestamp - b.timestamp);
+      });
       setNewMessage('');
       scrollToBottom();
     } catch (error) {
