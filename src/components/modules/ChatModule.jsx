@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import messageService from '../../services/messageService';
-import friendsService from '../../services/friendsService';
 // WebRTC removed - using Gun.js only
 
 /**
@@ -35,7 +34,7 @@ function ChatModule({ selectedFriend, currentUser }) {
     loadMessages();
 
     const unsubscribeConversation = messageService.subscribeToConversation(
-      conversationId,
+      selectedFriend.conversationId,
       (message) => {
         if (message.from !== selectedFriend.publicKey && message.to !== selectedFriend.publicKey) {
           return;
