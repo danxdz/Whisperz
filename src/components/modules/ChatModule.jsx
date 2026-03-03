@@ -13,8 +13,20 @@ function ChatModule({ selectedFriend, currentUser }) {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+
+  const getConversationId = () => {
+    if (!selectedFriend || !currentUser?.pub) return null;
+    return selectedFriend.conversationId || friendsService.generateConversationId(currentUser.pub, selectedFriend.publicKey);
+  };
+
   useEffect(() => {
     if (!selectedFriend) {
+      setMessages([]);
+      return;
+    }
+
+    const conversationId = getConversationId();
+    if (!conversationId) {
       setMessages([]);
       return;
     }
@@ -43,13 +55,14 @@ function ChatModule({ selectedFriend, currentUser }) {
     return () => {
       if (unsubscribeConversation) unsubscribeConversation();
     };
-  }, [selectedFriend]);
+  }, [selectedFriend, currentUser?.pub]);
 
   const loadMessages = async () => {
-    if (!selectedFriend || !selectedFriend.conversationId) return;
+    const conversationId = getConversationId();
+    if (!selectedFriend || !conversationId) return;
 
     try {
-      const history = await messageService.getConversationHistory(selectedFriend.conversationId);
+      const history = await messageService.getConversationHistory(conversationId);
       setMessages(history || []);
       scrollToBottom();
     } catch (error) {

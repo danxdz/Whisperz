@@ -96,7 +96,7 @@ class MessageService {
       from: user.pub,
       to: recipientPublicKey,
       timestamp: Date.now(),
-      conversationId: friend.conversationId,
+      conversationId,
       deliveryMethod: 'gun',
       encryptionStatus: 'encrypted',
       ...metadata
