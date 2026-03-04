@@ -36,6 +36,11 @@ function MainChatInterface({ user, onLogout, onInviteAccepted }) {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   const typingTimeoutRef = useRef(null);
+
+  const getConversationId = () => {
+    if (!user?.pub || !selectedFriend?.publicKey) return null;
+    return friendsService.generateConversationId(user.pub, selectedFriend.publicKey);
+  };
   const messagesEndRef = useRef(null);
   const loadFriendsRef = useRef(null);
 
@@ -165,7 +170,10 @@ function MainChatInterface({ user, onLogout, onInviteAccepted }) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
-      messageService.sendTypingIndicator(selectedFriend.conversationId, false);
+      const conversationId = getConversationId();
+      if (conversationId) {
+        messageService.sendTypingIndicator(conversationId, false);
+      }
     } catch (error) {
       setIsSendingMessage(false);
       console.error('Failed to send message:', error);
@@ -191,10 +199,16 @@ function MainChatInterface({ user, onLogout, onInviteAccepted }) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    messageService.sendTypingIndicator(selectedFriend.conversationId, true);
+    const conversationId = getConversationId();
+    if (!conversationId) return;
+
+    messageService.sendTypingIndicator(conversationId, true);
 
     typingTimeoutRef.current = setTimeout(() => {
-      messageService.sendTypingIndicator(selectedFriend.conversationId, false);
+      const conversationId = getConversationId();
+      if (conversationId) {
+        messageService.sendTypingIndicator(conversationId, false);
+      }
     }, 2000);
   };
 
