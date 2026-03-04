@@ -32,7 +32,7 @@ function ChatModule({ selectedFriend, currentUser }) {
       return;
     }
 
-    loadMessages();
+    loadMessages(conversationId);
 
     const unsubscribeConversation = messageService.subscribeToConversation(
       conversationId,
@@ -58,8 +58,7 @@ function ChatModule({ selectedFriend, currentUser }) {
     };
   }, [selectedFriend, currentUser?.pub]);
 
-  const loadMessages = async () => {
-    const conversationId = getConversationId();
+  const loadMessages = async (conversationId) => {
     if (!selectedFriend || !conversationId) return;
 
     try {
