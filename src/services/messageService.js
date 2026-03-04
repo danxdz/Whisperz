@@ -82,19 +82,6 @@ class MessageService {
     }
   }
 
-
-  resolveConversationId(currentUserPublicKey, friendOrPublicKey) {
-    const friendPublicKey = typeof friendOrPublicKey === 'string'
-      ? friendOrPublicKey
-      : friendOrPublicKey?.publicKey;
-
-    if (!currentUserPublicKey || !friendPublicKey) {
-      throw new Error('Missing public key(s) required to resolve conversation ID');
-    }
-
-    return friendsService.generateConversationId(currentUserPublicKey, friendPublicKey);
-  }
-
   // Send message via Gun.js only
   async sendMessage(recipientPublicKey, content, metadata = {}) {
     const user = gunAuthService.getCurrentUser();
@@ -103,57 +90,43 @@ class MessageService {
     const friend = await friendsService.getFriend(recipientPublicKey);
     if (!friend) throw new Error('Not a friend');
 
-    const resolvedConversationId = this.resolveConversationId(user.pub, recipientPublicKey);
-
     const message = {
       id: securityUtils.generateMessageId(),
       content,
       from: user.pub,
       to: recipientPublicKey,
       timestamp: Date.now(),
-      conversationId: resolvedConversationId,
+      conversationId,
       deliveryMethod: 'gun',
       encryptionStatus: 'encrypted',
       ...metadata
     };
 
     const peerEpub = await this.resolveFriendEpub(recipientPublicKey);
-
-    let transportMessage;
     if (!peerEpub) {
-      transportMessage = {
-        ...message,
-        encrypted: false,
-        encryptionStatus: 'plaintext-fallback'
-      };
-    } else {
-      try {
-        const encryptedPayload = await gunAuthService.encryptFor(message, peerEpub);
-        transportMessage = {
-          id: message.id,
-          from: message.from,
-          to: message.to,
-          timestamp: message.timestamp,
-          conversationId: message.conversationId,
-          encrypted: true,
-          payload: encryptedPayload,
-          deliveryMethod: 'gun'
-        };
-      } catch (error) {
-        transportMessage = {
-          ...message,
-          encrypted: false,
-          encryptionStatus: 'plaintext-fallback'
-        };
-      }
+      throw new Error('Cannot send securely: friend encryption key is missing. Ask them to re-login.');
     }
 
-    if (!resolvedConversationId) {
-      throw new Error('Failed to resolve conversation ID');
+    let encryptedPayload;
+    try {
+      encryptedPayload = await gunAuthService.encryptFor(message, peerEpub);
+    } catch (error) {
+      throw new Error(`Encryption failed: ${error.message}`);
     }
 
-    await hybridGunService.storeMessage(resolvedConversationId, transportMessage);
-    await hybridGunService.storeMessageHistory(resolvedConversationId, message);
+    const transportMessage = {
+      id: message.id,
+      from: message.from,
+      to: message.to,
+      timestamp: message.timestamp,
+      conversationId: message.conversationId,
+      encrypted: true,
+      payload: encryptedPayload,
+      deliveryMethod: 'gun'
+    };
+
+    await hybridGunService.storeMessage(friend.conversationId, transportMessage);
+    await hybridGunService.storeMessageHistory(friend.conversationId, message);
 
     this.notifyHandlers('sent', message);
     return message;
