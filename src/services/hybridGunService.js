@@ -163,7 +163,7 @@ class HybridGunService {
         .get('messages')
         .map()
         .once((data, key) => {
-          if (data && data.content) {
+          if (data && (data.content || data.payload)) {
             messages.set(key, data);
           }
         });
@@ -179,7 +179,7 @@ class HybridGunService {
         .get('messages')
         .map()
         .once((data, key) => {
-          if (data && data.content) {
+          if (data && (data.content || data.payload)) {
             messages.set(key, data);
           }
         });
@@ -203,8 +203,7 @@ class HybridGunService {
       .get('messages')
       .map()
       .on((data, key) => {
-        if (data && data.content) {
-          // console.log('📨 New private message:', data);
+        if (data && (data.content || data.payload)) {
           callback({ ...data, key });
         }
       });
@@ -221,11 +220,11 @@ class HybridGunService {
           conversationId,
           key,
           hasData: !!data,
-          hasContent: !!(data && data.content),
+          hasContent: !!(data && (data.content || data.payload)),
           dataKeys: data ? Object.keys(data) : []
         });
         
-        if (data && data.content) {
+        if (data && (data.content || data.payload)) {
           console.log('📨 New public message:', data);
           callback({ ...data, key });
         }

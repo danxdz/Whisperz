@@ -176,10 +176,10 @@ class PresenceService {
   handlePresenceUpdate(publicKey, data) {
     const now = Date.now();
 
-    // Check if presence is fresh (within 40 seconds)
+    // Check if presence is fresh (within 5 minutes)
     const isOnline = data.status === 'online' &&
                     data.lastSeen &&
-                    (now - data.lastSeen) < 40000;
+                    (now - data.lastSeen) < 300000;
 
     const status = {
       online: isOnline,

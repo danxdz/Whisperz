@@ -60,6 +60,37 @@ function LoginView({ onLogin, inviteCode }) {
     }
   };
 
+  const handleHardReset = async () => {
+    const confirmed = window.confirm(
+      'Hard reset this device?\n\nThis will clear local app data (session, cache, and local database state) and reload the page.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+
+      if (window.indexedDB && typeof window.indexedDB.databases === 'function') {
+        const dbs = await window.indexedDB.databases();
+        await Promise.all(
+          (dbs || [])
+            .filter((db) => db?.name)
+            .map((db) => new Promise((resolve) => {
+              const req = window.indexedDB.deleteDatabase(db.name);
+              req.onsuccess = () => resolve();
+              req.onerror = () => resolve();
+              req.onblocked = () => resolve();
+            }))
+        );
+      }
+    } finally {
+      window.location.href = window.location.origin;
+    }
+  };
+
   return (
     <div className="auth-container">
       <ThemeToggle />
@@ -127,6 +158,24 @@ function LoginView({ onLogin, inviteCode }) {
         <p className="invite-only-notice">
           This is an invite-only chat. You need an invite link from an existing member to join.
         </p>
+        <div style={{ marginTop: '12px', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={handleHardReset}
+            disabled={loading}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(255, 70, 70, 0.6)',
+              color: '#ff6b6b',
+              fontSize: '12px',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Hard reset this device
+          </button>
+        </div>
       </div>
     </div>
   );

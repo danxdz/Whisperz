@@ -162,11 +162,9 @@ function App() {
         gunAuthService.initialize();
         friendsService.initialize();
 
-        // Only initialize hybridGunService on desktop
-        const isMobile = /Mobile|Android|iPhone/i.test(navigator.userAgent);
-        if (!isMobile) {
-          hybridGunService.initialize();
-        }
+        // Initialize hybridGunService for all clients (mobile included)
+        // so chat history and realtime subscriptions work consistently.
+        hybridGunService.initialize();
 
         // Check for existing session
         const currentUser = gunAuthService.getCurrentUser();
